@@ -588,6 +588,54 @@ div[data-testid="stDataFrame"] {{
     font-weight: 500;
 }}
 
+.homepage-feature-box {{
+    width: fit-content;
+    max-width: 760px;
+    margin: 22px auto 24px auto;
+    padding: 18px 24px;
+
+    background: rgba(255, 255, 255, 0.42);
+    border: 1px solid rgba(255, 255, 255, 0.38);
+    border-radius: 18px;
+
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+
+    box-shadow:
+        0 8px 22px
+        rgba(30, 47, 110, 0.06);
+}}
+
+.homepage-feature-grid {{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 42px;
+    row-gap: 18px;
+    justify-content: center;
+    align-items: center;
+}}
+
+.homepage-feature-item {{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    font-size: 18px;
+    font-weight: 700;
+    color: #22356F;
+    line-height: 1.3;
+    white-space: nowrap;
+}}
+
+.homepage-feature-item span {{
+    color: #22356F;
+}}
+
+.homepage-feature-item:last-child:nth-child(odd) {{
+    grid-column: 1 / span 2;
+    justify-self: center;
+}}
+
 .homepage-guide {{
     max-width: 780px;
     margin: 30px auto 0 auto;
