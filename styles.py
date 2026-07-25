@@ -607,7 +607,7 @@ div[data-testid="stDataFrame"] {{
     min-width: 168px;
     padding: 11px 16px;
 
-    background: rgba(255, 255, 255, 0.13);
+    background: rgba(255, 255, 255, 0.15);
     border-radius: 15px;
 
     backdrop-filter: blur(6px);
