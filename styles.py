@@ -588,52 +588,42 @@ div[data-testid="stDataFrame"] {{
     font-weight: 500;
 }}
 
-.homepage-feature-box {{
-    width: fit-content;
-    max-width: 760px;
-    margin: 22px auto 24px auto;
-    padding: 18px 24px;
-
-    background: rgba(255, 255, 255, 0.42);
-    border: 1px solid rgba(255, 255, 255, 0.38);
-    border-radius: 18px;
-
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-
-    box-shadow:
-        0 8px 22px
-        rgba(30, 47, 110, 0.06);
-}}
-
 .homepage-feature-grid {{
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    column-gap: 42px;
-    row-gap: 18px;
+    max-width: 760px;
+    margin: 24px auto 28px auto;
+
+    display: flex;
+    flex-wrap: wrap;
     justify-content: center;
-    align-items: center;
+    gap: 14px 16px;
 }}
 
 .homepage-feature-item {{
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
+
+    min-width: 180px;
+    padding: 14px 20px;
+
+    background: rgba(255, 255, 255, 0.24);
+    border-radius: 16px;
+
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+
+    box-shadow: 0 6px 18px rgba(34, 53, 111, 0.05);
 
     font-size: 18px;
     font-weight: 700;
     color: #22356F;
-    line-height: 1.3;
+    line-height: 1.2;
     white-space: nowrap;
 }}
 
 .homepage-feature-item span {{
     color: #22356F;
-}}
-
-.homepage-feature-item:last-child:nth-child(odd) {{
-    grid-column: 1 / span 2;
-    justify-self: center;
 }}
 
 .homepage-guide {{
