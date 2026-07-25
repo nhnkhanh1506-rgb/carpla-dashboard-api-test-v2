@@ -589,7 +589,7 @@ div[data-testid="stDataFrame"] {{
 }}
 
 .homepage-feature-grid {{
-    max-width: 720px;
+    max-width: 560px;
     margin: 22px auto 26px auto;
 
     display: flex;
@@ -602,18 +602,18 @@ div[data-testid="stDataFrame"] {{
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 7px;
 
     min-width: 168px;
-    padding: 12px 17px;
+    padding: 11px 16px;
 
-    background: rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.16);
     border-radius: 15px;
 
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
 
-    box-shadow: 0 5px 16px rgba(34, 53, 111, 0.045);
+    box-shadow: 0 4px 14px rgba(34, 53, 111, 0.035);
 
     font-size: 16px;
     font-weight: 700;
