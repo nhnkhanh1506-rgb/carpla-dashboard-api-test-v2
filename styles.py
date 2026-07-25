@@ -589,33 +589,33 @@ div[data-testid="stDataFrame"] {{
 }}
 
 .homepage-feature-grid {{
-    max-width: 760px;
-    margin: 24px auto 28px auto;
+    max-width: 720px;
+    margin: 22px auto 26px auto;
 
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 14px 16px;
+    gap: 12px 14px;
 }}
 
 .homepage-feature-item {{
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 8px;
 
-    min-width: 180px;
-    padding: 14px 20px;
+    min-width: 168px;
+    padding: 12px 17px;
 
-    background: rgba(255, 255, 255, 0.24);
-    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.22);
+    border-radius: 15px;
 
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
 
-    box-shadow: 0 6px 18px rgba(34, 53, 111, 0.05);
+    box-shadow: 0 5px 16px rgba(34, 53, 111, 0.045);
 
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
     color: #22356F;
     line-height: 1.2;
@@ -624,6 +624,7 @@ div[data-testid="stDataFrame"] {{
 
 .homepage-feature-item span {{
     color: #22356F;
+    font-size: 16px;
 }}
 
 .homepage-guide {{
