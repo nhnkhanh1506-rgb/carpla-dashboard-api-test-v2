@@ -313,7 +313,7 @@ def build_brand_relationship_bubble_chart(
 
     figure.update_layout(
         template="simple_white",
-        height=300,
+        height=275,
 
         margin=dict(
             l=0,
@@ -529,7 +529,7 @@ def render_brand_relationship_section(
 
     left_column, right_column = (
         st.columns(
-            [0.82, 1.18]
+            [0.86, 1.14]
         )
     )
 
@@ -576,8 +576,45 @@ def render_brand_relationship_section(
                 unsafe_allow_html=True,
             )
 
-            render_brand_relationship_group_cards(
-                relationship_groups
+            brand_group_rows = []
+
+            for item in relationship_groups:
+                group_name = item[
+                    "group_name"
+                ]
+
+                brands = item[
+                    "brands"
+                ]
+
+                if not brands:
+                    brand_group_rows.append(
+                        {
+                            "Nhóm thương hiệu": group_name,
+                            "Hãng xe": "-",
+                        }
+                    )
+                    continue
+
+                for brand_name in brands:
+                    brand_group_rows.append(
+                        {
+                            "Nhóm thương hiệu": group_name,
+                            "Hãng xe": brand_name,
+                        }
+                    )
+
+            brand_group_table = pd.DataFrame(
+                brand_group_rows
+            )
+
+            st.dataframe(
+                style_white_table(
+                    brand_group_table
+                ),
+                use_container_width=True,
+                hide_index=True,
+                height=360,
             )
 
 
