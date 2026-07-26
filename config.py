@@ -9,23 +9,14 @@ WORKSHOP_CONFIG = {
     "Phạm Văn Đồng": {
         "chi_nhanh": "Hà Nội",
 
-        # File lệnh sửa chữa:
-        # - Xác định lượt xe theo Số lệnh
-        # - Lọc kỳ báo cáo theo Ngày hóa đơn
-        # - Lấy doanh thu dịch vụ từ Tổng trước thuế
         "service_file": Path(
             "hn_pvd_service_2026_07.xlsx"
         ),
 
-        # File Bảng tổng hợp lệnh sửa chữa:
-        # - Không lọc theo Ngày quyết toán
-        # - Ghép với file dịch vụ theo Số lệnh
-        # - Lấy Doanh thu phụ tùng của đúng các lệnh
         "parts_file": Path(
             "summary_repair_orders.xlsx"
         ),
 
-        # Chưa có file phụ kiện
         "accessory_file": None,
     },
 }
@@ -41,6 +32,43 @@ TARGETS = {
         "revenue": 1_429_000_000,
     },
 }
+
+
+# ============================================================
+# PHÂN NHÓM QUAN HỆ THƯƠNG HIỆU
+# ============================================================
+
+TASCO_OFFICIAL_BRANDS = [
+    "GEELY",
+    "LYNK & CO",
+    "ZEEKR",
+    "LOTUS",
+]
+
+PARTNER_BRANDS = [
+    "HYUNDAI",
+    "TOYOTA",
+    "KIA",
+    "MAZDA",
+    "MITSUBISHI",
+    "FORD",
+    "HONDA",
+    "VOLVO",
+    "MERCEDES-BENZ",
+    "BMW",
+    "AUDI",
+    "LEXUS",
+    "PORSCHE",
+    "LAND ROVER",
+    "JAGUAR",
+    "PEUGEOT",
+    "VOLKSWAGEN",
+    "SUZUKI",
+    "MG",
+    "VINFAST",
+    "OMODA & JAECOO",
+    "WULING",
+]
 
 
 # ============================================================
