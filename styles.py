@@ -879,13 +879,13 @@ div[data-testid="stPlotlyChart"] > div {{
 }}
 
 .st-key-brand_relationship_bubble_card {{
-    padding: 16px 18px 14px 18px !important;
-    min-height: 410px !important;
+    padding: 18px 20px 16px 20px !important;
+    min-height: 500px !important;
 }}
 
 .st-key-brand_relationship_group_card {{
-    padding: 16px 18px 14px 18px !important;
-    min-height: 410px !important;
+    padding: 18px 18px 16px 18px !important;
+    min-height: 500px !important;
 }}
 
 .brand-relationship-card-title {{
@@ -893,7 +893,7 @@ div[data-testid="stPlotlyChart"] > div {{
     line-height: 1.25 !important;
     font-weight: 800 !important;
     color: #1F2937 !important;
-    margin: 0 0 6px 2px !important;
+    margin: 2px 0 8px 2px !important;
 }}
 
 .st-key-brand_relationship_bubble_card
@@ -939,18 +939,6 @@ div[style*="background:#F9FAFB"] {{
     border-radius: 16px !important;
     margin-bottom: 10px !important;
 }}
-
-.st-key-brand_relationship_group_card
-div[data-testid="stDataFrame"] {{
-    border-radius: 16px !important;
-    overflow: hidden !important;
-}}
-
-.st-key-brand_relationship_group_card
-div[data-testid="stDataFrame"] > div {{
-    border-radius: 16px !important;
-}}
-
 
 @media (max-width: 900px) {{
     .brand-relationship-card-title {{
