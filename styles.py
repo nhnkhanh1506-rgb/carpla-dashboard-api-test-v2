@@ -588,45 +588,6 @@ div[data-testid="stDataFrame"] {{
     font-weight: 500;
 }}
 
-.homepage-feature-grid {{
-    max-width: 560px;
-    margin: 22px auto 26px auto;
-
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px 14px;
-}}
-
-.homepage-feature-item {{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-
-    min-width: 168px;
-    padding: 11px 16px;
-
-    background: rgba(255, 255, 255, 0.18);
-    border-radius: 15px;
-
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-
-    box-shadow: 0 4px 14px rgba(34, 53, 111, 0.035);
-
-    font-size: 16px;
-    font-weight: 700;
-    color: #22356F;
-    line-height: 1.2;
-    white-space: nowrap;
-}}
-
-.homepage-feature-item span {{
-    color: #22356F;
-    font-size: 16px;
-}}
-
 .homepage-guide {{
     max-width: 780px;
     margin: 30px auto 0 auto;
@@ -901,6 +862,92 @@ div[data-testid="stPlotlyChart"] > div {{
     background: transparent !important;
     border-radius: 20px !important;
     overflow: hidden !important;
+}}
+
+
+/* =========================================================
+   CƠ CẤU THEO QUAN HỆ THƯƠNG HIỆU
+   ========================================================= */
+
+.st-key-brand_relationship_bubble_card,
+.st-key-brand_relationship_group_card {{
+    background: #FFFFFF !important;
+    border-radius: 22px !important;
+    border: 1px solid #E9ECF3 !important;
+    box-shadow: 0 8px 24px rgba(30, 47, 110, 0.06) !important;
+    overflow: hidden !important;
+}}
+
+.st-key-brand_relationship_bubble_card {{
+    padding: 18px 20px 16px 20px !important;
+    min-height: 500px !important;
+}}
+
+.st-key-brand_relationship_group_card {{
+    padding: 18px 18px 16px 18px !important;
+    min-height: 500px !important;
+}}
+
+.brand-relationship-card-title {{
+    font-size: 20px !important;
+    line-height: 1.25 !important;
+    font-weight: 800 !important;
+    color: #1F2937 !important;
+    margin: 2px 0 8px 2px !important;
+}}
+
+.st-key-brand_relationship_bubble_card
+div[data-testid="stPlotlyChart"] {{
+    background: transparent !important;
+    border-radius: 18px !important;
+    overflow: hidden !important;
+}}
+
+.st-key-brand_relationship_bubble_card
+.js-plotly-plot,
+.st-key-brand_relationship_bubble_card
+.plot-container,
+.st-key-brand_relationship_bubble_card
+.svg-container,
+.st-key-brand_relationship_bubble_card
+.main-svg {{
+    background: transparent !important;
+}}
+
+.brand-relationship-legend-item {{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #243B7C;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    padding: 4px 0;
+}}
+
+.brand-relationship-dot {{
+    width: 9px;
+    height: 9px;
+    display: inline-block;
+    border-radius: 50%;
+    flex: 0 0 auto;
+}}
+
+.st-key-brand_relationship_group_card
+div[style*="background:#F9FAFB"] {{
+    border-radius: 16px !important;
+    margin-bottom: 10px !important;
+}}
+
+@media (max-width: 900px) {{
+    .brand-relationship-card-title {{
+        font-size: 18px !important;
+    }}
+
+    .brand-relationship-legend-item {{
+        font-size: 12px;
+    }}
 }}
 
 
