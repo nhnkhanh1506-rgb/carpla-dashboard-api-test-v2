@@ -204,9 +204,9 @@ def build_brand_relationship_bubble_chart(
     )
 
     positions = [
-        (1.45, 1.55),
-        (3.20, 2.15),
-        (3.10, 0.85),
+        (1.35, 1.55),
+        (3.10, 2.15),
+        (3.00, 0.82),
     ]
 
     bubble_colors = {
@@ -237,8 +237,8 @@ def build_brand_relationship_bubble_chart(
         "ty_trong_doanh_thu"
     ].apply(
         lambda share:
-        92
-        + 118
+        96
+        + 130
         * (
             share
             / max_share
@@ -274,7 +274,7 @@ def build_brand_relationship_bubble_chart(
                     ),
                     color=style["fill"],
                     line=dict(
-                        color="rgba(255,255,255,0.80)",
+                        color="rgba(255,255,255,0.85)",
                         width=2,
                     ),
                 ),
@@ -283,8 +283,7 @@ def build_brand_relationship_bubble_chart(
                     (
                         "<b>"
                         f"{row['ty_trong_doanh_thu']:.0%}"
-                        "</b><br>"
-                        f"{group_name}"
+                        "</b>"
                     )
                 ],
 
@@ -292,7 +291,7 @@ def build_brand_relationship_bubble_chart(
 
                 textfont=dict(
                     color=style["text"],
-                    size=15,
+                    size=18,
                 ),
 
                 hovertemplate=(
@@ -301,6 +300,8 @@ def build_brand_relationship_bubble_chart(
                     f"{int(row['so_ro'])}<br>"
                     "Doanh thu: "
                     f"{fmt_m(row['doanh_thu'])}<br>"
+                    "Tỷ trọng RO: "
+                    f"{row['ty_trong_ro']:.1%}<br>"
                     "Tỷ trọng doanh thu: "
                     f"{row['ty_trong_doanh_thu']:.1%}"
                     "<extra></extra>"
@@ -312,13 +313,13 @@ def build_brand_relationship_bubble_chart(
 
     figure.update_layout(
         template="simple_white",
-        height=410,
+        height=345,
 
         margin=dict(
-            l=10,
-            r=10,
-            t=15,
-            b=15,
+            l=5,
+            r=5,
+            t=5,
+            b=5,
         ),
 
         paper_bgcolor="#FFFFFF",
@@ -326,13 +327,13 @@ def build_brand_relationship_bubble_chart(
 
         xaxis=dict(
             visible=False,
-            range=[0, 4.35],
+            range=[0, 4.2],
             fixedrange=True,
         ),
 
         yaxis=dict(
             visible=False,
-            range=[0, 3.15],
+            range=[0, 3.0],
             fixedrange=True,
             scaleanchor="x",
             scaleratio=1,
@@ -350,6 +351,196 @@ def build_brand_relationship_bubble_chart(
     return figure
 
 
+def build_brand_relationship_brand_map(
+    data,
+):
+    relationship_data = data.copy()
+
+    relationship_data[
+        "hang_xe"
+    ] = (
+        relationship_data[
+            "hang_xe"
+        ]
+        .fillna("KHÔNG XÁC ĐỊNH")
+        .astype(str)
+        .map(
+            normalize_brand_name
+        )
+    )
+
+    relationship_data[
+        "nhom_quan_he"
+    ] = relationship_data[
+        "hang_xe"
+    ].apply(
+        classify_brand_relationship
+    )
+
+    group_order = [
+        "Xe chính hãng Tasco",
+        "Hãng đối tác",
+        "Khác",
+    ]
+
+    records = []
+
+    for group_name in group_order:
+        brands = sorted(
+            relationship_data.loc[
+                relationship_data[
+                    "nhom_quan_he"
+                ]
+                == group_name,
+                "hang_xe",
+            ].dropna().unique().tolist()
+        )
+
+        records.append(
+            {
+                "group_name": group_name,
+                "brands": brands,
+            }
+        )
+
+    return records
+
+
+def render_brand_relationship_legend():
+    legend_items = [
+        (
+            "Xe chính hãng Tasco",
+            "#6D4BEA",
+        ),
+        (
+            "Hãng đối tác",
+            "#2FB878",
+        ),
+        (
+            "Khác",
+            "#EC5269",
+        ),
+    ]
+
+    html = """
+    <div style="
+        display:grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px 26px;
+        margin-top: 10px;
+        padding: 4px 10px 0 10px;
+    ">
+    """
+
+    for index, (
+        label,
+        color,
+    ) in enumerate(
+        legend_items
+    ):
+        if index == 2:
+            extra_style = (
+                "grid-column: 1 / span 2; "
+                "justify-self: center;"
+            )
+        else:
+            extra_style = ""
+
+        html += f"""
+        <div style="
+            display:flex;
+            align-items:center;
+            gap:10px;
+            color:#243B7C;
+            font-size:16px;
+            font-weight:700;
+            {extra_style}
+        ">
+            <span style="
+                display:inline-block;
+                width:10px;
+                height:10px;
+                border-radius:50%;
+                background:{color};
+                box-shadow:0 0 0 4px rgba(255,255,255,0.0);
+            "></span>
+            <span>{label}</span>
+        </div>
+        """
+
+    html += "</div>"
+
+    st.markdown(
+        html,
+        unsafe_allow_html=True,
+    )
+
+
+def render_brand_relationship_group_cards(
+    relationship_groups,
+):
+    for item in relationship_groups:
+        group_name = item[
+            "group_name"
+        ]
+
+        brands = item[
+            "brands"
+        ]
+
+        color_map = {
+            "Xe chính hãng Tasco": "#6D4BEA",
+            "Hãng đối tác": "#2FB878",
+            "Khác": "#EC5269",
+        }
+
+        brand_text = (
+            ", ".join(brands)
+            if brands
+            else "-"
+        )
+
+        st.markdown(
+            f"""
+            <div style="
+                background:#F9FAFB;
+                border:1px solid #EEF2F7;
+                border-radius:18px;
+                padding:14px 16px;
+                margin-bottom:12px;
+            ">
+                <div style="
+                    display:flex;
+                    align-items:center;
+                    gap:10px;
+                    margin-bottom:8px;
+                ">
+                    <span style="
+                        display:inline-block;
+                        width:10px;
+                        height:10px;
+                        border-radius:50%;
+                        background:{color_map[group_name]};
+                    "></span>
+                    <span style="
+                        font-size:16px;
+                        font-weight:800;
+                        color:#1F2937;
+                    ">{group_name}</span>
+                </div>
+                <div style="
+                    font-size:14px;
+                    line-height:1.65;
+                    color:#475467;
+                    font-weight:500;
+                ">{brand_text}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
+
 def render_brand_relationship_section(
     data,
 ):
@@ -363,140 +554,45 @@ def render_brand_relationship_section(
         )
     )
 
-    left_column, right_column = (
-        st.columns(
-            [1, 1.18]
+    relationship_groups = (
+        build_brand_relationship_brand_map(
+            data
         )
     )
 
-    with left_column:
-        st.markdown(
-            '<div class="section-label">'
-            'Tỷ trọng doanh thu theo quan hệ thương hiệu'
-            '</div>',
-            unsafe_allow_html=True,
-        )
+    relationship_card = st.container(
+        key="brand_relationship_card"
+    )
 
-        bubble_figure = (
-            build_brand_relationship_bubble_chart(
-                relationship_summary
+    with relationship_card:
+        left_column, right_column = (
+            st.columns(
+                [1.05, 1]
             )
         )
 
-        st.plotly_chart(
-            bubble_figure,
-            use_container_width=True,
-            config={
-                "displayModeBar": False,
-                "responsive": True,
-            },
-        )
-
-    with right_column:
-        st.markdown(
-            '<div class="section-label">'
-            'Bảng chi tiết theo quan hệ thương hiệu'
-            '</div>',
-            unsafe_allow_html=True,
-        )
-
-        relationship_display = (
-            relationship_summary.copy()
-        )
-
-        relationship_display[
-            "doanh_thu"
-        ] = relationship_display[
-            "doanh_thu"
-        ].map(
-            fmt_m
-        )
-
-        relationship_display[
-            "ty_trong_ro"
-        ] = relationship_display[
-            "ty_trong_ro"
-        ].map(
-            lambda value:
-            f"{value:.0%}"
-        )
-
-        relationship_display[
-            "ty_trong_doanh_thu"
-        ] = relationship_display[
-            "ty_trong_doanh_thu"
-        ].map(
-            lambda value:
-            f"{value:.0%}"
-        )
-
-        relationship_display = (
-            relationship_display.rename(
-                columns={
-                    "nhom_quan_he": "Nhóm thương hiệu",
-                    "so_ro": "Số RO",
-                    "doanh_thu": "Doanh thu trước thuế",
-                    "ty_trong_ro": "Tỷ trọng RO",
-                    "ty_trong_doanh_thu": "Tỷ trọng doanh thu",
-                }
+        with left_column:
+            bubble_figure = (
+                build_brand_relationship_bubble_chart(
+                    relationship_summary
+                )
             )
-        )
 
-        relationship_display[
-            "Số RO"
-        ] = (
-            relationship_display[
-                "Số RO"
-            ]
-            .astype(int)
-            .astype(str)
-        )
+            st.plotly_chart(
+                bubble_figure,
+                use_container_width=True,
+                config={
+                    "displayModeBar": False,
+                    "responsive": True,
+                },
+            )
 
-        total_row = pd.DataFrame(
-            {
-                "Nhóm thương hiệu": [
-                    "TỔNG"
-                ],
-                "Số RO": [
-                    str(
-                        int(
-                            relationship_summary[
-                                "so_ro"
-                            ].sum()
-                        )
-                    )
-                ],
-                "Doanh thu trước thuế": [
-                    fmt_m(
-                        relationship_summary[
-                            "doanh_thu"
-                        ].sum()
-                    )
-                ],
-                "Tỷ trọng RO": [
-                    "100%"
-                ],
-                "Tỷ trọng doanh thu": [
-                    "100%"
-                ],
-            }
-        )
+            render_brand_relationship_legend()
 
-        relationship_display = pd.concat(
-            [
-                relationship_display,
-                total_row,
-            ],
-            ignore_index=True,
-        )
-
-        st.dataframe(
-            style_white_table(
-                relationship_display
-            ),
-            use_container_width=True,
-            hide_index=True,
-        )
+        with right_column:
+            render_brand_relationship_group_cards(
+                relationship_groups
+            )
 
 
 # ============================================================
@@ -1569,7 +1665,7 @@ def render_brand_section(data):
             )
 
     st.markdown(
-        "<div style='height: 18px;'></div>",
+        "<div style='height: 6px;'></div>",
         unsafe_allow_html=True,
     )
 
