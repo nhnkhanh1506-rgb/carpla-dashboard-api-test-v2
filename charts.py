@@ -1575,7 +1575,7 @@ def render_summary_and_revenue_mix(
             ),
             use_container_width=True,
             hide_index=True,
-            height=143,
+            height=108,
         )
 
     with right_column:
