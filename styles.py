@@ -1272,7 +1272,7 @@ div[data-testid="stPlotlyChart"] {{
 
 
 .st-key-revenue_summary_mix_row {{
-    margin-top: -24px !important;
+    margin-top: 14px !important;
 }}
 
 /* Bảng tổng quan không có card bao ngoài */
