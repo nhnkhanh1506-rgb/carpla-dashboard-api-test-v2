@@ -207,9 +207,9 @@ def build_brand_relationship_bubble_chart(
     )
 
     positions = [
-        (1.25, 1.55),
-        (2.90, 2.05),
-        (2.75, 0.88),
+        (1.45, 1.55),
+        (3.00, 2.05),
+        (2.92, 0.92),
     ]
 
     bubble_colors = {
@@ -862,12 +862,12 @@ def build_vehicle_segment_bubble_chart(
 
     bubble_colors = {
         "Xe sang": {
-            "fill": "#EEE9FF",
-            "text": "#6D4BEA",
+            "fill": "#FE9E2C",
+            "text": "#A84E00",
         },
         "Xe phổ thông": {
-            "fill": "#DFF5EA",
-            "text": "#2FB878",
+            "fill": "#9DDBF5",
+            "text": "#1E5E7A",
         },
         "Khác": {
             "fill": "#FDE7EB",
@@ -987,12 +987,12 @@ def build_vehicle_segment_bubble_chart(
 def render_vehicle_segment_legend():
     legend_items = [
         (
-            "Xe sang",
-            "#6D4BEA",
+            "Xe phổ thông",
+            "#1E5E7A",
         ),
         (
-            "Xe phổ thông",
-            "#2FB878",
+            "Xe sang",
+            "#A84E00",
         ),
         (
             "Khác",
@@ -1063,16 +1063,6 @@ def render_vehicle_segment_section(data):
 
     grouped_brands = [
         (
-            "Xe sang",
-            [
-                normalize_brand_name(
-                    brand
-                )
-                for brand in LUXURY_BRANDS
-            ],
-            "vehicle-segment-luxury",
-        ),
-        (
             "Xe phổ thông",
             [
                 normalize_brand_name(
@@ -1081,6 +1071,16 @@ def render_vehicle_segment_section(data):
                 for brand in MASS_MARKET_BRANDS
             ],
             "vehicle-segment-mass",
+        ),
+        (
+            "Xe sang",
+            [
+                normalize_brand_name(
+                    brand
+                )
+                for brand in LUXURY_BRANDS
+            ],
+            "vehicle-segment-luxury",
         ),
         (
             "Khác",
