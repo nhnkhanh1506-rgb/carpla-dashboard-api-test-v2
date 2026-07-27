@@ -334,7 +334,8 @@ def render_homepage(logo_path: Path):
 '</div>'
 
 '<div class="homepage-guide">'
-'Vui lòng chọn <b>Chi nhánh</b>, <b>Xưởng</b>, <b>Năm</b> và <b>Tháng</b> tại bộ lọc bên trái, sau đó nhấn <b>“XEM DASHBOARD”</b>.'
+    '<span>Vui lòng chọn <b>Chi nhánh</b>, <b>Xưởng</b>, <b>Năm</b> và <b>Tháng</b> tại bộ lọc bên trái, sau đó nhấn</span>'
+    '<span class="homepage-dashboard-button">XEM DASHBOARD</span>'
 '</div>'
             '</div>'
         '</div>'
