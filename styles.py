@@ -1222,8 +1222,8 @@ div[data-testid="stPlotlyChart"] {{
         0 8px 24px
         rgba(30, 47, 110, 0.06) !important;
     overflow: hidden !important;
-    min-height: 382px !important;
-    padding: 16px 18px 42px 18px !important;
+    min-height: 360px !important;
+    padding: 16px 18px 28px 18px !important;
 }}
 
 .revenue-overview-card-title {{
@@ -1299,8 +1299,8 @@ div[data-testid="stDataFrame"] {{
     justify-content: center;
     gap: 7px;
     color: #475467;
-    font-size: 11px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 650;
     white-space: nowrap;
 }}
 
@@ -1313,15 +1313,89 @@ div[data-testid="stDataFrame"] {{
 }}
 
 
-
 /* =========================================================
-   BẢNG TỔNG QUAN THỰC HIỆN — ĐỒNG BỘ ST.DATAFRAME
+   BẢNG TỔNG QUAN THỰC HIỆN — HTML GỌN, KHÔNG THANH THỪA
    ========================================================= */
 
-.st-key-revenue_summary_mix_row
-div[data-testid="stDataFrame"] {{
-    border-radius: 16px !important;
+.revenue-summary-table-wrap {{
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid #D9DEE7;
+    border-radius: 16px;
+    background: #FFFFFF;
+}}
+
+.revenue-summary-table {{
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+    font-size: 15px;
+    color: #1F2937;
+}}
+
+.revenue-summary-table th {{
+    background: #F3F4F6;
+    color: #737B8C;
+    font-weight: 500;
+    text-align: left;
+    padding: 12px 14px;
+    border-right: 1px solid #D9DEE7;
+    border-bottom: 1px solid #D9DEE7;
+}}
+
+.revenue-summary-table td {{
+    background: #FFFFFF;
+    color: #1F2937;
+    font-weight: 700;
+    text-align: left;
+    padding: 12px 14px;
+    border-right: 1px solid #E1E5EC;
+    border-bottom: 1px solid #E1E5EC;
+}}
+
+.revenue-summary-table th:last-child,
+.revenue-summary-table td:last-child {{
+    border-right: none;
+}}
+
+.revenue-summary-table tbody tr:last-child td {{
+    border-bottom: none;
+}}
+
+
+/* =========================================================
+   FIX CUỐI: BỎ ĐƯỜNG THỪA DƯỚI BẢNG TỔNG QUAN
+   ========================================================= */
+
+.revenue-summary-table-wrap {{
+    margin: 0 !important;
+    padding: 0 !important;
+    border-bottom: 0 !important;
+    box-shadow: none !important;
     overflow: hidden !important;
+}}
+
+.revenue-summary-table {{
+    margin: 0 !important;
+    border-bottom: 0 !important;
+    box-shadow: none !important;
+}}
+
+.revenue-summary-table tbody tr:last-child td {{
+    border-bottom: 0 !important;
+}}
+
+.st-key-revenue_summary_mix_row
+div[data-testid="stMarkdownContainer"] {{
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}}
+
+.st-key-revenue_summary_mix_row
+div[data-testid="stMarkdownContainer"] > div {{
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
 }}
 
 
