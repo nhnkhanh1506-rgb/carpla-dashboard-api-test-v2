@@ -589,12 +589,52 @@ div[data-testid="stDataFrame"] {{
 }}
 
 .homepage-guide {{
-    max-width: 780px;
+    max-width: 940px;
     margin: 30px auto 0 auto;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+
     font-size: 16px;
     line-height: 1.7;
     color: #3F4F68;
     font-weight: 650;
+    text-align: center;
+}}
+
+.homepage-dashboard-button {{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 8px 18px;
+    border-radius: 12px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #FF6969 0%,
+            #FF4F4F 52%,
+            #E93E3E 100%
+        );
+
+    color: #FFFFFF !important;
+    font-size: 14px;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: 0.25px;
+
+    border: 1px solid rgba(255, 255, 255, 0.24);
+
+    box-shadow:
+        0 8px 18px rgba(233, 62, 62, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.26);
+
+    text-shadow:
+        0 1px 1px rgba(122, 26, 26, 0.16);
 }}
 
 /* =========================================================
