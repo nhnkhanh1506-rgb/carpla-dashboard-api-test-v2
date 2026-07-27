@@ -1479,6 +1479,52 @@ def render_summary_and_revenue_mix(
         "#F9B43A",
     ]
 
+    total_mix_revenue = sum(
+        revenue_values
+    )
+
+    revenue_mix_table = pd.DataFrame(
+        {
+            "Hạng mục": revenue_labels,
+            "Doanh thu": [
+                fmt_m(value)
+                for value in revenue_values
+            ],
+            "Tỷ trọng": [
+                (
+                    f"{safe_div(value, total_mix_revenue):.0%}"
+                    if total_mix_revenue
+                    else "0%"
+                )
+                for value in revenue_values
+            ],
+        }
+    )
+
+    revenue_mix_total_row = pd.DataFrame(
+        {
+            "Hạng mục": [
+                "TỔNG DOANH THU"
+            ],
+            "Doanh thu": [
+                fmt_m(total_mix_revenue)
+            ],
+            "Tỷ trọng": [
+                "100%"
+                if total_mix_revenue
+                else "0%"
+            ],
+        }
+    )
+
+    revenue_mix_table = pd.concat(
+        [
+            revenue_mix_table,
+            revenue_mix_total_row,
+        ],
+        ignore_index=True,
+    )
+
     figure = go.Figure(
         data=[
             go.Pie(
@@ -1530,7 +1576,7 @@ def render_summary_and_revenue_mix(
 
     figure.update_layout(
         template="simple_white",
-        height=245,
+        height=225,
         margin=dict(
             l=8,
             r=8,
@@ -1621,6 +1667,20 @@ def render_summary_and_revenue_mix(
                 </div>
                 """,
                 unsafe_allow_html=True,
+            )
+
+            st.markdown(
+                "<div style='height:10px;'></div>",
+                unsafe_allow_html=True,
+            )
+
+            st.dataframe(
+                style_white_table(
+                    revenue_mix_table
+                ),
+                use_container_width=True,
+                hide_index=True,
+                height=178,
             )
 
 
