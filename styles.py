@@ -1195,13 +1195,13 @@ div[data-testid="stPlotlyChart"] {{
 }}
 
 .vehicle-segment-table .vehicle-segment-luxury {{
-    background: #EEE9FF !important;
-    color: #6D4BEA !important;
+    background: #FE9E2C !important;
+    color: #7A3500 !important;
 }}
 
 .vehicle-segment-table .vehicle-segment-mass {{
-    background: #DFF5EA !important;
-    color: #2FB878 !important;
+    background: #9DDBF5 !important;
+    color: #1E5E7A !important;
 }}
 
 .vehicle-segment-table .vehicle-segment-other {{
