@@ -1,4 +1,5 @@
 import calendar
+import html
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -629,7 +630,17 @@ def render_brand_relationship_section(
                 unsafe_allow_html=True,
             )
 
-            brand_group_rows = []
+            table_html = """
+            <div class="brand-group-table-wrap">
+                <table class="brand-group-table">
+                    <thead>
+                        <tr>
+                            <th>Nhóm thương hiệu</th>
+                            <th>Hãng xe</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            """
 
             for (
                 group_name,
@@ -641,31 +652,59 @@ def render_brand_relationship_section(
                     else ["-"]
                 )
 
+                row_count = len(
+                    display_brands
+                )
+
                 for index, brand_name in enumerate(
                     display_brands
                 ):
-                    brand_group_rows.append(
-                        {
-                            "Nhóm thương hiệu": (
-                                group_name
-                                if index == 0
-                                else ""
+                    table_html += "<tr>"
+
+                    if index == 0:
+                        group_class_map = {
+                            "Xe chính hãng Tasco": (
+                                "brand-group-official"
                             ),
-                            "Hãng xe": brand_name,
+                            "Hãng đối tác": (
+                                "brand-group-partner"
+                            ),
+                            "Khác": (
+                                "brand-group-other"
+                            ),
                         }
+
+                        group_class = (
+                            group_class_map[
+                                group_name
+                            ]
+                        )
+
+                        table_html += (
+                            '<td class="brand-group-merged '
+                            f'{group_class}" '
+                            f'rowspan="{row_count}">'
+                            f'{html.escape(group_name)}'
+                            "</td>"
+                        )
+
+                    table_html += (
+                        "<td>"
+                        f"{html.escape(brand_name)}"
+                        "</td>"
                     )
 
-            brand_group_table = pd.DataFrame(
-                brand_group_rows
-            )
+                    table_html += "</tr>"
 
-            st.dataframe(
-                style_white_table(
-                    brand_group_table
-                ),
-                use_container_width=True,
-                hide_index=True,
-                height=360,
+            table_html += """
+                    </tbody>
+                </table>
+            </div>
+            """
+
+            st.markdown(
+                table_html,
+                unsafe_allow_html=True,
             )
 
 
