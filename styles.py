@@ -947,6 +947,7 @@ div[data-testid="stPlotlyChart"] {{
     background: transparent !important;
     border-radius: 18px !important;
     overflow: hidden !important;
+    margin-top: 10px !important;
 }}
 
 .st-key-brand_relationship_bubble_card
@@ -969,7 +970,7 @@ div[data-testid="stPlotlyChart"] {{
     font-size: 14px;
     font-weight: 700;
     white-space: nowrap;
-    padding: 4px 0;
+    padding: 8px 0 2px 0;
 }}
 
 .brand-relationship-dot {{
@@ -1007,12 +1008,14 @@ div[data-testid="stDataFrame"] > div {{
    ========================================================= */
 
 .brand-group-table-wrap {{
-    max-height: 360px;
+    max-height: 332px;
     overflow-y: auto;
     overflow-x: hidden;
     border: 1px solid #E5E7EB;
     border-radius: 16px;
     background: #FFFFFF;
+    margin-top: 4px;
+    margin-bottom: 10px;
 }}
 
 .brand-group-table {{
