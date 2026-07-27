@@ -2159,8 +2159,23 @@ def render_brand_section(data):
             / 1_000_000
         )
 
+        # Gradient vàng Carpla từ trên xuống dưới:
+        # hãng đứng đầu đậm nhất, các hãng phía dưới nhạt dần.
+        carpla_yellow_gradient = [
+            "#F3B900",
+            "#F6C21A",
+            "#F8CB33",
+            "#F9D34A",
+            "#FADD61",
+            "#FBE577",
+            "#FCEB8E",
+            "#FDF0A5",
+            "#FEF4BC",
+            "#FFF8D3",
+        ]
+
         color_list = (
-            MUTED_BAR_COLORS[
+            carpla_yellow_gradient[
                 :len(brand_chart)
             ]
         )
