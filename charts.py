@@ -2174,10 +2174,15 @@ def render_brand_section(data):
             "#FFF8D3",
         ]
 
-        color_list = (
-            carpla_yellow_gradient[
-                :len(brand_chart)
-            ]
+        # brand_chart đang được sắp xếp tăng dần để Plotly
+        # hiển thị hãng doanh thu cao nhất ở trên cùng.
+        # Vì vậy cần đảo danh sách màu để thanh trên cùng đậm nhất.
+        color_list = list(
+            reversed(
+                carpla_yellow_gradient[
+                    :len(brand_chart)
+                ]
+            )
         )
 
         figure = go.Figure()
