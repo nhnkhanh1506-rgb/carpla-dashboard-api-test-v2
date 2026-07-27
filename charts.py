@@ -862,12 +862,12 @@ def build_vehicle_segment_bubble_chart(
 
     bubble_colors = {
         "Xe sang": {
-            "fill": "#FE9E2C",
-            "text": "#A84E00",
+            "fill": "#FFECD4",
+            "text": "#A45A00",
         },
         "Xe phổ thông": {
-            "fill": "#9DDBF5",
-            "text": "#1E5E7A",
+            "fill": "#D4EDFF",
+            "text": "#2F5F7A",
         },
         "Khác": {
             "fill": "#FDE7EB",
@@ -988,11 +988,11 @@ def render_vehicle_segment_legend():
     legend_items = [
         (
             "Xe phổ thông",
-            "#1E5E7A",
+            "#2F5F7A",
         ),
         (
             "Xe sang",
-            "#A84E00",
+            "#A45A00",
         ),
         (
             "Khác",
