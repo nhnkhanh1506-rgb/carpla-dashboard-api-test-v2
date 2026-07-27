@@ -866,6 +866,52 @@ div[data-testid="stPlotlyChart"] > div {{
 
 
 /* =========================================================
+   5 Ô TÍNH NĂNG Ở HOMEPAGE
+   ========================================================= */
+
+.homepage-feature-grid {{
+    max-width: 560px;
+    margin: 22px auto 26px auto;
+
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px 14px;
+}}
+
+.homepage-feature-item {{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+
+    min-width: 168px;
+    padding: 11px 16px;
+
+    background: rgba(255, 255, 255, 0.10);
+    border-radius: 15px;
+
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+
+    box-shadow:
+        0 3px 10px
+        rgba(34, 53, 111, 0.025);
+
+    font-size: 16px;
+    font-weight: 700;
+    color: #22356F;
+    line-height: 1.2;
+    white-space: nowrap;
+}}
+
+.homepage-feature-item span {{
+    color: #22356F;
+    font-size: 16px;
+}}
+
+
+/* =========================================================
    CƠ CẤU THEO QUAN HỆ THƯƠNG HIỆU
    ========================================================= */
 
@@ -879,13 +925,13 @@ div[data-testid="stPlotlyChart"] > div {{
 }}
 
 .st-key-brand_relationship_bubble_card {{
-    padding: 18px 20px 16px 20px !important;
-    min-height: 500px !important;
+    padding: 16px 18px 14px 18px !important;
+    min-height: 410px !important;
 }}
 
 .st-key-brand_relationship_group_card {{
-    padding: 18px 18px 16px 18px !important;
-    min-height: 500px !important;
+    padding: 16px 18px 14px 18px !important;
+    min-height: 410px !important;
 }}
 
 .brand-relationship-card-title {{
@@ -893,7 +939,7 @@ div[data-testid="stPlotlyChart"] > div {{
     line-height: 1.25 !important;
     font-weight: 800 !important;
     color: #1F2937 !important;
-    margin: 2px 0 8px 2px !important;
+    margin: 0 0 6px 2px !important;
 }}
 
 .st-key-brand_relationship_bubble_card
@@ -935,9 +981,14 @@ div[data-testid="stPlotlyChart"] {{
 }}
 
 .st-key-brand_relationship_group_card
-div[style*="background:#F9FAFB"] {{
+div[data-testid="stDataFrame"] {{
     border-radius: 16px !important;
-    margin-bottom: 10px !important;
+    overflow: hidden !important;
+}}
+
+.st-key-brand_relationship_group_card
+div[data-testid="stDataFrame"] > div {{
+    border-radius: 16px !important;
 }}
 
 @media (max-width: 900px) {{
