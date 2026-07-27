@@ -1424,6 +1424,188 @@ def prepare_daily_data(
 # BIỂU ĐỒ LƯỢT XE THEO NGÀY
 # ============================================================
 
+
+# ============================================================
+# TỔNG QUAN THỰC HIỆN + CƠ CẤU TỔNG DOANH THU
+# ============================================================
+
+def render_summary_and_revenue_mix(
+    actual_ro,
+    target_ro,
+    actual_revenue,
+    target_revenue,
+    ro_rate,
+    revenue_rate,
+    labor_revenue,
+    parts_revenue,
+    accessory_revenue,
+):
+    summary_kpi = pd.DataFrame(
+        {
+            "Hạng mục": [
+                "Lượt xe / RO",
+                "Tổng Doanh thu",
+            ],
+            "Thực hiện": [
+                f"{actual_ro:,.0f}",
+                fmt_m(actual_revenue),
+            ],
+            "Chỉ tiêu": [
+                f"{target_ro:,.0f}",
+                fmt_m(target_revenue),
+            ],
+            "% đạt": [
+                f"{ro_rate:.0%}",
+                f"{revenue_rate:.0%}",
+            ],
+        }
+    )
+
+    revenue_labels = [
+        "Doanh thu công việc",
+        "Doanh thu phụ tùng",
+        "Doanh thu phụ kiện",
+    ]
+
+    revenue_values = [
+        labor_revenue,
+        parts_revenue,
+        accessory_revenue,
+    ]
+
+    revenue_colors = [
+        "#386FAE",
+        "#F86D53",
+        "#F9B43A",
+    ]
+
+    figure = go.Figure(
+        data=[
+            go.Pie(
+                labels=revenue_labels,
+                values=revenue_values,
+                hole=0.60,
+                sort=False,
+                direction="clockwise",
+                marker=dict(
+                    colors=revenue_colors,
+                    line=dict(
+                        color="#FFFFFF",
+                        width=3,
+                    ),
+                ),
+                textinfo="percent",
+                texttemplate="%{percent:.0%}",
+                textfont=dict(
+                    size=15,
+                    color="#FFFFFF",
+                ),
+                hovertemplate=(
+                    "<b>%{label}</b><br>"
+                    "Giá trị: %{value:,.0f}<br>"
+                    "Tỷ trọng: %{percent:.1%}"
+                    "<extra></extra>"
+                ),
+            )
+        ]
+    )
+
+    figure.add_annotation(
+        x=0.5,
+        y=0.54,
+        text=(
+            f"<b>{fmt_m(actual_revenue)}</b>"
+            "<br>"
+            "<span style='font-size:12px;'>"
+            "Tổng doanh thu"
+            "</span>"
+        ),
+        showarrow=False,
+        font=dict(
+            size=20,
+            color="#1E2F6E",
+        ),
+        align="center",
+    )
+
+    figure.update_layout(
+        template="simple_white",
+        height=305,
+        margin=dict(
+            l=8,
+            r=8,
+            t=0,
+            b=56,
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.04,
+            xanchor="center",
+            x=0.5,
+            font=dict(
+                size=12,
+                color="#475467",
+            ),
+        ),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(
+            color="#475467",
+        ),
+        showlegend=True,
+    )
+
+    left_column, right_column = st.columns(
+        [1.1, 1],
+        gap="large",
+    )
+
+    with left_column:
+        summary_card = st.container(
+            key="summary_kpi_compact_card"
+        )
+
+        with summary_card:
+            st.markdown(
+                '<div class="revenue-overview-card-title">'
+                'Tổng quan thực hiện'
+                '</div>',
+                unsafe_allow_html=True,
+            )
+
+            st.dataframe(
+                style_white_table(
+                    summary_kpi
+                ),
+                use_container_width=True,
+                hide_index=True,
+                height=150,
+            )
+
+    with right_column:
+        revenue_mix_card = st.container(
+            key="revenue_mix_donut_card"
+        )
+
+        with revenue_mix_card:
+            st.markdown(
+                '<div class="revenue-overview-card-title">'
+                'Cơ cấu tổng doanh thu'
+                '</div>',
+                unsafe_allow_html=True,
+            )
+
+            st.plotly_chart(
+                figure,
+                use_container_width=True,
+                config={
+                    "displayModeBar": False,
+                    "responsive": True,
+                },
+            )
+
+
 def build_ro_daily_chart(
     daily,
     days,
