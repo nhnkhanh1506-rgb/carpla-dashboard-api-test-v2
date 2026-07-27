@@ -1512,7 +1512,7 @@ def render_summary_and_revenue_mix(
 
     figure.add_annotation(
         x=0.5,
-        y=0.54,
+        y=0.49,
         text=(
             f"<b>{fmt_m(actual_revenue)}</b>"
             "<br>"
@@ -1530,12 +1530,12 @@ def render_summary_and_revenue_mix(
 
     figure.update_layout(
         template="simple_white",
-        height=270,
+        height=245,
         margin=dict(
             l=8,
             r=8,
             t=0,
-            b=38,
+            b=4,
         ),
         legend=dict(
             orientation="h",
@@ -1555,29 +1555,27 @@ def render_summary_and_revenue_mix(
         font=dict(
             color="#475467",
         ),
-        showlegend=True,
+        showlegend=False,
     )
 
-    left_column, right_column = st.columns(
-        [1, 1],
-        gap="small",
+    revenue_row = st.container(
+        key="revenue_summary_mix_row"
     )
 
-    with left_column:
-        st.markdown(
-            '<div class="revenue-summary-title">'
-            'Tổng quan thực hiện'
-            '</div>',
-            unsafe_allow_html=True,
+    with revenue_row:
+        left_column, right_column = st.columns(
+            [1, 1],
+            gap="small",
         )
 
+    with left_column:
         st.dataframe(
             style_white_table(
                 summary_kpi
             ),
             use_container_width=True,
             hide_index=True,
-            height=150,
+            height=112,
         )
 
     with right_column:
@@ -1600,6 +1598,29 @@ def render_summary_and_revenue_mix(
                     "displayModeBar": False,
                     "responsive": True,
                 },
+            )
+
+            st.markdown(
+                """
+                <div class="revenue-mix-legend">
+                    <div class="revenue-mix-legend-item">
+                        <span class="revenue-mix-dot"
+                              style="background:#386FAE;"></span>
+                        <span>Doanh thu công việc</span>
+                    </div>
+                    <div class="revenue-mix-legend-item">
+                        <span class="revenue-mix-dot"
+                              style="background:#F86D53;"></span>
+                        <span>Doanh thu phụ tùng</span>
+                    </div>
+                    <div class="revenue-mix-legend-item">
+                        <span class="revenue-mix-dot"
+                              style="background:#F9B43A;"></span>
+                        <span>Doanh thu phụ kiện</span>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
 
 
