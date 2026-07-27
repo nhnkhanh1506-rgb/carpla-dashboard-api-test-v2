@@ -1530,21 +1530,23 @@ def render_summary_and_revenue_mix(
 
     figure.update_layout(
         template="simple_white",
-        height=305,
+        height=270,
         margin=dict(
             l=8,
             r=8,
             t=0,
-            b=56,
+            b=38,
         ),
         legend=dict(
             orientation="h",
             yanchor="top",
-            y=-0.04,
+            y=-0.03,
             xanchor="center",
             x=0.5,
+            traceorder="normal",
+            itemwidth=30,
             font=dict(
-                size=12,
+                size=11,
                 color="#475467",
             ),
         ),
@@ -1557,31 +1559,26 @@ def render_summary_and_revenue_mix(
     )
 
     left_column, right_column = st.columns(
-        [1.1, 1],
-        gap="large",
+        [1, 1],
+        gap="small",
     )
 
     with left_column:
-        summary_card = st.container(
-            key="summary_kpi_compact_card"
+        st.markdown(
+            '<div class="revenue-summary-title">'
+            'Tổng quan thực hiện'
+            '</div>',
+            unsafe_allow_html=True,
         )
 
-        with summary_card:
-            st.markdown(
-                '<div class="revenue-overview-card-title">'
-                'Tổng quan thực hiện'
-                '</div>',
-                unsafe_allow_html=True,
-            )
-
-            st.dataframe(
-                style_white_table(
-                    summary_kpi
-                ),
-                use_container_width=True,
-                hide_index=True,
-                height=150,
-            )
+        st.dataframe(
+            style_white_table(
+                summary_kpi
+            ),
+            use_container_width=True,
+            hide_index=True,
+            height=150,
+        )
 
     with right_column:
         revenue_mix_card = st.container(
