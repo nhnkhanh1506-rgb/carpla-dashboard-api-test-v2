@@ -1214,7 +1214,6 @@ div[data-testid="stPlotlyChart"] {{
    TỔNG QUAN THỰC HIỆN + CƠ CẤU TỔNG DOANH THU
    ========================================================= */
 
-.st-key-summary_kpi_compact_card,
 .st-key-revenue_mix_donut_card {{
     background: #FFFFFF !important;
     border-radius: 22px !important;
@@ -1223,15 +1222,8 @@ div[data-testid="stPlotlyChart"] {{
         0 8px 24px
         rgba(30, 47, 110, 0.06) !important;
     overflow: hidden !important;
-    min-height: 355px !important;
-}}
-
-.st-key-summary_kpi_compact_card {{
-    padding: 18px 18px 16px 18px !important;
-}}
-
-.st-key-revenue_mix_donut_card {{
-    padding: 18px 18px 8px 18px !important;
+    min-height: 300px !important;
+    padding: 16px 18px 6px 18px !important;
 }}
 
 .revenue-overview-card-title {{
@@ -1239,13 +1231,15 @@ div[data-testid="stPlotlyChart"] {{
     line-height: 1.25 !important;
     font-weight: 800 !important;
     color: #1F2937 !important;
-    margin: 0 0 12px 2px !important;
+    margin: 0 0 8px 2px !important;
 }}
 
-.st-key-summary_kpi_compact_card
-div[data-testid="stDataFrame"] {{
-    border-radius: 16px !important;
-    overflow: hidden !important;
+.revenue-summary-title {{
+    font-size: 20px !important;
+    line-height: 1.25 !important;
+    font-weight: 800 !important;
+    color: #1F2937 !important;
+    margin: 2px 0 12px 2px !important;
 }}
 
 .st-key-revenue_mix_donut_card
@@ -1271,7 +1265,6 @@ div[data-testid="stPlotlyChart"] {{
         font-size: 18px !important;
     }}
 
-    .st-key-summary_kpi_compact_card,
     .st-key-revenue_mix_donut_card {{
         min-height: auto !important;
     }}
