@@ -1624,6 +1624,20 @@ def render_summary_and_revenue_mix(
             height=108,
         )
 
+        st.markdown(
+            "<div style='height:12px;'></div>",
+            unsafe_allow_html=True,
+        )
+
+        st.dataframe(
+            style_white_table(
+                revenue_mix_table
+            ),
+            use_container_width=True,
+            hide_index=True,
+            height=178,
+        )
+
     with right_column:
         revenue_mix_card = st.container(
             key="revenue_mix_donut_card"
@@ -1669,19 +1683,6 @@ def render_summary_and_revenue_mix(
                 unsafe_allow_html=True,
             )
 
-            st.markdown(
-                "<div style='height:10px;'></div>",
-                unsafe_allow_html=True,
-            )
-
-            st.dataframe(
-                style_white_table(
-                    revenue_mix_table
-                ),
-                use_container_width=True,
-                hide_index=True,
-                height=178,
-            )
 
 
 def build_ro_daily_chart(
