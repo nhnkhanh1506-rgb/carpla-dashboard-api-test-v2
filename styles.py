@@ -1210,6 +1210,74 @@ div[data-testid="stPlotlyChart"] {{
 }}
 
 
+/* =========================================================
+   TỔNG QUAN THỰC HIỆN + CƠ CẤU TỔNG DOANH THU
+   ========================================================= */
+
+.st-key-summary_kpi_compact_card,
+.st-key-revenue_mix_donut_card {{
+    background: #FFFFFF !important;
+    border-radius: 22px !important;
+    border: 1px solid #E9ECF3 !important;
+    box-shadow:
+        0 8px 24px
+        rgba(30, 47, 110, 0.06) !important;
+    overflow: hidden !important;
+    min-height: 355px !important;
+}}
+
+.st-key-summary_kpi_compact_card {{
+    padding: 18px 18px 16px 18px !important;
+}}
+
+.st-key-revenue_mix_donut_card {{
+    padding: 18px 18px 8px 18px !important;
+}}
+
+.revenue-overview-card-title {{
+    font-size: 20px !important;
+    line-height: 1.25 !important;
+    font-weight: 800 !important;
+    color: #1F2937 !important;
+    margin: 0 0 12px 2px !important;
+}}
+
+.st-key-summary_kpi_compact_card
+div[data-testid="stDataFrame"] {{
+    border-radius: 16px !important;
+    overflow: hidden !important;
+}}
+
+.st-key-revenue_mix_donut_card
+div[data-testid="stPlotlyChart"] {{
+    background: transparent !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+}}
+
+.st-key-revenue_mix_donut_card
+.js-plotly-plot,
+.st-key-revenue_mix_donut_card
+.plot-container,
+.st-key-revenue_mix_donut_card
+.svg-container,
+.st-key-revenue_mix_donut_card
+.main-svg {{
+    background: transparent !important;
+}}
+
+@media (max-width: 900px) {{
+    .revenue-overview-card-title {{
+        font-size: 18px !important;
+    }}
+
+    .st-key-summary_kpi_compact_card,
+    .st-key-revenue_mix_donut_card {{
+        min-height: auto !important;
+    }}
+}}
+
+
 </style>
 """,
         unsafe_allow_html=True,
