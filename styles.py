@@ -1222,8 +1222,8 @@ div[data-testid="stPlotlyChart"] {{
         0 8px 24px
         rgba(30, 47, 110, 0.06) !important;
     overflow: hidden !important;
-    min-height: 300px !important;
-    padding: 16px 18px 6px 18px !important;
+    min-height: 382px !important;
+    padding: 16px 18px 42px 18px !important;
 }}
 
 .revenue-overview-card-title {{
@@ -1231,7 +1231,7 @@ div[data-testid="stPlotlyChart"] {{
     line-height: 1.25 !important;
     font-weight: 800 !important;
     color: #1F2937 !important;
-    margin: 0 0 8px 2px !important;
+    margin: 0 0 4px 2px !important;
 }}
 
 .revenue-summary-title {{
@@ -1268,6 +1268,134 @@ div[data-testid="stPlotlyChart"] {{
     .st-key-revenue_mix_donut_card {{
         min-height: auto !important;
     }}
+}}
+
+
+.st-key-revenue_summary_mix_row {{
+    margin-top: -24px !important;
+}}
+
+/* Bảng tổng quan không có card bao ngoài */
+.st-key-revenue_summary_mix_row
+div[data-testid="stDataFrame"] {{
+    border-radius: 16px !important;
+    overflow: hidden !important;
+}}
+
+/* Legend doanh thu luôn nằm trên một hàng */
+.revenue-mix-legend {{
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    flex-wrap: nowrap;
+    padding: 2px 2px 10px 2px;
+}}
+
+.revenue-mix-legend-item {{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    color: #475467;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}}
+
+.revenue-mix-dot {{
+    width: 9px;
+    height: 9px;
+    border-radius: 2px;
+    display: inline-block;
+    flex: 0 0 auto;
+}}
+
+
+/* =========================================================
+   BẢNG TỔNG QUAN THỰC HIỆN — HTML GỌN, KHÔNG THANH THỪA
+   ========================================================= */
+
+.revenue-summary-table-wrap {{
+    width: 100%;
+    overflow: hidden;
+    border: 1px solid #D9DEE7;
+    border-radius: 16px;
+    background: #FFFFFF;
+}}
+
+.revenue-summary-table {{
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+    font-size: 15px;
+    color: #1F2937;
+}}
+
+.revenue-summary-table th {{
+    background: #F3F4F6;
+    color: #737B8C;
+    font-weight: 500;
+    text-align: left;
+    padding: 12px 14px;
+    border-right: 1px solid #D9DEE7;
+    border-bottom: 1px solid #D9DEE7;
+}}
+
+.revenue-summary-table td {{
+    background: #FFFFFF;
+    color: #1F2937;
+    font-weight: 700;
+    text-align: left;
+    padding: 12px 14px;
+    border-right: 1px solid #E1E5EC;
+    border-bottom: 1px solid #E1E5EC;
+}}
+
+.revenue-summary-table th:last-child,
+.revenue-summary-table td:last-child {{
+    border-right: none;
+}}
+
+.revenue-summary-table tbody tr:last-child td {{
+    border-bottom: none;
+}}
+
+
+/* =========================================================
+   FIX CUỐI: BỎ ĐƯỜNG THỪA DƯỚI BẢNG TỔNG QUAN
+   ========================================================= */
+
+.revenue-summary-table-wrap {{
+    margin: 0 !important;
+    padding: 0 !important;
+    border-bottom: 0 !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+}}
+
+.revenue-summary-table {{
+    margin: 0 !important;
+    border-bottom: 0 !important;
+    box-shadow: none !important;
+}}
+
+.revenue-summary-table tbody tr:last-child td {{
+    border-bottom: 0 !important;
+}}
+
+.st-key-revenue_summary_mix_row
+div[data-testid="stMarkdownContainer"] {{
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}}
+
+.st-key-revenue_summary_mix_row
+div[data-testid="stMarkdownContainer"] > div {{
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
 }}
 
 
