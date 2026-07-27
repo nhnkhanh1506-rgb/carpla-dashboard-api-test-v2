@@ -1313,89 +1313,15 @@ div[data-testid="stDataFrame"] {{
 }}
 
 
-/* =========================================================
-   BẢNG TỔNG QUAN THỰC HIỆN — HTML GỌN, KHÔNG THANH THỪA
-   ========================================================= */
-
-.revenue-summary-table-wrap {{
-    width: 100%;
-    overflow: hidden;
-    border: 1px solid #D9DEE7;
-    border-radius: 16px;
-    background: #FFFFFF;
-}}
-
-.revenue-summary-table {{
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    table-layout: fixed;
-    font-size: 15px;
-    color: #1F2937;
-}}
-
-.revenue-summary-table th {{
-    background: #F3F4F6;
-    color: #737B8C;
-    font-weight: 500;
-    text-align: left;
-    padding: 12px 14px;
-    border-right: 1px solid #D9DEE7;
-    border-bottom: 1px solid #D9DEE7;
-}}
-
-.revenue-summary-table td {{
-    background: #FFFFFF;
-    color: #1F2937;
-    font-weight: 700;
-    text-align: left;
-    padding: 12px 14px;
-    border-right: 1px solid #E1E5EC;
-    border-bottom: 1px solid #E1E5EC;
-}}
-
-.revenue-summary-table th:last-child,
-.revenue-summary-table td:last-child {{
-    border-right: none;
-}}
-
-.revenue-summary-table tbody tr:last-child td {{
-    border-bottom: none;
-}}
-
 
 /* =========================================================
-   FIX CUỐI: BỎ ĐƯỜNG THỪA DƯỚI BẢNG TỔNG QUAN
+   BẢNG TỔNG QUAN THỰC HIỆN — ĐỒNG BỘ ST.DATAFRAME
    ========================================================= */
 
-.revenue-summary-table-wrap {{
-    margin: 0 !important;
-    padding: 0 !important;
-    border-bottom: 0 !important;
-    box-shadow: none !important;
+.st-key-revenue_summary_mix_row
+div[data-testid="stDataFrame"] {{
+    border-radius: 16px !important;
     overflow: hidden !important;
-}}
-
-.revenue-summary-table {{
-    margin: 0 !important;
-    border-bottom: 0 !important;
-    box-shadow: none !important;
-}}
-
-.revenue-summary-table tbody tr:last-child td {{
-    border-bottom: 0 !important;
-}}
-
-.st-key-revenue_summary_mix_row
-div[data-testid="stMarkdownContainer"] {{
-    margin-bottom: 0 !important;
-    padding-bottom: 0 !important;
-}}
-
-.st-key-revenue_summary_mix_row
-div[data-testid="stMarkdownContainer"] > div {{
-    margin-bottom: 0 !important;
-    padding-bottom: 0 !important;
 }}
 
 
