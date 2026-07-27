@@ -1081,6 +1081,135 @@ div[data-testid="stDataFrame"] > div {{
 }}
 
 
+/* =========================================================
+   CƠ CẤU THEO PHÂN KHÚC XE
+   ========================================================= */
+
+.st-key-vehicle_segment_bubble_card,
+.st-key-vehicle_segment_group_card {{
+    background: #FFFFFF !important;
+    border-radius: 22px !important;
+    border: 1px solid #E9ECF3 !important;
+    box-shadow: 0 8px 24px rgba(30, 47, 110, 0.06) !important;
+    overflow: hidden !important;
+}}
+
+.st-key-vehicle_segment_bubble_card {{
+    padding: 16px 18px 14px 18px !important;
+    min-height: 410px !important;
+}}
+
+.st-key-vehicle_segment_group_card {{
+    padding: 16px 18px 14px 18px !important;
+    min-height: 410px !important;
+}}
+
+.vehicle-segment-card-title {{
+    font-size: 20px !important;
+    line-height: 1.25 !important;
+    font-weight: 800 !important;
+    color: #1F2937 !important;
+    margin: 0 0 6px 2px !important;
+}}
+
+.st-key-vehicle_segment_bubble_card
+div[data-testid="stPlotlyChart"] {{
+    background: transparent !important;
+    border-radius: 18px !important;
+    overflow: hidden !important;
+    margin-top: 10px !important;
+}}
+
+.vehicle-segment-legend-item {{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #243B7C;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    padding: 8px 0 2px 0;
+}}
+
+.vehicle-segment-dot {{
+    width: 9px;
+    height: 9px;
+    display: inline-block;
+    border-radius: 50%;
+    flex: 0 0 auto;
+}}
+
+.vehicle-segment-table-wrap {{
+    max-height: 332px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border: 1px solid #E5E7EB;
+    border-radius: 16px;
+    background: #FFFFFF;
+    margin-top: 4px;
+    margin-bottom: 10px;
+}}
+
+.vehicle-segment-table {{
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+    font-size: 14px;
+    color: #1F2937;
+}}
+
+.vehicle-segment-table thead th {{
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #F3F4F6;
+    color: #6B7280;
+    font-weight: 600;
+    text-align: left;
+    padding: 12px 14px;
+    border-bottom: 1px solid #E5E7EB;
+}}
+
+.vehicle-segment-table thead th:first-child {{
+    width: 52%;
+    border-right: 1px solid #E5E7EB;
+}}
+
+.vehicle-segment-table tbody td {{
+    background: #FFFFFF;
+    padding: 11px 14px;
+    border-bottom: 1px solid #E5E7EB;
+    vertical-align: middle;
+}}
+
+.vehicle-segment-table tbody td:first-child {{
+    border-right: 1px solid #E5E7EB;
+}}
+
+.vehicle-segment-table .vehicle-segment-merged {{
+    text-align: center;
+    font-weight: 800;
+    vertical-align: middle;
+}}
+
+.vehicle-segment-table .vehicle-segment-luxury {{
+    background: #EEE9FF !important;
+    color: #6D4BEA !important;
+}}
+
+.vehicle-segment-table .vehicle-segment-mass {{
+    background: #DFF5EA !important;
+    color: #2FB878 !important;
+}}
+
+.vehicle-segment-table .vehicle-segment-other {{
+    background: #FDE7EB !important;
+    color: #EC5269 !important;
+}}
+
+
 </style>
 """,
         unsafe_allow_html=True,
