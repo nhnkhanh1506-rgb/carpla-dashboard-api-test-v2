@@ -1,4 +1,6 @@
 from pathlib import Path
+import re
+import unicodedata
 
 import pandas as pd
 import streamlit as st
@@ -20,6 +22,33 @@ def clean_text(value):
     if pd.isna(value):
         return ""
     return str(value).strip()
+
+
+def normalize_status(value):
+    """
+    Chuẩn hóa trạng thái để tránh lỗi do:
+    - khoảng trắng thừa
+    - khoảng trắng không ngắt dòng
+    - khác biệt viết hoa / viết thường
+    - có hoặc không có dấu tiếng Việt
+    """
+    text = clean_text(value)
+
+    text = text.replace("\u00a0", " ")
+    text = re.sub(r"\s+", " ", text)
+
+    text = unicodedata.normalize(
+        "NFD",
+        text,
+    )
+
+    text = "".join(
+        character
+        for character in text
+        if unicodedata.category(character) != "Mn"
+    )
+
+    return text.casefold().strip()
 
 
 def clean_optional_path(value):
@@ -122,6 +151,9 @@ def load_workshop_manager():
     manager["Chi nhánh"] = manager["Chi nhánh"].apply(clean_text)
     manager["Xưởng"] = manager["Xưởng"].apply(clean_text)
     manager["Trạng thái"] = manager["Trạng thái"].apply(clean_text)
+    manager["trang_thai_key"] = manager["Trạng thái"].apply(
+        normalize_status
+    )
 
     manager = manager[
         (manager["Chi nhánh"] != "")
@@ -129,8 +161,9 @@ def load_workshop_manager():
     ].copy()
 
     manager = manager[
-        manager["Trạng thái"].str.casefold()
-        == "đang hoạt động".casefold()
+        manager["trang_thai_key"].eq(
+            "dang hoat dong"
+        )
     ].copy()
 
     if manager.empty:
