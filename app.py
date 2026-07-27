@@ -1,4 +1,3 @@
-import pandas as pd
 import streamlit as st
 
 from calculations import (
@@ -11,6 +10,7 @@ from charts import (
     render_brand_section,
     render_daily_charts,
     render_payment_section,
+    render_summary_and_revenue_mix,
 )
 
 from components import (
@@ -30,48 +30,6 @@ from config import (
 
 from data_loader import load_all_data
 from styles import apply_global_style
-
-
-# ============================================================
-# HÀM ĐỊNH DẠNG BẢNG
-# ============================================================
-
-def style_white_table(dataframe):
-    return (
-        dataframe.style
-        .set_properties(
-            **{
-                "background-color": "#FFFFFF",
-                "color": "#1F2937",
-                "border-color": "#E5E7EB",
-                "font-weight": "500",
-            }
-        )
-        .set_table_styles(
-            [
-                {
-                    "selector": "thead th",
-                    "props": [
-                        ("background-color", "#F3F4F6"),
-                        ("color", "#6B7280"),
-                        ("font-weight", "600"),
-                        ("border-color", "#E5E7EB"),
-                        ("text-align", "left"),
-                    ],
-                },
-                {
-                    "selector": "tbody td",
-                    "props": [
-                        ("background-color", "#FFFFFF"),
-                        ("color", "#1F2937"),
-                        ("border-color", "#E5E7EB"),
-                    ],
-                },
-            ],
-            overwrite=False,
-        )
-        .hide(axis="index")
-    )
 
 
 # ============================================================
@@ -243,129 +201,24 @@ render_interactive_target_planner(
 
 
 # ============================================================
-# 14. SUMMARY TABLE
+# 14. SUMMARY + REVENUE MIX
 # ============================================================
 
-summary_kpi = pd.DataFrame(
-    {
-        "Hạng mục": [
-            "Lượt xe / RO",
-            "Tổng Doanh thu",
-        ],
-
-        "Thực hiện": [
-            f"{actual_ro:,.0f}",
-            fmt_m(actual_revenue),
-        ],
-
-        "Chỉ tiêu": [
-            f"{target_ro:,.0f}",
-            fmt_m(target_revenue),
-        ],
-
-        "% đạt": [
-            f"{ro_rate:.0%}",
-            f"{revenue_rate:.0%}",
-        ],
-    }
-)
-
-st.dataframe(
-    style_white_table(
-        summary_kpi
-    ),
-    use_container_width=True,
-    hide_index=True,
+render_summary_and_revenue_mix(
+    actual_ro=actual_ro,
+    target_ro=target_ro,
+    actual_revenue=actual_revenue,
+    target_revenue=target_revenue,
+    ro_rate=ro_rate,
+    revenue_rate=revenue_rate,
+    labor_revenue=labor_revenue,
+    parts_revenue=parts_revenue,
+    accessory_revenue=accessory_revenue,
 )
 
 
 # ============================================================
-# 15. CƠ CẤU DOANH THU
-# ============================================================
-# Công việc + phụ tùng = Tổng trước thuế.
-# Phụ kiện chỉ cộng thêm nếu nằm ngoài file Lệnh sửa chữa.
-
-st.markdown(
-    "## Cơ cấu tổng doanh thu"
-)
-
-revenue_breakdown = pd.DataFrame(
-    {
-        "Nguồn doanh thu": [
-            "Doanh thu công việc",
-            "Doanh thu phụ tùng",
-            "Doanh thu phụ kiện",
-            "TỔNG DOANH THU",
-        ],
-
-        "Giá trị": [
-            labor_revenue,
-            parts_revenue,
-            accessory_revenue,
-            actual_revenue,
-        ],
-    }
-)
-
-revenue_breakdown[
-    "Giá trị hiển thị"
-] = (
-    revenue_breakdown[
-        "Giá trị"
-    ].map(fmt_m)
-)
-
-revenue_breakdown[
-    "Tỷ trọng"
-] = [
-    value / actual_revenue
-    if actual_revenue
-    else 0
-    for value in [
-        labor_revenue,
-        parts_revenue,
-        accessory_revenue,
-        actual_revenue,
-    ]
-]
-
-revenue_breakdown[
-    "Tỷ trọng"
-] = (
-    revenue_breakdown[
-        "Tỷ trọng"
-    ].map(
-        lambda value:
-        f"{value:.0%}"
-    )
-)
-
-revenue_breakdown_display = (
-    revenue_breakdown[
-        [
-            "Nguồn doanh thu",
-            "Giá trị hiển thị",
-            "Tỷ trọng",
-        ]
-    ]
-    .rename(
-        columns={
-            "Giá trị hiển thị": "Giá trị",
-        }
-    )
-)
-
-st.dataframe(
-    style_white_table(
-        revenue_breakdown_display
-    ),
-    use_container_width=True,
-    hide_index=True,
-)
-
-
-# ============================================================
-# 16. DAILY CHARTS
+# 15. DAILY CHARTS
 # ============================================================
 # Daily dùng Tổng trước thuế trực tiếp từ file Lệnh sửa chữa.
 
@@ -381,7 +234,7 @@ render_daily_charts(
 
 
 # ============================================================
-# 17. BRAND SECTION
+# 16. BRAND SECTION
 # ============================================================
 # Hãng xe và danh sách lệnh lấy từ file Lệnh sửa chữa.
 # Doanh thu theo hãng dùng Tổng trước thuế.
@@ -392,7 +245,7 @@ render_brand_section(
 
 
 # ============================================================
-# 18. PAYMENT STRUCTURE
+# 17. PAYMENT STRUCTURE
 # ============================================================
 
 total_payment = render_payment_section(
@@ -401,7 +254,7 @@ total_payment = render_payment_section(
 
 
 # ============================================================
-# 19. CHECK TOTAL
+# 18. CHECK TOTAL
 # ============================================================
 
 with st.expander(
@@ -486,7 +339,7 @@ with st.expander(
 
 
 # ============================================================
-# 20. RAW DATA
+# 19. RAW DATA
 # ============================================================
 
 with st.expander(
