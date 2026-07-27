@@ -1002,6 +1002,82 @@ div[data-testid="stDataFrame"] > div {{
 }}
 
 
+/* =========================================================
+   BẢNG MERGE NHÓM THƯƠNG HIỆU
+   ========================================================= */
+
+.brand-group-table-wrap {{
+    max-height: 360px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border: 1px solid #E5E7EB;
+    border-radius: 16px;
+    background: #FFFFFF;
+}}
+
+.brand-group-table {{
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+    font-size: 14px;
+    color: #1F2937;
+}}
+
+.brand-group-table thead th {{
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #F3F4F6;
+    color: #6B7280;
+    font-weight: 600;
+    text-align: left;
+    padding: 12px 14px;
+    border-bottom: 1px solid #E5E7EB;
+}}
+
+.brand-group-table thead th:first-child {{
+    width: 52%;
+    border-right: 1px solid #E5E7EB;
+}}
+
+.brand-group-table tbody td {{
+    background: #FFFFFF;
+    padding: 11px 14px;
+    border-bottom: 1px solid #E5E7EB;
+    vertical-align: middle;
+}}
+
+.brand-group-table tbody td:first-child {{
+    border-right: 1px solid #E5E7EB;
+}}
+
+.brand-group-table tbody tr:last-child td {{
+    border-bottom: none;
+}}
+
+.brand-group-table .brand-group-merged {{
+    text-align: center;
+    font-weight: 800;
+    vertical-align: middle;
+}}
+
+.brand-group-table .brand-group-official {{
+    background: #EEE9FF !important;
+    color: #6D4BEA !important;
+}}
+
+.brand-group-table .brand-group-partner {{
+    background: #DFF5EA !important;
+    color: #2FB878 !important;
+}}
+
+.brand-group-table .brand-group-other {{
+    background: #FDE7EB !important;
+    color: #EC5269 !important;
+}}
+
+
 </style>
 """,
         unsafe_allow_html=True,
