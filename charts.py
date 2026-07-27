@@ -855,9 +855,9 @@ def build_vehicle_segment_bubble_chart(
     )
 
     positions = [
-        (1.25, 1.55),
-        (2.90, 2.05),
-        (2.75, 0.88),
+        (1.45, 1.50),
+        (2.72, 1.95),
+        (2.66, 0.92),
     ]
 
     bubble_colors = {
