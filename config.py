@@ -48,6 +48,11 @@ def normalize_status(value):
         if unicodedata.category(character) != "Mn"
     )
 
+    text = (
+        text.replace("đ", "d")
+        .replace("Đ", "D")
+    )
+
     return text.casefold().strip()
 
 
