@@ -2162,16 +2162,16 @@ def render_brand_section(data):
         # Gradient vàng Carpla từ trên xuống dưới:
         # hãng đứng đầu đậm nhất, các hãng phía dưới nhạt dần.
         carpla_yellow_gradient = [
-            "#F3B900",
-            "#F6C21A",
-            "#F8CB33",
-            "#F9D34A",
-            "#FADD61",
-            "#FBE577",
-            "#FCEB8E",
-            "#FDF0A5",
-            "#FEF4BC",
-            "#FFF8D3",
+            "#F1CD54",
+            "#F3D467",
+            "#F5DA7A",
+            "#F7E08D",
+            "#F8E6A0",
+            "#F9EAB0",
+            "#FBEFC0",
+            "#FCF3CF",
+            "#FDF7DE",
+            "#FFFBEE",
         ]
 
         # brand_chart đang được sắp xếp tăng dần để Plotly
