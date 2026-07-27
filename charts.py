@@ -7,6 +7,8 @@ import streamlit as st
 from plotly.subplots import make_subplots
 
 from config import (
+    LUXURY_BRANDS,
+    MASS_MARKET_BRANDS,
     PARTNER_BRANDS,
     TASCO_OFFICIAL_BRANDS,
 )
@@ -706,6 +708,501 @@ def render_brand_relationship_section(
                 table_html,
                 unsafe_allow_html=True,
             )
+
+
+# ============================================================
+# PHÂN KHÚC XE
+# ============================================================
+
+def classify_vehicle_segment(brand_name):
+    normalized_brand = normalize_brand_name(
+        brand_name
+    )
+
+    luxury_brands = {
+        normalize_brand_name(brand)
+        for brand in LUXURY_BRANDS
+    }
+
+    mass_market_brands = {
+        normalize_brand_name(brand)
+        for brand in MASS_MARKET_BRANDS
+    }
+
+    if normalized_brand in luxury_brands:
+        return "Xe sang"
+
+    if normalized_brand in mass_market_brands:
+        return "Xe phổ thông"
+
+    return "Khác"
+
+
+def build_vehicle_segment_summary(data):
+    segment_data = data.copy()
+
+    segment_data[
+        "doanh_thu_truoc_thue"
+    ] = pd.to_numeric(
+        segment_data[
+            "doanh_thu_truoc_thue"
+        ],
+        errors="coerce",
+    ).fillna(0)
+
+    segment_data[
+        "hang_xe"
+    ] = (
+        segment_data[
+            "hang_xe"
+        ]
+        .fillna("KHÔNG XÁC ĐỊNH")
+        .astype(str)
+        .map(
+            normalize_brand_name
+        )
+    )
+
+    segment_data[
+        "phan_khuc"
+    ] = segment_data[
+        "hang_xe"
+    ].apply(
+        classify_vehicle_segment
+    )
+
+    summary = (
+        segment_data
+        .groupby(
+            "phan_khuc",
+            dropna=False,
+        )
+        .agg(
+            so_ro=(
+                "ro",
+                "nunique",
+            ),
+            doanh_thu=(
+                "doanh_thu_truoc_thue",
+                "sum",
+            ),
+        )
+        .reset_index()
+    )
+
+    group_order = [
+        "Xe sang",
+        "Xe phổ thông",
+        "Khác",
+    ]
+
+    summary = (
+        summary
+        .set_index("phan_khuc")
+        .reindex(
+            group_order,
+            fill_value=0,
+        )
+        .reset_index()
+    )
+
+    total_ro = summary[
+        "so_ro"
+    ].sum()
+
+    total_revenue = summary[
+        "doanh_thu"
+    ].sum()
+
+    summary[
+        "ty_trong_ro"
+    ] = summary[
+        "so_ro"
+    ].apply(
+        lambda value:
+        safe_div(
+            value,
+            total_ro,
+        )
+    )
+
+    summary[
+        "ty_trong_doanh_thu"
+    ] = summary[
+        "doanh_thu"
+    ].apply(
+        lambda value:
+        safe_div(
+            value,
+            total_revenue,
+        )
+    )
+
+    return summary
+
+
+def build_vehicle_segment_bubble_chart(
+    segment_summary,
+):
+    bubble_data = (
+        segment_summary
+        .sort_values(
+            "doanh_thu",
+            ascending=False,
+        )
+        .reset_index(drop=True)
+        .copy()
+    )
+
+    positions = [
+        (1.25, 1.55),
+        (2.90, 2.05),
+        (2.75, 0.88),
+    ]
+
+    bubble_colors = {
+        "Xe sang": {
+            "fill": "#EEE9FF",
+            "text": "#6D4BEA",
+        },
+        "Xe phổ thông": {
+            "fill": "#DFF5EA",
+            "text": "#2FB878",
+        },
+        "Khác": {
+            "fill": "#FDE7EB",
+            "text": "#EC5269",
+        },
+    }
+
+    max_share = max(
+        bubble_data[
+            "ty_trong_doanh_thu"
+        ].max(),
+        0.01,
+    )
+
+    bubble_data[
+        "bubble_size"
+    ] = bubble_data[
+        "ty_trong_doanh_thu"
+    ].apply(
+        lambda share:
+        78
+        + 110
+        * (
+            share
+            / max_share
+        ) ** 0.5
+    )
+
+    figure = go.Figure()
+
+    for index, row in (
+        bubble_data.iterrows()
+    ):
+        group_name = row[
+            "phan_khuc"
+        ]
+
+        style = bubble_colors[
+            group_name
+        ]
+
+        x_position, y_position = (
+            positions[index]
+        )
+
+        figure.add_trace(
+            go.Scatter(
+                x=[x_position],
+                y=[y_position],
+                mode="markers+text",
+                marker=dict(
+                    size=float(
+                        row["bubble_size"]
+                    ),
+                    color=style["fill"],
+                    line=dict(
+                        color="rgba(255,255,255,0.90)",
+                        width=2,
+                    ),
+                ),
+                text=[
+                    (
+                        "<b>"
+                        f"{row['ty_trong_doanh_thu']:.0%}"
+                        "</b>"
+                    )
+                ],
+                textposition="middle center",
+                textfont=dict(
+                    color=style["text"],
+                    size=20,
+                ),
+                hovertemplate=(
+                    f"<b>{group_name}</b><br>"
+                    "Số RO: "
+                    f"{int(row['so_ro'])}<br>"
+                    "Doanh thu: "
+                    f"{fmt_m(row['doanh_thu'])}<br>"
+                    "Tỷ trọng RO: "
+                    f"{row['ty_trong_ro']:.1%}<br>"
+                    "Tỷ trọng doanh thu: "
+                    f"{row['ty_trong_doanh_thu']:.1%}"
+                    "<extra></extra>"
+                ),
+                showlegend=False,
+            )
+        )
+
+    figure.update_layout(
+        template="simple_white",
+        height=275,
+        margin=dict(
+            l=0,
+            r=0,
+            t=0,
+            b=0,
+        ),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        xaxis=dict(
+            visible=False,
+            range=[0, 4.0],
+            fixedrange=True,
+        ),
+        yaxis=dict(
+            visible=False,
+            range=[0, 2.8],
+            fixedrange=True,
+            scaleanchor="x",
+            scaleratio=1,
+        ),
+    )
+
+    return figure
+
+
+def render_vehicle_segment_legend():
+    legend_items = [
+        (
+            "Xe sang",
+            "#6D4BEA",
+        ),
+        (
+            "Xe phổ thông",
+            "#2FB878",
+        ),
+        (
+            "Khác",
+            "#EC5269",
+        ),
+    ]
+
+    legend_columns = st.columns(
+        [0.85, 1.1, 0.65]
+    )
+
+    for column, (
+        label,
+        color,
+    ) in zip(
+        legend_columns,
+        legend_items,
+    ):
+        with column:
+            st.markdown(
+                (
+                    '<div class="vehicle-segment-legend-item">'
+                    f'<span class="vehicle-segment-dot" '
+                    f'style="background:{color};"></span>'
+                    f'<span>{label}</span>'
+                    '</div>'
+                ),
+                unsafe_allow_html=True,
+            )
+
+
+def render_vehicle_segment_section(data):
+    segment_summary = (
+        build_vehicle_segment_summary(
+            data
+        )
+    )
+
+    segment_data = data.copy()
+
+    segment_data[
+        "hang_xe"
+    ] = (
+        segment_data[
+            "hang_xe"
+        ]
+        .fillna("KHÔNG XÁC ĐỊNH")
+        .astype(str)
+        .map(
+            normalize_brand_name
+        )
+    )
+
+    other_brands = sorted(
+        segment_data.loc[
+            segment_data[
+                "hang_xe"
+            ].apply(
+                classify_vehicle_segment
+            )
+            == "Khác",
+            "hang_xe",
+        ]
+        .dropna()
+        .unique()
+        .tolist()
+    )
+
+    grouped_brands = [
+        (
+            "Xe sang",
+            [
+                normalize_brand_name(
+                    brand
+                )
+                for brand in LUXURY_BRANDS
+            ],
+            "vehicle-segment-luxury",
+        ),
+        (
+            "Xe phổ thông",
+            [
+                normalize_brand_name(
+                    brand
+                )
+                for brand in MASS_MARKET_BRANDS
+            ],
+            "vehicle-segment-mass",
+        ),
+        (
+            "Khác",
+            other_brands,
+            "vehicle-segment-other",
+        ),
+    ]
+
+    st.markdown(
+        "<div style='height: 8px;'></div>",
+        unsafe_allow_html=True,
+    )
+
+    left_column, right_column = (
+        st.columns(
+            [0.86, 1.14]
+        )
+    )
+
+    with left_column:
+        bubble_card = st.container(
+            key="vehicle_segment_bubble_card"
+        )
+
+        with bubble_card:
+            st.markdown(
+                '<div class="vehicle-segment-card-title">'
+                'Cơ cấu theo phân khúc xe'
+                '</div>',
+                unsafe_allow_html=True,
+            )
+
+            bubble_figure = (
+                build_vehicle_segment_bubble_chart(
+                    segment_summary
+                )
+            )
+
+            st.plotly_chart(
+                bubble_figure,
+                use_container_width=True,
+                config={
+                    "displayModeBar": False,
+                    "responsive": True,
+                },
+            )
+
+            render_vehicle_segment_legend()
+
+    with right_column:
+        group_card = st.container(
+            key="vehicle_segment_group_card"
+        )
+
+        with group_card:
+            st.markdown(
+                '<div class="vehicle-segment-card-title">'
+                'Chi tiết hãng xe theo phân khúc'
+                '</div>',
+                unsafe_allow_html=True,
+            )
+
+            table_html = """
+            <div class="vehicle-segment-table-wrap">
+                <table class="vehicle-segment-table">
+                    <thead>
+                        <tr>
+                            <th>Phân khúc</th>
+                            <th>Hãng xe</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            """
+
+            for (
+                group_name,
+                brands,
+                group_class,
+            ) in grouped_brands:
+                display_brands = (
+                    brands
+                    if brands
+                    else ["-"]
+                )
+
+                row_count = len(
+                    display_brands
+                )
+
+                for index, brand_name in enumerate(
+                    display_brands
+                ):
+                    table_html += "<tr>"
+
+                    if index == 0:
+                        table_html += (
+                            '<td class="vehicle-segment-merged '
+                            f'{group_class}" '
+                            f'rowspan="{row_count}">'
+                            f'{html.escape(group_name)}'
+                            "</td>"
+                        )
+
+                    table_html += (
+                        "<td>"
+                        f"{html.escape(brand_name)}"
+                        "</td>"
+                    )
+
+                    table_html += "</tr>"
+
+            table_html += """
+                    </tbody>
+                </table>
+            </div>
+            """
+
+            st.markdown(
+                table_html,
+                unsafe_allow_html=True,
+            )
+
 
 
 # ============================================================
@@ -1783,6 +2280,10 @@ def render_brand_section(data):
     )
 
     render_brand_relationship_section(
+        brand_data
+    )
+
+    render_vehicle_segment_section(
         brand_data
     )
 
