@@ -1569,39 +1569,13 @@ def render_summary_and_revenue_mix(
         )
 
     with left_column:
-        summary_table_html = """
-        <div class="revenue-summary-table-wrap">
-            <table class="revenue-summary-table">
-                <thead>
-                    <tr>
-                        <th>Hạng mục</th>
-                        <th>Thực hiện</th>
-                        <th>Chỉ tiêu</th>
-                        <th>% đạt</th>
-                    </tr>
-                </thead>
-                <tbody>
-        """
-
-        for _, row in summary_kpi.iterrows():
-            summary_table_html += (
-                "<tr>"
-                f"<td>{html.escape(str(row['Hạng mục']))}</td>"
-                f"<td>{html.escape(str(row['Thực hiện']))}</td>"
-                f"<td>{html.escape(str(row['Chỉ tiêu']))}</td>"
-                f"<td>{html.escape(str(row['% đạt']))}</td>"
-                "</tr>"
-            )
-
-        summary_table_html += """
-                </tbody>
-            </table>
-        </div>
-        """
-
-        st.markdown(
-            summary_table_html,
-            unsafe_allow_html=True,
+        st.dataframe(
+            style_white_table(
+                summary_kpi
+            ),
+            use_container_width=True,
+            hide_index=True,
+            height=143,
         )
 
     with right_column:
