@@ -1222,8 +1222,8 @@ div[data-testid="stPlotlyChart"] {{
         0 8px 24px
         rgba(30, 47, 110, 0.06) !important;
     overflow: hidden !important;
-    min-height: 326px !important;
-    padding: 16px 18px 14px 18px !important;
+    min-height: 300px !important;
+    padding: 16px 18px 6px 18px !important;
 }}
 
 .revenue-overview-card-title {{
@@ -1231,7 +1231,7 @@ div[data-testid="stPlotlyChart"] {{
     line-height: 1.25 !important;
     font-weight: 800 !important;
     color: #1F2937 !important;
-    margin: 0 0 4px 2px !important;
+    margin: 0 0 8px 2px !important;
 }}
 
 .revenue-summary-title {{
@@ -1268,48 +1268,6 @@ div[data-testid="stPlotlyChart"] {{
     .st-key-revenue_mix_donut_card {{
         min-height: auto !important;
     }}
-}}
-
-
-.st-key-revenue_summary_mix_row {{
-    margin-top: -24px !important;
-}}
-
-/* Bảng tổng quan không có card bao ngoài */
-.st-key-revenue_summary_mix_row
-div[data-testid="stDataFrame"] {{
-    border-radius: 16px !important;
-    overflow: hidden !important;
-}}
-
-/* Legend doanh thu luôn nằm trên một hàng */
-.revenue-mix-legend {{
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 18px;
-    flex-wrap: nowrap;
-    padding: 2px 2px 10px 2px;
-}}
-
-.revenue-mix-legend-item {{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    color: #475467;
-    font-size: 11px;
-    font-weight: 600;
-    white-space: nowrap;
-}}
-
-.revenue-mix-dot {{
-    width: 9px;
-    height: 9px;
-    border-radius: 2px;
-    display: inline-block;
-    flex: 0 0 auto;
 }}
 
 
