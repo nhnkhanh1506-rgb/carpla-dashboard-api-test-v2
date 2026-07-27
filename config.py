@@ -98,7 +98,6 @@ def parse_integer(value, field_name, row_number):
 # ĐỌC FILE QUẢN LÝ XƯỞNG
 # ============================================================
 
-@st.cache_data
 def load_workshop_manager():
     if not WORKSHOP_MANAGER_FILE.exists():
         st.error(
@@ -165,17 +164,43 @@ def load_workshop_manager():
         & (manager["Xưởng"] != "")
     ].copy()
 
-    manager = manager[
-        manager["trang_thai_key"].eq(
-            "dang hoat dong"
+    # Nhận các biến thể có ký tự ẩn hoặc chữ bổ sung,
+    # miễn trạng thái chứa đầy đủ "dang" và "hoat dong".
+    active_mask = (
+        manager["trang_thai_key"].str.contains(
+            r"\bdang\b",
+            regex=True,
+            na=False,
         )
-    ].copy()
+        & manager["trang_thai_key"].str.contains(
+            r"\bhoat\s+dong\b",
+            regex=True,
+            na=False,
+        )
+    )
+
+    manager = manager[active_mask].copy()
 
     if manager.empty:
-        st.error(
-            "Không có xưởng nào mang trạng thái "
-            "'Đang hoạt động' trong workshop_manager.xlsx."
+        status_values = sorted(
+            {
+                value
+                for value in manager["Trạng thái"].tolist()
+                if clean_text(value)
+            }
         )
+
+        st.error(
+            "Không nhận diện được xưởng đang hoạt động trong "
+            "workshop_manager.xlsx."
+        )
+
+        if status_values:
+            st.write(
+                "Các trạng thái đọc được:",
+                status_values,
+            )
+
         st.stop()
 
     return manager
