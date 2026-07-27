@@ -72,6 +72,43 @@ PARTNER_BRANDS = [
 
 
 # ============================================================
+# PHÂN NHÓM PHÂN KHÚC XE
+# ============================================================
+
+LUXURY_BRANDS = [
+    "AUDI",
+    "BMW",
+    "JAGUAR",
+    "LAND ROVER",
+    "LEXUS",
+    "LOTUS",
+    "MERCEDES-BENZ",
+    "PORSCHE",
+    "VOLVO",
+    "ZEEKR",
+]
+
+MASS_MARKET_BRANDS = [
+    "FORD",
+    "GEELY",
+    "HONDA",
+    "HYUNDAI",
+    "KIA",
+    "LYNK & CO",
+    "MAZDA",
+    "MG",
+    "MITSUBISHI",
+    "OMODA & JAECOO",
+    "PEUGEOT",
+    "SUZUKI",
+    "TOYOTA",
+    "VINFAST",
+    "VOLKSWAGEN",
+    "WULING",
+]
+
+
+# ============================================================
 # CẤU HÌNH CHUNG
 # ============================================================
 
