@@ -521,11 +521,64 @@ def render_brand_relationship_section(
         )
     )
 
-    relationship_groups = (
-        build_brand_relationship_brand_map(
-            data
+    official_brands = [
+        normalize_brand_name(
+            brand
+        )
+        for brand in TASCO_OFFICIAL_BRANDS
+    ]
+
+    partner_brands = [
+        normalize_brand_name(
+            brand
+        )
+        for brand in PARTNER_BRANDS
+    ]
+
+    relationship_data = data.copy()
+
+    relationship_data[
+        "hang_xe"
+    ] = (
+        relationship_data[
+            "hang_xe"
+        ]
+        .fillna("KHÔNG XÁC ĐỊNH")
+        .astype(str)
+        .map(
+            normalize_brand_name
         )
     )
+
+    other_brands = sorted(
+        relationship_data.loc[
+            relationship_data[
+                "hang_xe"
+            ].apply(
+                classify_brand_relationship
+            )
+            == "Khác",
+            "hang_xe",
+        ]
+        .dropna()
+        .unique()
+        .tolist()
+    )
+
+    grouped_brands = [
+        (
+            "Xe chính hãng Tasco",
+            official_brands,
+        ),
+        (
+            "Hãng đối tác",
+            partner_brands,
+        ),
+        (
+            "Khác",
+            other_brands,
+        ),
+    ]
 
     left_column, right_column = (
         st.columns(
@@ -578,28 +631,26 @@ def render_brand_relationship_section(
 
             brand_group_rows = []
 
-            for item in relationship_groups:
-                group_name = item[
-                    "group_name"
-                ]
+            for (
+                group_name,
+                brands,
+            ) in grouped_brands:
+                display_brands = (
+                    brands
+                    if brands
+                    else ["-"]
+                )
 
-                brands = item[
-                    "brands"
-                ]
-
-                if not brands:
+                for index, brand_name in enumerate(
+                    display_brands
+                ):
                     brand_group_rows.append(
                         {
-                            "Nhóm thương hiệu": group_name,
-                            "Hãng xe": "-",
-                        }
-                    )
-                    continue
-
-                for brand_name in brands:
-                    brand_group_rows.append(
-                        {
-                            "Nhóm thương hiệu": group_name,
+                            "Nhóm thương hiệu": (
+                                group_name
+                                if index == 0
+                                else ""
+                            ),
                             "Hãng xe": brand_name,
                         }
                     )
