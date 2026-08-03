@@ -62,120 +62,58 @@ WORKSHOP_NAME_MAP = {
 
 
 # ============================================================
-# TARGET
+# TARGET - CHỈ ÁP DỤNG THÁNG 7/2026
 # ============================================================
-# Nếu workshop_manager.xlsx còn tồn tại thì vẫn đọc target
-# từ file đó để không làm mất cơ chế target hiện tại.
+# Quy tắc:
+# - Chỉ có target khi:
+#     Chi nhánh = Hà Nội
+#     Xưởng = 1 xưởng cụ thể
+#     Năm = 2026
+#     Tháng = 7
 #
-# Target được lưu theo:
-# (Chi nhánh, Xưởng, Năm, Tháng)
+# - Không có target khi:
+#     Tháng = 1..6
+#     Tháng = All
+#     Xưởng = All
+#     Chi nhánh = All / Toàn HO
+#     Các chi nhánh khác
 #
-# Khi chọn Xưởng = All hoặc Tháng = All,
-# calculations.py sẽ tự cộng các target phù hợp.
+# Không cộng target các xưởng để tạo target Chi nhánh / HO.
 
-def _clean_text(value):
-    if pd.isna(value):
-        return ""
-    return str(value).strip()
-
-
-def _parse_number(value):
-    if pd.isna(value):
-        return 0
-
-    if isinstance(value, (int, float)):
-        return int(value)
-
-    cleaned = (
-        str(value)
-        .strip()
-        .replace(".", "")
-        .replace(",", "")
-        .replace(" ", "")
-    )
-
-    try:
-        return int(float(cleaned))
-    except ValueError:
-        return 0
-
-
-def load_targets():
-    targets = {}
-
-    if not WORKSHOP_MANAGER_FILE.exists():
-        return targets
-
-    try:
-        manager = pd.read_excel(
-            WORKSHOP_MANAGER_FILE,
-            sheet_name="Workshop Manager",
-            header=1,
-        )
-    except Exception:
-        return targets
-
-    manager.columns = [
-        str(column).strip()
-        for column in manager.columns
-    ]
-
-    required = [
-        "Chi nhánh",
-        "Xưởng",
-        "Năm",
-        "Tháng",
-        "Target RO",
-        "Target doanh thu",
-    ]
-
-    if any(
-        column not in manager.columns
-        for column in required
-    ):
-        return targets
-
-    if "Trạng thái" in manager.columns:
-        active_mask = (
-            manager["Trạng thái"]
-            .fillna("")
-            .astype(str)
-            .str.strip()
-            .str.casefold()
-            == "đang hoạt động".casefold()
-        )
-        manager = manager[active_mask].copy()
-
-    for _, row in manager.iterrows():
-        branch = _clean_text(row["Chi nhánh"])
-        workshop = _clean_text(row["Xưởng"])
-
-        year = _parse_number(row["Năm"])
-        month = _parse_number(row["Tháng"])
-
-        if not branch or not workshop or not year or not month:
-            continue
-
-        targets[
-            (
-                branch,
-                workshop,
-                year,
-                month,
-            )
-        ] = {
-            "ro": _parse_number(
-                row["Target RO"]
-            ),
-            "revenue": _parse_number(
-                row["Target doanh thu"]
-            ),
-        }
-
-    return targets
-
-
-TARGETS = load_targets()
+TARGETS = {
+    ("Hà Nội", "Phạm Văn Đồng", 2026, 7): {
+        "ro": 714,
+        "revenue": 1_429_000_000,
+    },
+    ("Hà Nội", "Long Biên", 2026, 7): {
+        "ro": 643,
+        "revenue": 1_287_000_000,
+    },
+    ("Hà Nội", "Giải Phóng", 2026, 7): {
+        "ro": 527,
+        "revenue": 1_055_000_000,
+    },
+    ("Hà Nội", "Hà Đông", 2026, 7): {
+        "ro": 427,
+        "revenue": 855_000_000,
+    },
+    ("Hà Nội", "Hưng Yên", 2026, 7): {
+        "ro": 216,
+        "revenue": 432_000_000,
+    },
+    ("Hà Nội", "Hà Nam", 2026, 7): {
+        "ro": 154,
+        "revenue": 309_000_000,
+    },
+    ("Hà Nội", "Hải Dương", 2026, 7): {
+        "ro": 287,
+        "revenue": 575_000_000,
+    },
+    ("Hà Nội", "Ninh Bình", 2026, 7): {
+        "ro": 74,
+        "revenue": 148_000_000,
+    },
+}
 
 
 # ============================================================
