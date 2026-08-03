@@ -1,3 +1,4 @@
+# FIX_VERSION: HANOI_2026_ONLY + HOMEPAGE_RED_GRADIENT_BUTTON
 import math
 from pathlib import Path
 import base64
@@ -240,16 +241,11 @@ def render_sidebar(data_raw):
                 ].copy()
             )
 
-        year_options = sorted(
-            scope_after_workshop[
-                "ngay_hoa_don"
-            ]
-            .dropna()
-            .dt.year
-            .unique()
-            .tolist(),
-            reverse=True,
-        )
+        # Dashboard hiện tại chỉ sử dụng dữ liệu năm 2026.
+        # Không tự sinh thêm năm từ dữ liệu lỗi/sót trong file.
+        year_options = [
+            2026
+        ]
     else:
         scope_after_workshop = (
             data_raw.iloc[
@@ -262,7 +258,7 @@ def render_sidebar(data_raw):
     selected_year_input = (
         st.sidebar.selectbox(
             "Năm",
-            options=year_options,
+            options=[2026] if year_options else [],
             index=None,
             placeholder=" ",
             key="sidebar_year",
@@ -474,24 +470,25 @@ def render_homepage(logo_path: Path):
     '<div class="homepage-feature-item">📈 <span>KPI vận hành</span></div>'
 '</div>'
 
-'<div class="homepage-guide" style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px;">'
-    '<span>Vui lòng chọn <b>Chi nhánh</b>, <b>Xưởng</b>, <b>Năm</b> và <b>Tháng</b> tại bộ lọc bên trái, sau đó nhấn</span>'
+'<div class="homepage-guide">'
+    '<span>Vui lòng chọn <b>Chi nhánh</b>, <b>Xưởng</b>, <b>Năm</b> và <b>Tháng</b> tại bộ lọc bên trái, sau đó nhấn&nbsp;</span>'
     '<span style="'
         'display:inline-flex;'
         'align-items:center;'
         'justify-content:center;'
-        'padding:9px 18px;'
+        'padding:8px 18px;'
         'border-radius:12px;'
-        'background:linear-gradient(135deg,#FF6A6A 0%,#FF4D4D 52%,#E83D3D 100%);'
+        'background:linear-gradient(135deg,#FF6969 0%,#FF4F4F 52%,#E93E3E 100%);'
         'color:#FFFFFF;'
         'font-size:14px;'
-        'font-weight:800;'
         'line-height:1;'
+        'font-weight:800;'
         'letter-spacing:0.25px;'
         'border:1px solid rgba(255,255,255,0.24);'
-        'box-shadow:0 8px 18px rgba(232,61,61,0.25),inset 0 1px 0 rgba(255,255,255,0.28);'
+        'box-shadow:0 8px 18px rgba(233,62,62,0.24),inset 0 1px 0 rgba(255,255,255,0.26);'
         'text-shadow:0 1px 1px rgba(122,26,26,0.16);'
         'white-space:nowrap;'
+        'vertical-align:middle;'
     '">XEM DASHBOARD</span>'
 '</div>'
             '</div>'
