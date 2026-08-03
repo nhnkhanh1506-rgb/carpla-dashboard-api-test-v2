@@ -2,7 +2,6 @@ import calendar
 from datetime import date
 
 import pandas as pd
-import streamlit as st
 
 
 # ============================================================
@@ -27,6 +26,111 @@ def safe_div(a, b):
 
 
 # ============================================================
+# HÀM LỌC PHẠM VI
+# ============================================================
+
+def filter_scope(
+    data_raw,
+    selected_branch,
+    selected_workshop,
+    year,
+    month,
+):
+    data = data_raw.copy()
+
+    if selected_branch != "All":
+        data = data[
+            data["chi_nhanh"]
+            == selected_branch
+        ].copy()
+
+    if selected_workshop != "All":
+        data = data[
+            data["xuong"]
+            == selected_workshop
+        ].copy()
+
+    data = data[
+        data["ngay_hoa_don"].dt.year
+        == int(year)
+    ].copy()
+
+    if month != "All":
+        data = data[
+            data["ngay_hoa_don"].dt.month
+            == int(month)
+        ].copy()
+
+    return data
+
+
+# ============================================================
+# CỘNG TARGET THEO PHẠM VI ĐANG CHỌN
+# ============================================================
+
+def aggregate_targets(
+    targets,
+    selected_branch,
+    selected_workshop,
+    year,
+    month,
+):
+    target_ro = 0
+    target_revenue = 0
+
+    for (
+        key,
+        target_info,
+    ) in targets.items():
+        (
+            branch_name,
+            workshop_name,
+            target_year,
+            target_month,
+        ) = key
+
+        if int(target_year) != int(year):
+            continue
+
+        if (
+            selected_branch != "All"
+            and branch_name
+            != selected_branch
+        ):
+            continue
+
+        if (
+            selected_workshop != "All"
+            and workshop_name
+            != selected_workshop
+        ):
+            continue
+
+        if (
+            month != "All"
+            and int(target_month)
+            != int(month)
+        ):
+            continue
+
+        target_ro += (
+            target_info.get("ro", 0)
+        )
+
+        target_revenue += (
+            target_info.get(
+                "revenue",
+                0,
+            )
+        )
+
+    return {
+        "ro": target_ro,
+        "revenue": target_revenue,
+    }
+
+
+# ============================================================
 # TÍNH TOÀN BỘ KPI DASHBOARD
 # ============================================================
 
@@ -41,31 +145,49 @@ def calculate_dashboard_metrics(
     targets,
 ):
     # --------------------------------------------------------
-    # 1. LỌC LỆNH THEO CHI NHÁNH, XƯỞNG VÀ NGÀY HÓA ĐƠN
+    # 1. LỌC CHI NHÁNH / XƯỞNG / NĂM / THÁNG
     # --------------------------------------------------------
 
-    data = data_raw[
-        (data_raw["chi_nhanh"] == selected_branch)
-        & (data_raw["xuong"] == selected_workshop)
-        & (data_raw["ngay_hoa_don"].dt.year == year)
-        & (data_raw["ngay_hoa_don"].dt.month == month)
+    scoped_data = filter_scope(
+        data_raw=data_raw,
+        selected_branch=selected_branch,
+        selected_workshop=(
+            selected_workshop
+        ),
+        year=year,
+        month=month,
+    )
+
+    scoped_data = scoped_data[
+        ~scoped_data[
+            "trang_thai"
+        ].isin(EXCLUDED_STATUS)
+    ].copy()
+
+    scoped_data = scoped_data[
+        scoped_data["ro_key"].notna()
+    ].copy()
+
+    # --------------------------------------------------------
+    # 2. LỆNH SỬA CHỮA LSC
+    # --------------------------------------------------------
+    # Dashboard hiện tại về RO, daily, hãng xe,
+    # thanh toán vẫn dùng LSC giống logic cũ.
+
+    data = scoped_data[
+        scoped_data["loai_lenh"]
+        == "LSC"
     ].copy()
 
     data = data[
-        ~data["trang_thai"].isin(EXCLUDED_STATUS)
+        data["doanh_thu_truoc_thue"]
+        > 0
     ].copy()
 
-    data = data[
-        data["doanh_thu_truoc_thue"] > 0
-    ].copy()
-
-    data = data[
-        data["ro_key"].notna()
-    ].copy()
-
-    # Mỗi số lệnh chỉ giữ một dòng
     data = (
-        data.sort_values("ngay_hoa_don")
+        data.sort_values(
+            "ngay_hoa_don"
+        )
         .drop_duplicates(
             subset=["ro_key"],
             keep="last",
@@ -73,140 +195,62 @@ def calculate_dashboard_metrics(
         .reset_index(drop=True)
     )
 
+    actual_ro = (
+        data["ro_key"].nunique()
+    )
+
     # --------------------------------------------------------
-    # 2. TỔNG TRƯỚC THUẾ
+    # 3. CƠ CẤU DOANH THU LSC
     # --------------------------------------------------------
-    # Cột Tổng trước thuế trong file Lệnh sửa chữa đã bao gồm:
-    # - Doanh thu công việc
-    # - Doanh thu phụ tùng
-    # Vì vậy không cộng phụ tùng thêm lần nữa.
+
+    labor_revenue = pd.to_numeric(
+        data[
+            "doanh_thu_cong_viec"
+        ],
+        errors="coerce",
+    ).fillna(0).sum()
+
+    parts_revenue = pd.to_numeric(
+        data[
+            "doanh_thu_phu_tung"
+        ],
+        errors="coerce",
+    ).fillna(0).sum()
 
     service_revenue = pd.to_numeric(
-        data["doanh_thu_truoc_thue"],
+        data[
+            "doanh_thu_truoc_thue"
+        ],
         errors="coerce",
     ).fillna(0).sum()
 
     # --------------------------------------------------------
-    # 3. GHÉP FILE BẢNG TỔNG HỢP ĐỂ PHÂN TÍCH CƠ CẤU PHỤ TÙNG
+    # 4. PHỤ KIỆN LPK
     # --------------------------------------------------------
 
-    parts_df = parts_data.get(
-        selected_workshop,
-        pd.DataFrame(),
-    )
+    accessory_orders = scoped_data[
+        scoped_data["loai_lenh"]
+        == "LPK"
+    ].copy()
 
-    if parts_df is None:
-        parts_df = pd.DataFrame()
+    accessory_orders = accessory_orders[
+        accessory_orders[
+            "doanh_thu_truoc_thue"
+        ] > 0
+    ].copy()
 
-    if parts_df.empty:
-        merged_data = data.copy()
-        merged_data["doanh_thu_phu_tung"] = 0
-        merged_data["tim_thay_trong_bang_tong_hop"] = False
-    else:
-        merged_data = data.merge(
-            parts_df,
-            on="ro_key",
-            how="left",
-            indicator=True,
-        )
-
-        merged_data["tim_thay_trong_bang_tong_hop"] = (
-            merged_data["_merge"] == "both"
-        )
-
-        merged_data = merged_data.drop(
-            columns=["_merge"]
-        )
-
-    if "doanh_thu_phu_tung" not in merged_data.columns:
-        merged_data["doanh_thu_phu_tung"] = 0
-
-    merged_data["doanh_thu_phu_tung"] = pd.to_numeric(
-        merged_data["doanh_thu_phu_tung"],
+    accessory_revenue = pd.to_numeric(
+        accessory_orders[
+            "doanh_thu_truoc_thue"
+        ],
         errors="coerce",
-    ).fillna(0)
-
-    # Giữ để tương thích với các phần kiểm tra cũ.
-    # Không cộng phụ tùng lần hai.
-    merged_data["doanh_thu_theo_lenh"] = (
-        merged_data["doanh_thu_truoc_thue"]
-    )
+    ).fillna(0).sum()
 
     # --------------------------------------------------------
-    # 4. KIỂM TRA SỐ LỆNH GHÉP
+    # 5. TỔNG DOANH THU
     # --------------------------------------------------------
-
-    actual_ro = data["ro_key"].nunique()
-
-    matched_orders = int(
-        merged_data[
-            "tim_thay_trong_bang_tong_hop"
-        ].sum()
-    )
-
-    missing_orders = actual_ro - matched_orders
-
-    if missing_orders > 0:
-        st.warning(
-            f"Còn {missing_orders:,}/{actual_ro:,} lệnh theo Ngày hóa đơn "
-            f"chưa tìm thấy trong file Bảng tổng hợp. "
-            f"Việc này chỉ ảnh hưởng phân tích cơ cấu phụ tùng, "
-            f"không ảnh hưởng Tổng doanh thu."
-        )
-
-    # --------------------------------------------------------
-    # 5. CƠ CẤU DOANH THU NẰM TRONG TỔNG TRƯỚC THUẾ
-    # --------------------------------------------------------
-
-    parts_revenue = merged_data[
-        "doanh_thu_phu_tung"
-    ].sum()
-
-    labor_revenue = max(
-        service_revenue - parts_revenue,
-        0,
-    )
-
-    # --------------------------------------------------------
-    # 6. DOANH THU PHỤ KIỆN
-    # --------------------------------------------------------
-
-    accessory_df = accessory_data.get(
-        selected_workshop,
-        pd.DataFrame(),
-    )
-
-    accessory_revenue = 0
-
-    if (
-        accessory_df is not None
-        and not accessory_df.empty
-        and "ngay_hoa_don" in accessory_df.columns
-        and "doanh_thu_truoc_thue" in accessory_df.columns
-    ):
-        accessory_df = accessory_df.copy()
-
-        accessory_df["ngay_hoa_don"] = pd.to_datetime(
-            accessory_df["ngay_hoa_don"],
-            errors="coerce",
-            dayfirst=True,
-        )
-
-        accessory_filtered = accessory_df[
-            (accessory_df["ngay_hoa_don"].dt.year == year)
-            & (accessory_df["ngay_hoa_don"].dt.month == month)
-        ].copy()
-
-        accessory_revenue = pd.to_numeric(
-            accessory_filtered["doanh_thu_truoc_thue"],
-            errors="coerce",
-        ).fillna(0).sum()
-
-    # --------------------------------------------------------
-    # 7. TỔNG DOANH THU
-    # --------------------------------------------------------
-    # Tổng doanh thu = Tổng trước thuế trong file Lệnh sửa chữa
-    # + Doanh thu phụ kiện ngoài file Lệnh sửa chữa.
+    # Giữ logic dashboard hiện tại:
+    # Tổng DT = DT từ LSC + DT phụ kiện LPK.
 
     actual_revenue = (
         service_revenue
@@ -214,36 +258,37 @@ def calculate_dashboard_metrics(
     )
 
     # --------------------------------------------------------
-    # 8. TỔNG TIỀN SAU THUẾ
+    # 6. TỔNG THANH TOÁN SAU THUẾ
     # --------------------------------------------------------
 
     total_after_tax = pd.to_numeric(
-        data["tong_tien_sau_thue"],
+        data[
+            "tong_tien_sau_thue"
+        ],
         errors="coerce",
     ).fillna(0).sum()
 
     # --------------------------------------------------------
-    # 9. TARGET
+    # 7. TARGET
     # --------------------------------------------------------
 
-    target_info = targets.get(
-        (
-            selected_branch,
-            selected_workshop,
-            year,
-            month,
+    target_info = aggregate_targets(
+        targets=targets,
+        selected_branch=selected_branch,
+        selected_workshop=(
+            selected_workshop
         ),
-        {
-            "ro": 0,
-            "revenue": 0,
-        },
+        year=year,
+        month=month,
     )
 
     target_ro = target_info["ro"]
-    target_revenue = target_info["revenue"]
+    target_revenue = (
+        target_info["revenue"]
+    )
 
     # --------------------------------------------------------
-    # 10. TỶ LỆ HOÀN THÀNH
+    # 8. TỶ LỆ
     # --------------------------------------------------------
 
     ro_rate = safe_div(
@@ -262,46 +307,80 @@ def calculate_dashboard_metrics(
     )
 
     # --------------------------------------------------------
-    # 11. TRẢ KẾT QUẢ VỀ APP
+    # 9. ĐỐI CHIẾU
     # --------------------------------------------------------
+    # File mới đã có doanh thu phụ tùng trực tiếp.
+    # Giữ merged_data để app cũ không lỗi.
+
+    merged_data = data.copy()
+
+    merged_data[
+        "tim_thay_trong_bang_tong_hop"
+    ] = True
+
+    matched_orders = actual_ro
+    missing_orders = 0
 
     return {
         "data": data,
+        "scoped_data": scoped_data,
+        "accessory_orders": (
+            accessory_orders
+        ),
         "merged_data": merged_data,
 
-        "selected_branch": selected_branch,
-        "selected_workshop": selected_workshop,
+        "selected_branch": (
+            selected_branch
+        ),
+        "selected_workshop": (
+            selected_workshop
+        ),
         "year": year,
         "month": month,
 
         "actual_ro": actual_ro,
-        "matched_orders": matched_orders,
-        "missing_orders": missing_orders,
+        "matched_orders": (
+            matched_orders
+        ),
+        "missing_orders": (
+            missing_orders
+        ),
 
-        # Tổng trước thuế đã gồm công việc + phụ tùng
-        "service_revenue": service_revenue,
-
-        # Cơ cấu nằm bên trong Tổng trước thuế
-        "labor_revenue": labor_revenue,
-        "parts_revenue": parts_revenue,
-
-        # Phụ kiện ngoài file Lệnh sửa chữa
-        "accessory_revenue": accessory_revenue,
-
-        "actual_revenue": actual_revenue,
-        "total_after_tax": total_after_tax,
+        "service_revenue": (
+            service_revenue
+        ),
+        "labor_revenue": (
+            labor_revenue
+        ),
+        "parts_revenue": (
+            parts_revenue
+        ),
+        "accessory_revenue": (
+            accessory_revenue
+        ),
+        "actual_revenue": (
+            actual_revenue
+        ),
+        "total_after_tax": (
+            total_after_tax
+        ),
 
         "target_ro": target_ro,
-        "target_revenue": target_revenue,
+        "target_revenue": (
+            target_revenue
+        ),
 
         "ro_rate": ro_rate,
         "revenue_rate": revenue_rate,
-        "revenue_per_ro": revenue_per_ro,
+        "revenue_per_ro": (
+            revenue_per_ro
+        ),
     }
 
 
 # ============================================================
-# TÍNH NGÀY LÀM VIỆC, KHÔNG BAO GỒM CHỦ NHẬT
+# TÍNH NGÀY LÀM VIỆC
+# KHÔNG BAO GỒM CHỦ NHẬT
 # ============================================================
 
 def calculate_working_days(
@@ -309,30 +388,63 @@ def calculate_working_days(
     month,
     data,
 ):
-    """
-    Quy ước:
-    - Làm việc tất cả các ngày trừ Chủ nhật.
-    - Ngày chốt dữ liệu là Ngày hóa đơn mới nhất.
-    - Ngày còn lại bắt đầu từ ngày kế tiếp.
-    """
+    year = int(year)
 
-    days_in_month = calendar.monthrange(
-        year,
-        month,
-    )[1]
+    # --------------------------------------------------------
+    # NẾU THÁNG = ALL:
+    # TÍNH TOÀN BỘ NĂM
+    # --------------------------------------------------------
 
-    working_dates = [
-        date(year, month, day)
-        for day in range(
-            1,
-            days_in_month + 1,
-        )
-        if date(
+    if month == "All":
+        start_date = date(
             year,
-            month,
-            day,
-        ).weekday() != 6
-    ]
+            1,
+            1,
+        )
+
+        end_date = date(
+            year,
+            12,
+            31,
+        )
+
+        full_range = pd.date_range(
+            start=start_date,
+            end=end_date,
+            freq="D",
+        )
+
+        working_dates = [
+            timestamp.date()
+            for timestamp in full_range
+            if timestamp.weekday() != 6
+        ]
+    else:
+        month = int(month)
+
+        days_in_month = (
+            calendar.monthrange(
+                year,
+                month,
+            )[1]
+        )
+
+        working_dates = [
+            date(
+                year,
+                month,
+                day,
+            )
+            for day in range(
+                1,
+                days_in_month + 1,
+            )
+            if date(
+                year,
+                month,
+                day,
+            ).weekday() != 6
+        ]
 
     total_working_days = len(
         working_dates
@@ -343,10 +455,14 @@ def calculate_working_days(
     ].dropna()
 
     if valid_dates.empty:
-        data_cutoff_date = date(
-            year,
-            month,
-            1,
+        data_cutoff_date = (
+            working_dates[0]
+            if working_dates
+            else date(
+                year,
+                1,
+                1,
+            )
         )
     else:
         data_cutoff_date = (
@@ -355,24 +471,36 @@ def calculate_working_days(
 
     remaining_working_dates = [
         working_date
-        for working_date in working_dates
-        if working_date > data_cutoff_date
+        for working_date
+        in working_dates
+        if working_date
+        > data_cutoff_date
     ]
 
     elapsed_working_dates = [
         working_date
-        for working_date in working_dates
-        if working_date <= data_cutoff_date
+        for working_date
+        in working_dates
+        if working_date
+        <= data_cutoff_date
     ]
 
     return {
-        "data_cutoff_date": data_cutoff_date,
-        "total_working_days": total_working_days,
-        "elapsed_working_days": len(
-            elapsed_working_dates
+        "data_cutoff_date": (
+            data_cutoff_date
         ),
-        "remaining_working_days": len(
-            remaining_working_dates
+        "total_working_days": (
+            total_working_days
+        ),
+        "elapsed_working_days": (
+            len(
+                elapsed_working_dates
+            )
+        ),
+        "remaining_working_days": (
+            len(
+                remaining_working_dates
+            )
         ),
         "remaining_working_dates": (
             remaining_working_dates
@@ -410,12 +538,19 @@ def calculate_target_plan(
         average_required = 0
 
     already_achieved = (
-        actual_value >= desired_value
+        actual_value
+        >= desired_value
     )
 
     return {
         "desired_value": desired_value,
-        "remaining_required": remaining_required,
-        "average_required": average_required,
-        "already_achieved": already_achieved,
+        "remaining_required": (
+            remaining_required
+        ),
+        "average_required": (
+            average_required
+        ),
+        "already_achieved": (
+            already_achieved
+        ),
     }
