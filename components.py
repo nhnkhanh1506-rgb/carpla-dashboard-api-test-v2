@@ -135,51 +135,115 @@ def render_sidebar(data_raw):
     # =========================================================
     # 1. CHI NHÁNH
     # =========================================================
-    branch_options = sorted(
-        data_raw["chi_nhanh"].dropna().unique().tolist()
+
+    available_branches = sorted(
+        data_raw[
+            "chi_nhanh"
+        ]
+        .dropna()
+        .unique()
+        .tolist()
     )
 
-    selected_branch_input = st.sidebar.selectbox(
-        "Chi nhánh",
-        options=branch_options,
-        index=None,
-        placeholder=" ",
-        key="sidebar_branch",
+    branch_options = [
+        "All"
+    ] + available_branches
+
+    selected_branch_input = (
+        st.sidebar.selectbox(
+            "Chi nhánh",
+            options=branch_options,
+            index=None,
+            placeholder=" ",
+            key="sidebar_branch",
+        )
     )
 
     # =========================================================
     # 2. XƯỞNG
     # =========================================================
-    if selected_branch_input is not None:
-        branch_data = data_raw[
-            data_raw["chi_nhanh"] == selected_branch_input
-        ].copy()
 
-        workshop_options = sorted(
-            branch_data["xuong"].dropna().unique().tolist()
+    if selected_branch_input is None:
+        scope_after_branch = (
+            data_raw.iloc[
+                0:0
+            ].copy()
         )
-    else:
-        branch_data = data_raw.iloc[0:0].copy()
+
         workshop_options = []
 
-    selected_workshop_input = st.sidebar.selectbox(
-        "Xưởng",
-        options=workshop_options,
-        index=None,
-        placeholder=" ",
-        key="sidebar_workshop",
+    elif selected_branch_input == "All":
+        scope_after_branch = (
+            data_raw.copy()
+        )
+
+        # Khi xem toàn HO thì xưởng cố định All.
+        workshop_options = [
+            "All"
+        ]
+
+    else:
+        scope_after_branch = (
+            data_raw[
+                data_raw[
+                    "chi_nhanh"
+                ]
+                == selected_branch_input
+            ].copy()
+        )
+
+        workshop_options = [
+            "All"
+        ] + sorted(
+            scope_after_branch[
+                "xuong"
+            ]
+            .dropna()
+            .unique()
+            .tolist()
+        )
+
+    selected_workshop_input = (
+        st.sidebar.selectbox(
+            "Xưởng",
+            options=workshop_options,
+            index=None,
+            placeholder=" ",
+            key="sidebar_workshop",
+        )
     )
 
     # =========================================================
     # 3. NĂM
     # =========================================================
-    if selected_branch_input is not None and selected_workshop_input is not None:
-        workshop_data = branch_data[
-            branch_data["xuong"] == selected_workshop_input
-        ].copy()
+
+    if (
+        selected_branch_input
+        is not None
+        and selected_workshop_input
+        is not None
+    ):
+        if (
+            selected_workshop_input
+            == "All"
+        ):
+            scope_after_workshop = (
+                scope_after_branch.copy()
+            )
+        else:
+            scope_after_workshop = (
+                scope_after_branch[
+                    scope_after_branch[
+                        "xuong"
+                    ]
+                    == selected_workshop_input
+                ].copy()
+            )
 
         year_options = sorted(
-            workshop_data["ngay_hoa_don"]
+            scope_after_workshop[
+                "ngay_hoa_don"
+            ]
             .dropna()
             .dt.year
             .unique()
@@ -187,55 +251,91 @@ def render_sidebar(data_raw):
             reverse=True,
         )
     else:
-        workshop_data = data_raw.iloc[0:0].copy()
+        scope_after_workshop = (
+            data_raw.iloc[
+                0:0
+            ].copy()
+        )
+
         year_options = []
 
-    selected_year_input = st.sidebar.selectbox(
-        "Năm",
-        options=year_options,
-        index=None,
-        placeholder=" ",
-        key="sidebar_year",
+    selected_year_input = (
+        st.sidebar.selectbox(
+            "Năm",
+            options=year_options,
+            index=None,
+            placeholder=" ",
+            key="sidebar_year",
+        )
     )
 
     # =========================================================
     # 4. THÁNG
     # =========================================================
+
     if (
-        selected_branch_input is not None
-        and selected_workshop_input is not None
-        and selected_year_input is not None
+        selected_year_input
+        is not None
     ):
-        month_options = sorted(
-            workshop_data.loc[
-                workshop_data["ngay_hoa_don"].dt.year == selected_year_input,
-                "ngay_hoa_don",
+        year_data = (
+            scope_after_workshop[
+                scope_after_workshop[
+                    "ngay_hoa_don"
+                ].dt.year
+                == int(
+                    selected_year_input
+                )
+            ].copy()
+        )
+
+        available_months = sorted(
+            year_data[
+                "ngay_hoa_don"
             ]
             .dropna()
             .dt.month
             .unique()
             .tolist()
         )
+
+        month_options = (
+            ["All"]
+            + available_months
+        )
     else:
         month_options = []
 
-    selected_month_input = st.sidebar.selectbox(
-        "Tháng",
-        options=month_options,
-        index=None,
-        placeholder=" ",
-        format_func=lambda value: str(int(value)),
-        key="sidebar_month",
+    selected_month_input = (
+        st.sidebar.selectbox(
+            "Tháng",
+            options=month_options,
+            index=None,
+            placeholder=" ",
+            format_func=(
+                lambda value:
+                "All"
+                if value == "All"
+                else str(
+                    int(value)
+                )
+            ),
+            key="sidebar_month",
+        )
     )
 
     # =========================================================
     # 5. NÚT XEM DASHBOARD
     # =========================================================
+
     all_selected = all([
-        selected_branch_input is not None,
-        selected_workshop_input is not None,
-        selected_year_input is not None,
-        selected_month_input is not None,
+        selected_branch_input
+        is not None,
+        selected_workshop_input
+        is not None,
+        selected_year_input
+        is not None,
+        selected_month_input
+        is not None,
     ])
 
     if st.sidebar.button(
@@ -244,16 +344,37 @@ def render_sidebar(data_raw):
         use_container_width=True,
         disabled=not all_selected,
     ):
-        st.session_state.selected_branch = selected_branch_input
-        st.session_state.selected_workshop = selected_workshop_input
-        st.session_state.selected_year = int(selected_year_input)
-        st.session_state.selected_month = int(selected_month_input)
+        st.session_state.selected_branch = (
+            selected_branch_input
+        )
+
+        st.session_state.selected_workshop = (
+            selected_workshop_input
+        )
+
+        st.session_state.selected_year = int(
+            selected_year_input
+        )
+
+        if (
+            selected_month_input
+            == "All"
+        ):
+            st.session_state.selected_month = (
+                "All"
+            )
+        else:
+            st.session_state.selected_month = int(
+                selected_month_input
+            )
+
         st.session_state.show_dashboard = True
         st.rerun()
 
     # =========================================================
     # 6. NÚT TRANG CHỦ
     # =========================================================
+
     if st.session_state.show_dashboard:
         if st.sidebar.button(
             "← TRANG CHỦ",
@@ -261,30 +382,50 @@ def render_sidebar(data_raw):
         ):
             st.session_state.show_dashboard = False
 
-            # reset bộ lọc về trắng như bản cũ
             st.session_state.selected_branch = None
             st.session_state.selected_workshop = None
             st.session_state.selected_year = None
             st.session_state.selected_month = None
 
-            if "sidebar_branch" in st.session_state:
-                del st.session_state["sidebar_branch"]
-            if "sidebar_workshop" in st.session_state:
-                del st.session_state["sidebar_workshop"]
-            if "sidebar_year" in st.session_state:
-                del st.session_state["sidebar_year"]
-            if "sidebar_month" in st.session_state:
-                del st.session_state["sidebar_month"]
+            for key in [
+                "sidebar_branch",
+                "sidebar_workshop",
+                "sidebar_year",
+                "sidebar_month",
+            ]:
+                if key in st.session_state:
+                    del st.session_state[
+                        key
+                    ]
 
             st.rerun()
 
     return {
-        "show_dashboard": st.session_state.show_dashboard,
-        "branch": st.session_state.get("selected_branch"),
-        "workshop": st.session_state.get("selected_workshop"),
-        "year": st.session_state.get("selected_year"),
-        "month": st.session_state.get("selected_month"),
+        "show_dashboard": (
+            st.session_state.show_dashboard
+        ),
+        "branch": (
+            st.session_state.get(
+                "selected_branch"
+            )
+        ),
+        "workshop": (
+            st.session_state.get(
+                "selected_workshop"
+            )
+        ),
+        "year": (
+            st.session_state.get(
+                "selected_year"
+            )
+        ),
+        "month": (
+            st.session_state.get(
+                "selected_month"
+            )
+        ),
     }
+
 
 # ============================================================
 # HOMEPAGE
@@ -333,25 +474,8 @@ def render_homepage(logo_path: Path):
     '<div class="homepage-feature-item">📈 <span>KPI vận hành</span></div>'
 '</div>'
 
-'<div class="homepage-guide" style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px;">'
-    '<span>Vui lòng chọn <b>Chi nhánh</b>, <b>Xưởng</b>, <b>Năm</b> và <b>Tháng</b> tại bộ lọc bên trái, sau đó nhấn</span>'
-    '<span style="'
-        'display:inline-flex;'
-        'align-items:center;'
-        'justify-content:center;'
-        'padding:9px 18px;'
-        'border-radius:12px;'
-        'background:linear-gradient(135deg,#FF6A6A 0%,#FF4D4D 52%,#E83D3D 100%);'
-        'color:#FFFFFF;'
-        'font-size:14px;'
-        'font-weight:800;'
-        'line-height:1;'
-        'letter-spacing:0.25px;'
-        'border:1px solid rgba(255,255,255,0.24);'
-        'box-shadow:0 8px 18px rgba(232,61,61,0.25),inset 0 1px 0 rgba(255,255,255,0.28);'
-        'text-shadow:0 1px 1px rgba(122,26,26,0.16);'
-        'white-space:nowrap;'
-    '">XEM DASHBOARD</span>'
+'<div class="homepage-guide">'
+'Vui lòng chọn <b>Chi nhánh</b>, <b>Xưởng</b>, <b>Năm</b> và <b>Tháng</b> tại bộ lọc bên trái, sau đó nhấn <b>“XEM DASHBOARD”</b>.'
 '</div>'
             '</div>'
         '</div>'
@@ -373,10 +497,39 @@ def render_dashboard_header(
     year,
     month,
 ):
+    # Tên phạm vi
+    if branch == "All":
+        title_scope = "Toàn HO"
+        subtitle_scope = "Toàn hệ thống"
+    elif workshop == "All":
+        title_scope = (
+            f"Chi nhánh {branch}"
+        )
+        subtitle_scope = (
+            f"Chi nhánh {branch}"
+        )
+    else:
+        title_scope = (
+            f"Xưởng {workshop}"
+        )
+        subtitle_scope = (
+            f"Chi nhánh {branch}"
+        )
+
+    # Tên kỳ
+    if month == "All":
+        period_text = (
+            f"năm {year}"
+        )
+    else:
+        period_text = (
+            f"tháng {month}/{year}"
+        )
+
     html = f"""
 <div class="hero-box">
-    <div class="hero-title">Dashboard DMS - Xưởng {workshop}</div>
-    <div class="hero-subtitle">Chi nhánh {branch} | Theo dõi hiệu quả hoạt động tháng {month}/{year}: lượt xe, doanh thu, cơ cấu hãng xe và nguồn thanh toán</div>
+    <div class="hero-title">Dashboard DMS - {title_scope}</div>
+    <div class="hero-subtitle">{subtitle_scope} | Theo dõi hiệu quả hoạt động {period_text}: lượt xe, doanh thu, cơ cấu hãng xe và nguồn thanh toán</div>
 </div>
 """
 
