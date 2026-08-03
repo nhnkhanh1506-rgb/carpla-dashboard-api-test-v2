@@ -239,6 +239,10 @@ total_after_tax = metrics[
     "total_after_tax"
 ]
 
+target_available = metrics[
+    "target_available"
+]
+
 target_ro = metrics[
     "target_ro"
 ]
@@ -254,29 +258,6 @@ ro_rate = metrics[
 revenue_rate = metrics[
     "revenue_rate"
 ]
-
-
-# ============================================================
-# 9. WARNING IF TARGET IS MISSING
-# ============================================================
-
-if (
-    target_ro == 0
-    and target_revenue == 0
-):
-    if month == "All":
-        period_text = (
-            f"năm {year}"
-        )
-    else:
-        period_text = (
-            f"tháng {month}/{year}"
-        )
-
-    st.warning(
-        "Chưa thiết lập target đầy đủ cho "
-        f"phạm vi đang chọn - {period_text}."
-    )
 
 
 # ============================================================
@@ -353,55 +334,73 @@ actual_working_days = (
 # 13. INTERACTIVE TARGET PLANNER
 # ============================================================
 
-render_interactive_target_planner(
-    actual_ro=actual_ro,
-    target_ro=target_ro,
-    actual_revenue=(
-        actual_revenue
-    ),
-    target_revenue=(
-        target_revenue
-    ),
-    working_day_info=(
-        working_day_info
-    ),
-    calculate_target_plan_function=(
-        calculate_target_plan
-    ),
-)
+if target_available:
+    render_interactive_target_planner(
+        actual_ro=actual_ro,
+        target_ro=target_ro,
+        actual_revenue=(
+            actual_revenue
+        ),
+        target_revenue=(
+            target_revenue
+        ),
+        working_day_info=(
+            working_day_info
+        ),
+        calculate_target_plan_function=(
+            calculate_target_plan
+        ),
+    )
 
 
 # ============================================================
 # 14. SUMMARY TABLE
 # ============================================================
 
-summary_kpi = pd.DataFrame(
-    {
-        "Hạng mục": [
-            "Lượt xe / RO",
-            "Tổng Doanh thu",
-        ],
+if target_available:
+    summary_kpi = pd.DataFrame(
+        {
+            "Hạng mục": [
+                "Lượt xe / RO",
+                "Tổng Doanh thu",
+            ],
 
-        "Thực hiện": [
-            f"{actual_ro:,.0f}",
-            fmt_m(
-                actual_revenue
-            ),
-        ],
+            "Thực hiện": [
+                f"{actual_ro:,.0f}",
+                fmt_m(
+                    actual_revenue
+                ),
+            ],
 
-        "Chỉ tiêu": [
-            f"{target_ro:,.0f}",
-            fmt_m(
-                target_revenue
-            ),
-        ],
+            "Chỉ tiêu": [
+                f"{target_ro:,.0f}",
+                fmt_m(
+                    target_revenue
+                ),
+            ],
 
-        "% đạt": [
-            f"{ro_rate:.0%}",
-            f"{revenue_rate:.0%}",
-        ],
-    }
-)
+            "% đạt": [
+                f"{ro_rate:.0%}",
+                f"{revenue_rate:.0%}",
+            ],
+        }
+    )
+else:
+    summary_kpi = pd.DataFrame(
+        {
+            "Hạng mục": [
+                "Lượt xe / RO",
+                "Tổng Doanh thu",
+            ],
+
+            "Thực hiện": [
+                f"{actual_ro:,.0f}",
+                fmt_m(
+                    actual_revenue
+                ),
+            ],
+        }
+    )
 
 st.dataframe(
     style_white_table(
@@ -534,6 +533,9 @@ render_daily_charts(
     ),
     working_days=(
         actual_working_days
+    ),
+    target_available=(
+        target_available
     ),
 )
 
