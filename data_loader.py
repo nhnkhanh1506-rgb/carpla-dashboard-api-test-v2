@@ -7,16 +7,10 @@ import streamlit as st
 
 
 # ============================================================
-# HÀM CHUẨN HÓA CHUỖI
+# HÀM CHUẨN HÓA
 # ============================================================
 
 def normalize_text(value):
-    """
-    Chuẩn hóa chuỗi để nhận diện tên cột:
-    - Bỏ dấu tiếng Việt
-    - Chuyển thành chữ thường
-    - Thay ký tự đặc biệt bằng dấu _
-    """
     value = str(value).strip()
 
     value = unicodedata.normalize(
@@ -41,14 +35,7 @@ def normalize_text(value):
     return value.strip("_")
 
 
-# ============================================================
-# CHUẨN HÓA SỐ LỆNH
-# ============================================================
-
 def normalize_order_number(series):
-    """
-    Chuẩn hóa Số lệnh để ghép giữa hai file.
-    """
     return (
         series.astype(str)
         .str.strip()
@@ -66,14 +53,7 @@ def normalize_order_number(series):
     )
 
 
-# ============================================================
-# CHUYỂN CỘT TIỀN VỀ DẠNG SỐ
-# ============================================================
-
 def parse_money(series):
-    """
-    Chuyển dữ liệu tiền về dạng số.
-    """
     cleaned = (
         series.astype(str)
         .str.strip()
@@ -101,63 +81,17 @@ def parse_money(series):
 
 
 # ============================================================
-# TÌM TÊN CỘT
-# ============================================================
-
-def find_column(
-    data,
-    possible_names,
-    file_name,
-    required=True,
-):
-    """
-    Tìm tên cột thực tế dựa trên nhiều tên có thể có.
-    """
-    normalized_columns = {
-        normalize_text(column): column
-        for column in data.columns
-    }
-
-    for possible_name in possible_names:
-        normalized_name = normalize_text(
-            possible_name
-        )
-
-        if normalized_name in normalized_columns:
-            return normalized_columns[
-                normalized_name
-            ]
-
-    if required:
-        st.error(
-            f"Không tìm thấy cột cần thiết trong "
-            f"file {file_name}.\n\n"
-            f"Các tên đang tìm: "
-            f"{', '.join(possible_names)}"
-        )
-        st.stop()
-
-    return None
-
-
-# ============================================================
-# ĐỌC EXCEL VÀ TỰ TÌM DÒNG TIÊU ĐỀ
+# ĐỌC FILE VÀ TỰ TÌM HEADER
 # ============================================================
 
 def read_excel_with_header_detection(
     file_path: Path,
     expected_columns,
-    preferred_sheet=None,
+    preferred_sheet="Báo cáo",
 ):
-    """
-    Tự tìm dòng tiêu đề trong file Excel.
-
-    Phù hợp với file Bảng tổng hợp có vài dòng
-    mô tả nằm phía trên bảng dữ liệu.
-    """
     if not file_path.exists():
         st.error(
-            f"Không tìm thấy file: "
+            f"Không tìm thấy file dữ liệu: "
             f"{file_path.name}"
         )
         st.stop()
@@ -166,10 +100,7 @@ def read_excel_with_header_detection(
         file_path
     )
 
-    if (
-        preferred_sheet
-        and preferred_sheet in excel_file.sheet_names
-    ):
+    if preferred_sheet in excel_file.sheet_names:
         sheet_name = preferred_sheet
     else:
         sheet_name = excel_file.sheet_names[0]
@@ -204,7 +135,7 @@ def read_excel_with_header_detection(
 
     if header_row is None:
         st.error(
-            f"Không xác định được dòng tiêu đề "
+            f"Không tìm được dòng tiêu đề "
             f"trong file {file_path.name}."
         )
         st.stop()
@@ -228,55 +159,74 @@ def read_excel_with_header_detection(
 
 
 # ============================================================
-# ĐỌC FILE LỆNH SỬA CHỮA
+# ĐỌC FILE TỔNG HỢP 1 CHI NHÁNH
 # ============================================================
 
-def read_service_file(
+def read_branch_file(
     file_path: Path,
-    workshop_name: str,
     branch_name: str,
+    workshop_name_map: dict,
 ):
-    if not file_path.exists():
-        st.error(
-            f"Không tìm thấy file lệnh sửa chữa: "
-            f"{file_path.name}"
-        )
-        st.stop()
-
-    data = pd.read_excel(
-        file_path
+    data = read_excel_with_header_detection(
+        file_path=file_path,
+        expected_columns=[
+            "Số lệnh sửa chữa",
+            "Ngày DT",
+            "Chi nhánh",
+            "Tổng doanh thu",
+        ],
+        preferred_sheet="Báo cáo",
     )
 
-    data.columns = [
-        str(column).strip()
-        for column in data.columns
-    ]
+    # --------------------------------------------------------
+    # 1. ĐỔI TÊN CỘT
+    # --------------------------------------------------------
 
-    data = data.rename(columns={
-        "Số": "ro",
-        "Trạng thái": "trang_thai",
-        "Ngày hóa đơn": "ngay_hoa_don",
-        "Ngày hoá đơn": "ngay_hoa_don",
-        "Tổng trước thuế": (
-            "doanh_thu_truoc_thue"
-        ),
-        "Tổng tiền": "tong_tien_sau_thue",
-        "Hãng xe": "hang_xe",
-        "Dòng xe": "dong_xe",
-        "Khách hàng": "ten_khach_hang",
-        "Khách hàng.1": (
-            "khach_hang_chi_tra"
-        ),
-        "Bảo hiểm": "bao_hiem_chi_tra",
-    })
+    data = data.rename(
+        columns={
+            "Số lệnh sửa chữa": "ro",
+            "Ngày DT": "ngay_hoa_don",
+            "Ngày quyết toán": "ngay_quyet_toan",
+            "Ngày lập lệnh": "ngay_lap_lenh",
+            "Trạng thái lệnh": "trang_thai",
+            "Nguồn khách": "nguon_khach",
+            "Hãng xe": "hang_xe",
+            "Dòng xe": "dong_xe",
+            "Khách hàng": "ten_khach_hang",
+            "Doanh thu công việc": (
+                "doanh_thu_cong_viec"
+            ),
+            "Doanh thu phụ tùng": (
+                "doanh_thu_phu_tung"
+            ),
+            "Tổng doanh thu": (
+                "doanh_thu_truoc_thue"
+            ),
+            "Tổng thanh toán": (
+                "tong_tien_sau_thue"
+            ),
+            "Khách hàng.1": (
+                "khach_hang_chi_tra"
+            ),
+            "Bảo hiểm": (
+                "bao_hiem_chi_tra"
+            ),
+            "Chi nhánh": (
+                "xuong_dms"
+            ),
+        }
+    )
 
     required_columns = [
         "ro",
-        "trang_thai",
         "ngay_hoa_don",
+        "trang_thai",
+        "hang_xe",
+        "doanh_thu_cong_viec",
+        "doanh_thu_phu_tung",
         "doanh_thu_truoc_thue",
         "tong_tien_sau_thue",
-        "hang_xe",
+        "xuong_dms",
     ]
 
     missing_columns = [
@@ -292,24 +242,108 @@ def read_service_file(
         )
         st.stop()
 
-    # Thông tin chi nhánh và xưởng
-    data["chi_nhanh"] = branch_name
-    data["xuong"] = workshop_name
+    # --------------------------------------------------------
+    # 2. CHỈ GIỮ CÁC DÒNG LỆNH THẬT
+    # --------------------------------------------------------
+    # File tổng hợp có:
+    # - dòng Tổng cộng
+    # - dòng tiêu đề theo ngày
+    # Các dòng đó không phải lệnh.
 
-    # Chuẩn hóa số lệnh
+    data["ro"] = (
+        data["ro"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+    )
+
+    real_order_mask = (
+        data["ro"]
+        .str.upper()
+        .str.match(
+            r"^(LSC|LPK|LPT)\.",
+            na=False,
+        )
+    )
+
+    data = data[
+        real_order_mask
+    ].copy()
+
+    # --------------------------------------------------------
+    # 3. LOẠI LỆNH TRÙNG
+    # --------------------------------------------------------
+
     data["ro_key"] = normalize_order_number(
         data["ro"]
     )
 
-    # Chuẩn hóa ngày hóa đơn
-    data["ngay_hoa_don"] = pd.to_datetime(
-        data["ngay_hoa_don"],
-        errors="coerce",
-        dayfirst=True,
+    data = data[
+        data["ro_key"].notna()
+    ].copy()
+
+    # Nếu cùng một số lệnh xuất hiện nhiều dòng,
+    # chỉ giữ bản ghi cuối cùng.
+    data = (
+        data.drop_duplicates(
+            subset=["ro_key"],
+            keep="last",
+        )
+        .reset_index(drop=True)
     )
 
-    # Chuẩn hóa các cột tiền
+    # --------------------------------------------------------
+    # 4. LOẠI LỆNH
+    # --------------------------------------------------------
+
+    data["loai_lenh"] = (
+        data["ro_key"]
+        .astype(str)
+        .str[:3]
+    )
+
+    # --------------------------------------------------------
+    # 5. CHI NHÁNH / XƯỞNG
+    # --------------------------------------------------------
+
+    data["chi_nhanh"] = branch_name
+
+    data["xuong_dms"] = (
+        data["xuong_dms"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+    )
+
+    data["xuong"] = (
+        data["xuong_dms"]
+        .map(workshop_name_map)
+        .fillna(data["xuong_dms"])
+    )
+
+    # --------------------------------------------------------
+    # 6. NGÀY
+    # --------------------------------------------------------
+
+    for column in [
+        "ngay_hoa_don",
+        "ngay_quyet_toan",
+        "ngay_lap_lenh",
+    ]:
+        if column in data.columns:
+            data[column] = pd.to_datetime(
+                data[column],
+                errors="coerce",
+                dayfirst=True,
+            )
+
+    # --------------------------------------------------------
+    # 7. CỘT TIỀN
+    # --------------------------------------------------------
+
     money_columns = [
+        "doanh_thu_cong_viec",
+        "doanh_thu_phu_tung",
         "doanh_thu_truoc_thue",
         "tong_tien_sau_thue",
         "khach_hang_chi_tra",
@@ -324,7 +358,10 @@ def read_service_file(
             data[column]
         )
 
-    # Chuẩn hóa trạng thái
+    # --------------------------------------------------------
+    # 8. TRẠNG THÁI
+    # --------------------------------------------------------
+
     data["trang_thai"] = (
         data["trang_thai"]
         .fillna("")
@@ -332,7 +369,10 @@ def read_service_file(
         .str.strip()
     )
 
-    # Chuẩn hóa hãng xe
+    # --------------------------------------------------------
+    # 9. HÃNG XE
+    # --------------------------------------------------------
+
     data["hang_xe"] = (
         data["hang_xe"]
         .fillna("KHÔNG XÁC ĐỊNH")
@@ -341,179 +381,32 @@ def read_service_file(
         .str.strip()
     )
 
-    data["hang_xe"] = data[
-        "hang_xe"
-    ].replace({
-        "HUYNDAI": "HYUNDAI",
-        "HYNDAI": "HYUNDAI",
-        "MERCEDES BENZ": "MERCEDES-BENZ",
-        "LYNK&CO": "LYNK & CO",
-        "LYNK AND CO": "LYNK & CO",
-    })
-
-    return data
-
-
-# ============================================================
-# ĐỌC FILE BẢNG TỔNG HỢP LỆNH SỬA CHỮA
-# ============================================================
-
-def read_parts_file(
-    file_path: Path | None,
-):
-    """
-    Đọc Doanh thu phụ tùng theo từng Số lệnh.
-
-    Không lấy dòng Tổng cộng.
-    Không lọc theo Ngày quyết toán.
-    """
-    empty_result = pd.DataFrame(
-        columns=[
-            "ro_key",
-            "doanh_thu_phu_tung",
-        ]
+    data["hang_xe"] = (
+        data["hang_xe"]
+        .replace({
+            "HUYNDAI": "HYUNDAI",
+            "HYNDAI": "HYUNDAI",
+            "MERCEDES BENZ": "MERCEDES-BENZ",
+            "LYNK&CO": "LYNK & CO",
+            "LYNK AND CO": "LYNK & CO",
+        })
     )
 
-    if file_path is None:
-        return empty_result
+    # --------------------------------------------------------
+    # 10. NGUỒN KHÁCH
+    # --------------------------------------------------------
 
-    if not file_path.exists():
-        st.error(
-            f"Không tìm thấy file Bảng tổng hợp: "
-            f"{file_path.name}"
-        )
-        st.stop()
+    if "nguon_khach" not in data.columns:
+        data["nguon_khach"] = ""
 
-    data = read_excel_with_header_detection(
-        file_path=file_path,
-        expected_columns=[
-            "Số lệnh sửa chữa",
-            "Doanh thu phụ tùng",
-        ],
-        preferred_sheet="Báo cáo",
-    )
-
-    order_column = find_column(
-        data,
-        [
-            "Số lệnh sửa chữa",
-            "Số lệnh",
-            "Số",
-            "Mã lệnh sửa chữa",
-        ],
-        file_path.name,
-    )
-
-    parts_revenue_column = find_column(
-        data,
-        [
-            "Doanh thu phụ tùng",
-            "Doanh thu vật tư phụ tùng",
-            "Tiền phụ tùng",
-            "Phụ tùng",
-        ],
-        file_path.name,
-    )
-
-    # Loại dòng Tổng cộng trước khi chuẩn hóa
-    total_row_mask = (
-        data[order_column]
-        .fillna("")
+    data["nguon_khach"] = (
+        data["nguon_khach"]
+        .fillna("KHÔNG XÁC ĐỊNH")
         .astype(str)
-        .str.contains(
-            "Tổng cộng",
-            case=False,
-            na=False,
-        )
-    )
-
-    data = data[
-        ~total_row_mask
-    ].copy()
-
-    # Chuẩn hóa số lệnh
-    data["ro_key"] = normalize_order_number(
-        data[order_column]
-    )
-
-    data = data[
-        data["ro_key"].notna()
-    ].copy()
-
-    # Chuẩn hóa doanh thu phụ tùng
-    data["doanh_thu_phu_tung"] = (
-        parse_money(
-            data[parts_revenue_column]
-        )
-    )
-
-    # Nếu một lệnh có nhiều dòng thì cộng lại
-    parts_by_order = (
-        data.groupby(
-            "ro_key",
-            as_index=False,
-        )
-        .agg(
-            doanh_thu_phu_tung=(
-                "doanh_thu_phu_tung",
-                "sum",
-            )
-        )
-    )
-
-    return parts_by_order
-
-
-# ============================================================
-# ĐỌC FILE LỆNH PHỤ KIỆN
-# ============================================================
-
-def read_accessory_file(
-    file_path: Path | None,
-):
-    if file_path is None:
-        return pd.DataFrame()
-
-    if not file_path.exists():
-        return pd.DataFrame()
-
-    data = pd.read_excel(
-        file_path
-    )
-
-    data.columns = [
-        str(column).strip()
-        for column in data.columns
-    ]
-
-    data = data.rename(columns={
-        "Ngày hóa đơn": "ngay_hoa_don",
-        "Ngày hoá đơn": "ngay_hoa_don",
-        "Tổng trước thuế": (
-            "doanh_thu_truoc_thue"
-        ),
-    })
-
-    required_columns = [
-        "ngay_hoa_don",
-        "doanh_thu_truoc_thue",
-    ]
-
-    if any(
-        column not in data.columns
-        for column in required_columns
-    ):
-        return pd.DataFrame()
-
-    data["ngay_hoa_don"] = pd.to_datetime(
-        data["ngay_hoa_don"],
-        errors="coerce",
-        dayfirst=True,
-    )
-
-    data["doanh_thu_truoc_thue"] = (
-        parse_money(
-            data["doanh_thu_truoc_thue"]
+        .str.strip()
+        .replace(
+            "",
+            "KHÔNG XÁC ĐỊNH",
         )
     )
 
@@ -526,53 +419,52 @@ def read_accessory_file(
 
 @st.cache_data
 def load_all_data(
-    workshop_config,
+    data_files,
+    workshop_name_map,
 ):
-    service_frames = []
-    parts_data = {}
-    accessory_data = {}
+    frames = []
 
     for (
-        workshop_name,
-        config,
-    ) in workshop_config.items():
-        branch_name = config[
-            "chi_nhanh"
-        ]
+        branch_name,
+        file_path,
+    ) in data_files.items():
+        if not file_path.exists():
+            st.warning(
+                f"Chưa có file dữ liệu cho "
+                f"Chi nhánh {branch_name}: "
+                f"{file_path.name}"
+            )
+            continue
 
-        service_df = read_service_file(
-            file_path=config["service_file"],
-            workshop_name=workshop_name,
+        branch_data = read_branch_file(
+            file_path=file_path,
             branch_name=branch_name,
+            workshop_name_map=(
+                workshop_name_map
+            ),
         )
 
-        service_frames.append(
-            service_df
+        frames.append(
+            branch_data
         )
 
-        parts_data[
-            workshop_name
-        ] = read_parts_file(
-            config.get("parts_file")
-        )
-
-        accessory_data[
-            workshop_name
-        ] = read_accessory_file(
-            config.get("accessory_file")
-        )
-
-    if not service_frames:
+    if not frames:
         st.error(
-            "Không có dữ liệu lệnh sửa chữa "
-            "để hiển thị."
+            "Không có dữ liệu để hiển thị."
         )
         st.stop()
 
     data_raw = pd.concat(
-        service_frames,
+        frames,
         ignore_index=True,
     )
+
+    # Giữ 3 output để app cũ vẫn tương thích.
+    # File tổng hợp mới đã có trực tiếp DT công việc,
+    # DT phụ tùng và DT phụ kiện theo loại lệnh,
+    # nên không còn cần parts_data/accessory_data riêng.
+    parts_data = {}
+    accessory_data = {}
 
     return (
         data_raw,
