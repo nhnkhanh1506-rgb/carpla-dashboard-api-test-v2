@@ -284,15 +284,19 @@ def render_sidebar(data_raw):
             ].copy()
         )
 
-        available_months = sorted(
-            year_data[
-                "ngay_hoa_don"
-            ]
-            .dropna()
-            .dt.month
-            .unique()
-            .tolist()
-        )
+        available_months = [
+            month_value
+            for month_value in sorted(
+                year_data[
+                    "ngay_hoa_don"
+                ]
+                .dropna()
+                .dt.month
+                .unique()
+                .tolist()
+            )
+            if 1 <= int(month_value) <= 7
+        ]
 
         month_options = (
             ["All"]
@@ -304,7 +308,7 @@ def render_sidebar(data_raw):
     selected_month_input = (
         st.sidebar.selectbox(
             "Tháng",
-            options=month_options,
+            options=["All"] + [m for m in month_options if m != "All" and int(m) <= 7],
             index=None,
             placeholder=" ",
             format_func=(
