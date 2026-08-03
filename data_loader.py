@@ -338,6 +338,35 @@ def read_branch_file(
             )
 
     # --------------------------------------------------------
+    # 6.1. GIỚI HẠN PHẠM VI NGÀY DT CHO FILE HÀ NỘI
+    # --------------------------------------------------------
+    # File hiện tại được xác định là dữ liệu từ:
+    # 01/01/2026 đến 31/07/2026.
+    #
+    # Vì vậy các dòng có Ngày DT ngoài phạm vi này
+    # sẽ bị loại khỏi dashboard, kể cả khi chúng vẫn còn
+    # xuất hiện trong file nguồn.
+
+    if branch_name == "Hà Nội":
+        start_date = pd.Timestamp(
+            "2026-01-01"
+        )
+
+        end_date = pd.Timestamp(
+            "2026-07-31"
+        )
+
+        data = data[
+            data[
+                "ngay_hoa_don"
+            ].between(
+                start_date,
+                end_date,
+                inclusive="both",
+            )
+        ].copy()
+
+    # --------------------------------------------------------
     # 7. CỘT TIỀN
     # --------------------------------------------------------
 
