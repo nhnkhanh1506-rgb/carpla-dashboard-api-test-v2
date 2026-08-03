@@ -240,16 +240,11 @@ def render_sidebar(data_raw):
                 ].copy()
             )
 
-        year_options = sorted(
-            scope_after_workshop[
-                "ngay_hoa_don"
-            ]
-            .dropna()
-            .dt.year
-            .unique()
-            .tolist(),
-            reverse=True,
-        )
+        # Dashboard hiện tại chỉ sử dụng dữ liệu năm 2026.
+        # Không tự sinh thêm năm từ dữ liệu lỗi/sót trong file.
+        year_options = [
+            2026
+        ]
     else:
         scope_after_workshop = (
             data_raw.iloc[
@@ -475,25 +470,7 @@ def render_homepage(logo_path: Path):
 '</div>'
 
 '<div class="homepage-guide">'
-    '<span>Vui lòng chọn <b>Chi nhánh</b>, <b>Xưởng</b>, <b>Năm</b> và <b>Tháng</b> tại bộ lọc bên trái, sau đó nhấn&nbsp;</span>'
-    '<span style="'
-        'display:inline-flex;'
-        'align-items:center;'
-        'justify-content:center;'
-        'padding:8px 18px;'
-        'border-radius:12px;'
-        'background:linear-gradient(135deg,#FF6969 0%,#FF4F4F 52%,#E93E3E 100%);'
-        'color:#FFFFFF;'
-        'font-size:14px;'
-        'line-height:1;'
-        'font-weight:800;'
-        'letter-spacing:0.25px;'
-        'border:1px solid rgba(255,255,255,0.24);'
-        'box-shadow:0 8px 18px rgba(233,62,62,0.24),inset 0 1px 0 rgba(255,255,255,0.26);'
-        'text-shadow:0 1px 1px rgba(122,26,26,0.16);'
-        'white-space:nowrap;'
-        'vertical-align:middle;'
-    '">XEM DASHBOARD</span>'
+'Vui lòng chọn <b>Chi nhánh</b>, <b>Xưởng</b>, <b>Năm</b> và <b>Tháng</b> tại bộ lọc bên trái, sau đó nhấn <b>“XEM DASHBOARD”</b>.'
 '</div>'
             '</div>'
         '</div>'
