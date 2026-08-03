@@ -862,12 +862,12 @@ def build_vehicle_segment_bubble_chart(
 
     bubble_colors = {
         "Xe sang": {
-            "fill": "#FFECD4",
-            "text": "#A45A00",
+            "fill": "#FE9E2C",
+            "text": "#A84E00",
         },
         "Xe phổ thông": {
-            "fill": "#D4EDFF",
-            "text": "#2F5F7A",
+            "fill": "#9DDBF5",
+            "text": "#1E5E7A",
         },
         "Khác": {
             "fill": "#FDE7EB",
@@ -988,11 +988,11 @@ def render_vehicle_segment_legend():
     legend_items = [
         (
             "Xe phổ thông",
-            "#2F5F7A",
+            "#1E5E7A",
         ),
         (
             "Xe sang",
-            "#A45A00",
+            "#A84E00",
         ),
         (
             "Khác",
@@ -1288,18 +1288,6 @@ def prepare_daily_data(
     target_revenue,
     working_days,
 ):
-    days_in_month = calendar.monthrange(
-        year,
-        month,
-    )[1]
-
-    days = list(
-        range(
-            1,
-            days_in_month + 1,
-        )
-    )
-
     daily_source = data.dropna(
         subset=["ngay_hoa_don"]
     ).copy()
@@ -1313,78 +1301,204 @@ def prepare_daily_data(
         errors="coerce",
     ).fillna(0)
 
-    # CPUS và doanh thu đều chia theo Ngày hóa đơn.
-    # Doanh thu Daily chỉ dùng Tổng trước thuế.
-    daily = (
-        daily_source
-        .assign(
-            day=lambda dataframe:
-            dataframe[
-                "ngay_hoa_don"
-            ].dt.day
+    # ========================================================
+    # THÁNG = ALL
+    # Giữ nguyên hình dáng/màu chart.
+    # Chỉ đổi đơn vị trục X từ ngày sang tháng.
+    # ========================================================
+
+    if month == "All":
+        days = list(
+            range(
+                1,
+                13,
+            )
         )
-        .groupby("day")
-        .agg(
-            ro=(
-                "ro",
-                "nunique",
-            ),
-            revenue=(
-                "doanh_thu_truoc_thue",
-                "sum",
-            ),
+
+        daily = (
+            daily_source
+            .assign(
+                day=lambda dataframe:
+                dataframe[
+                    "ngay_hoa_don"
+                ].dt.month
+            )
+            .groupby("day")
+            .agg(
+                ro=(
+                    "ro",
+                    "nunique",
+                ),
+                revenue=(
+                    "doanh_thu_truoc_thue",
+                    "sum",
+                ),
+            )
+            .reindex(
+                days,
+                fill_value=0,
+            )
+            .reset_index()
         )
-        .reindex(
-            days,
-            fill_value=0,
+
+        daily[
+            "revenue_m"
+        ] = (
+            daily["revenue"]
+            / 1_000_000
         )
-        .reset_index()
-    )
 
-    daily["revenue_m"] = (
-        daily["revenue"]
-        / 1_000_000
-    )
+        daily["cum_ro"] = (
+            daily["ro"].cumsum()
+        )
 
-    daily["cum_ro"] = (
-        daily["ro"].cumsum()
-    )
+        daily[
+            "cum_revenue"
+        ] = (
+            daily[
+                "revenue"
+            ].cumsum()
+        )
 
-    daily["cum_revenue"] = (
-        daily["revenue"].cumsum()
-    )
+        target_ro_day = safe_div(
+            target_ro,
+            12,
+        )
 
-    target_ro_day = safe_div(
-        target_ro,
-        working_days,
-    )
+        target_revenue_day = (
+            safe_div(
+                target_revenue,
+                12,
+            )
+        )
 
-    target_revenue_day = safe_div(
-        target_revenue,
-        working_days,
-    )
+        daily[
+            "target_cum_ro"
+        ] = (
+            daily["day"]
+            * target_ro_day
+        )
 
-    daily["target_cum_ro"] = [
-        target_ro_day
-        * min(day, working_days)
-        for day in daily["day"]
-    ]
+        daily[
+            "target_cum_revenue"
+        ] = (
+            daily["day"]
+            * target_revenue_day
+        )
 
-    daily["target_cum_revenue"] = [
-        target_revenue_day
-        * min(day, working_days)
-        for day in daily["day"]
-    ]
+    else:
+        days_in_month = calendar.monthrange(
+            year,
+            int(month),
+        )[1]
+
+        days = list(
+            range(
+                1,
+                days_in_month + 1,
+            )
+        )
+
+        daily = (
+            daily_source
+            .assign(
+                day=lambda dataframe:
+                dataframe[
+                    "ngay_hoa_don"
+                ].dt.day
+            )
+            .groupby("day")
+            .agg(
+                ro=(
+                    "ro",
+                    "nunique",
+                ),
+                revenue=(
+                    "doanh_thu_truoc_thue",
+                    "sum",
+                ),
+            )
+            .reindex(
+                days,
+                fill_value=0,
+            )
+            .reset_index()
+        )
+
+        daily[
+            "revenue_m"
+        ] = (
+            daily["revenue"]
+            / 1_000_000
+        )
+
+        daily["cum_ro"] = (
+            daily["ro"].cumsum()
+        )
+
+        daily[
+            "cum_revenue"
+        ] = (
+            daily[
+                "revenue"
+            ].cumsum()
+        )
+
+        target_ro_day = safe_div(
+            target_ro,
+            working_days,
+        )
+
+        target_revenue_day = (
+            safe_div(
+                target_revenue,
+                working_days,
+            )
+        )
+
+        daily[
+            "target_cum_ro"
+        ] = [
+            target_ro_day
+            * min(
+                day,
+                working_days,
+            )
+            for day in daily[
+                "day"
+            ]
+        ]
+
+        daily[
+            "target_cum_revenue"
+        ] = [
+            target_revenue_day
+            * min(
+                day,
+                working_days,
+            )
+            for day in daily[
+                "day"
+            ]
+        ]
 
     daily["cum_ro_pct"] = (
         daily["cum_ro"]
-        / daily["target_cum_ro"]
+        / daily[
+            "target_cum_ro"
+        ]
         * 100
     )
 
-    daily["cum_revenue_pct"] = (
-        daily["cum_revenue"]
-        / daily["target_cum_revenue"]
+    daily[
+        "cum_revenue_pct"
+    ] = (
+        daily[
+            "cum_revenue"
+        ]
+        / daily[
+            "target_cum_revenue"
+        ]
         * 100
     )
 
@@ -1400,8 +1514,12 @@ def prepare_daily_data(
         .fillna(0)
     )
 
-    daily["cum_revenue_pct"] = (
-        daily["cum_revenue_pct"]
+    daily[
+        "cum_revenue_pct"
+    ] = (
+        daily[
+            "cum_revenue_pct"
+        ]
         .replace(
             [
                 float("inf"),
@@ -1423,267 +1541,6 @@ def prepare_daily_data(
 # ============================================================
 # BIỂU ĐỒ LƯỢT XE THEO NGÀY
 # ============================================================
-
-
-# ============================================================
-# TỔNG QUAN THỰC HIỆN + CƠ CẤU TỔNG DOANH THU
-# ============================================================
-
-def render_summary_and_revenue_mix(
-    actual_ro,
-    target_ro,
-    actual_revenue,
-    target_revenue,
-    ro_rate,
-    revenue_rate,
-    labor_revenue,
-    parts_revenue,
-    accessory_revenue,
-):
-    summary_kpi = pd.DataFrame(
-        {
-            "Hạng mục": [
-                "Lượt xe / RO",
-                "Tổng Doanh thu",
-            ],
-            "Thực hiện": [
-                f"{actual_ro:,.0f}",
-                fmt_m(actual_revenue),
-            ],
-            "Chỉ tiêu": [
-                f"{target_ro:,.0f}",
-                fmt_m(target_revenue),
-            ],
-            "% đạt": [
-                f"{ro_rate:.0%}",
-                f"{revenue_rate:.0%}",
-            ],
-        }
-    )
-
-    revenue_labels = [
-        "Doanh thu công việc",
-        "Doanh thu phụ tùng",
-        "Doanh thu phụ kiện",
-    ]
-
-    revenue_values = [
-        labor_revenue,
-        parts_revenue,
-        accessory_revenue,
-    ]
-
-    revenue_colors = [
-        "#386FAE",
-        "#F86D53",
-        "#F9B43A",
-    ]
-
-    total_mix_revenue = sum(
-        revenue_values
-    )
-
-    revenue_mix_table = pd.DataFrame(
-        {
-            "Hạng mục": revenue_labels,
-            "Doanh thu": [
-                fmt_m(value)
-                for value in revenue_values
-            ],
-            "Tỷ trọng": [
-                (
-                    f"{safe_div(value, total_mix_revenue):.0%}"
-                    if total_mix_revenue
-                    else "0%"
-                )
-                for value in revenue_values
-            ],
-        }
-    )
-
-    revenue_mix_total_row = pd.DataFrame(
-        {
-            "Hạng mục": [
-                "TỔNG DOANH THU"
-            ],
-            "Doanh thu": [
-                fmt_m(total_mix_revenue)
-            ],
-            "Tỷ trọng": [
-                "100%"
-                if total_mix_revenue
-                else "0%"
-            ],
-        }
-    )
-
-    revenue_mix_table = pd.concat(
-        [
-            revenue_mix_table,
-            revenue_mix_total_row,
-        ],
-        ignore_index=True,
-    )
-
-    figure = go.Figure(
-        data=[
-            go.Pie(
-                labels=revenue_labels,
-                values=revenue_values,
-                hole=0.60,
-                sort=False,
-                direction="clockwise",
-                marker=dict(
-                    colors=revenue_colors,
-                    line=dict(
-                        color="#FFFFFF",
-                        width=3,
-                    ),
-                ),
-                textinfo="percent",
-                texttemplate="%{percent:.0%}",
-                textfont=dict(
-                    size=15,
-                    color="#FFFFFF",
-                ),
-                hovertemplate=(
-                    "<b>%{label}</b><br>"
-                    "Giá trị: %{value:,.0f}<br>"
-                    "Tỷ trọng: %{percent:.1%}"
-                    "<extra></extra>"
-                ),
-            )
-        ]
-    )
-
-    figure.add_annotation(
-        x=0.5,
-        y=0.49,
-        text=(
-            f"<b>{fmt_m(actual_revenue)}</b>"
-            "<br>"
-            "<span style='font-size:12px;'>"
-            "Tổng doanh thu"
-            "</span>"
-        ),
-        showarrow=False,
-        font=dict(
-            size=20,
-            color="#1E2F6E",
-        ),
-        align="center",
-    )
-
-    figure.update_layout(
-        template="simple_white",
-        height=225,
-        margin=dict(
-            l=8,
-            r=8,
-            t=0,
-            b=4,
-        ),
-        legend=dict(
-            orientation="h",
-            yanchor="top",
-            y=-0.03,
-            xanchor="center",
-            x=0.5,
-            traceorder="normal",
-            itemwidth=30,
-            font=dict(
-                size=11,
-                color="#475467",
-            ),
-        ),
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(
-            color="#475467",
-        ),
-        showlegend=False,
-    )
-
-    revenue_row = st.container(
-        key="revenue_summary_mix_row"
-    )
-
-    with revenue_row:
-        left_column, right_column = st.columns(
-            [1, 1],
-            gap="small",
-        )
-
-    with left_column:
-        st.dataframe(
-            style_white_table(
-                summary_kpi
-            ),
-            use_container_width=True,
-            hide_index=True,
-            height=108,
-        )
-
-        st.markdown(
-            "<div style='height:12px;'></div>",
-            unsafe_allow_html=True,
-        )
-
-        st.dataframe(
-            style_white_table(
-                revenue_mix_table
-            ),
-            use_container_width=True,
-            hide_index=True,
-            height=210,
-        )
-
-    with right_column:
-        revenue_mix_card = st.container(
-            key="revenue_mix_donut_card"
-        )
-
-        with revenue_mix_card:
-            st.markdown(
-                '<div class="revenue-overview-card-title">'
-                'Cơ cấu tổng doanh thu'
-                '</div>',
-                unsafe_allow_html=True,
-            )
-
-            st.plotly_chart(
-                figure,
-                use_container_width=True,
-                config={
-                    "displayModeBar": False,
-                    "responsive": True,
-                },
-            )
-
-            st.markdown(
-                """
-                <div class="revenue-mix-legend">
-                    <div class="revenue-mix-legend-item">
-                        <span class="revenue-mix-dot"
-                              style="background:#386FAE;"></span>
-                        <span>Doanh thu công việc</span>
-                    </div>
-                    <div class="revenue-mix-legend-item">
-                        <span class="revenue-mix-dot"
-                              style="background:#F86D53;"></span>
-                        <span>Doanh thu phụ tùng</span>
-                    </div>
-                    <div class="revenue-mix-legend-item">
-                        <span class="revenue-mix-dot"
-                              style="background:#F9B43A;"></span>
-                        <span>Doanh thu phụ kiện</span>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-
 
 def build_ro_daily_chart(
     daily,
@@ -2028,9 +1885,18 @@ def render_daily_charts(
     target_revenue,
     working_days,
 ):
-    st.markdown(
-        "## 2. Lượt xe & Doanh thu theo ngày"
+    is_year_view = (
+        month == "All"
     )
+
+    if is_year_view:
+        st.markdown(
+            "## 2. Lượt xe & Doanh thu theo tháng"
+        )
+    else:
+        st.markdown(
+            "## 2. Lượt xe & Doanh thu theo ngày"
+        )
 
     (
         daily,
@@ -2054,22 +1920,35 @@ def render_daily_charts(
         "revenue"
     ].sum()
 
-    actual_ro_average = safe_div(
-        total_ro,
-        working_days,
-    )
+    if is_year_view:
+        period_count = 12
 
-    actual_revenue_average = safe_div(
-        total_revenue,
-        working_days,
-    )
+        actual_ro_average = safe_div(
+            total_ro,
+            period_count,
+        )
+
+        actual_revenue_average = safe_div(
+            total_revenue,
+            period_count,
+        )
+    else:
+        actual_ro_average = safe_div(
+            total_ro,
+            working_days,
+        )
+
+        actual_revenue_average = safe_div(
+            total_revenue,
+            working_days,
+        )
 
     revenue_per_cpus = safe_div(
         total_revenue,
         total_ro,
     )
 
-    # HÀNG 1: CPUS DAILY
+    # HÀNG 1: CPUS
     ro_chart_column, ro_kpi_column = (
         st.columns(
             [4.6, 1.25]
@@ -2100,17 +1979,28 @@ def render_daily_charts(
             )
 
     with ro_kpi_column:
-        render_mini_kpi(
-            "CPUS TB/NGÀY",
-            f"{actual_ro_average:.0f}",
-        )
+        if is_year_view:
+            render_mini_kpi(
+                "CPUS TB/THÁNG",
+                f"{actual_ro_average:.0f}",
+            )
 
-        render_mini_kpi(
-            "CPUS/NGÀY TARGET",
-            f"{target_ro_day:.0f}",
-        )
+            render_mini_kpi(
+                "CPUS/THÁNG TARGET",
+                f"{target_ro_day:.0f}",
+            )
+        else:
+            render_mini_kpi(
+                "CPUS TB/NGÀY",
+                f"{actual_ro_average:.0f}",
+            )
 
-    # HÀNG 2: DOANH THU DAILY
+            render_mini_kpi(
+                "CPUS/NGÀY TARGET",
+                f"{target_ro_day:.0f}",
+            )
+
+    # HÀNG 2: DOANH THU
     revenue_chart_column, revenue_kpi_column = (
         st.columns(
             [4.6, 1.25]
@@ -2150,19 +2040,35 @@ def render_daily_charts(
             ),
         )
 
-        render_mini_kpi(
-            "DT TB/NGÀY",
-            fmt_m(
-                actual_revenue_average
-            ),
-        )
+        if is_year_view:
+            render_mini_kpi(
+                "DT TB/THÁNG",
+                fmt_m(
+                    actual_revenue_average
+                ),
+            )
 
-        render_mini_kpi(
-            "DT TB/NGÀY TARGET",
-            fmt_m(
-                target_revenue_day
-            ),
-        )
+            render_mini_kpi(
+                "DT TB/THÁNG TARGET",
+                fmt_m(
+                    target_revenue_day
+                ),
+            )
+        else:
+            render_mini_kpi(
+                "DT TB/NGÀY",
+                fmt_m(
+                    actual_revenue_average
+                ),
+            )
+
+            render_mini_kpi(
+                "DT TB/NGÀY TARGET",
+                fmt_m(
+                    target_revenue_day
+                ),
+            )
+
 
 # ============================================================
 # HÃNG XE
@@ -2420,30 +2326,10 @@ def render_brand_section(data):
             / 1_000_000
         )
 
-        # Gradient vàng Carpla từ trên xuống dưới:
-        # hãng đứng đầu đậm nhất, các hãng phía dưới nhạt dần.
-        carpla_yellow_gradient = [
-            "#F1CD54",
-            "#F3D467",
-            "#F5DA7A",
-            "#F7E08D",
-            "#F8E6A0",
-            "#F9EAB0",
-            "#FBEFC0",
-            "#FCF3CF",
-            "#FDF7DE",
-            "#FFFBEE",
-        ]
-
-        # brand_chart đang được sắp xếp tăng dần để Plotly
-        # hiển thị hãng doanh thu cao nhất ở trên cùng.
-        # Vì vậy cần đảo danh sách màu để thanh trên cùng đậm nhất.
-        color_list = list(
-            reversed(
-                carpla_yellow_gradient[
-                    :len(brand_chart)
-                ]
-            )
+        color_list = (
+            MUTED_BAR_COLORS[
+                :len(brand_chart)
+            ]
         )
 
         figure = go.Figure()
