@@ -68,65 +68,69 @@ def filter_scope(
 # CỘNG TARGET THEO PHẠM VI ĐANG CHỌN
 # ============================================================
 
-def aggregate_targets(
+def get_target_for_scope(
     targets,
     selected_branch,
     selected_workshop,
     year,
     month,
 ):
-    target_ro = 0
-    target_revenue = 0
+    """
+    Target chỉ tồn tại cho đúng 1 xưởng Hà Nội,
+    tháng 7/2026.
 
-    for (
-        key,
-        target_info,
-    ) in targets.items():
-        (
-            branch_name,
-            workshop_name,
-            target_year,
-            target_month,
-        ) = key
+    Không cộng target khi:
+    - Chi nhánh = All
+    - Xưởng = All
+    - Tháng = All
+    - Tháng khác 7
+    - Chi nhánh khác Hà Nội
+    """
 
-        if int(target_year) != int(year):
-            continue
+    if selected_branch == "All":
+        return {
+            "available": False,
+            "ro": 0,
+            "revenue": 0,
+        }
 
-        if (
-            selected_branch != "All"
-            and branch_name
-            != selected_branch
-        ):
-            continue
+    if selected_workshop == "All":
+        return {
+            "available": False,
+            "ro": 0,
+            "revenue": 0,
+        }
 
-        if (
-            selected_workshop != "All"
-            and workshop_name
-            != selected_workshop
-        ):
-            continue
+    if month == "All":
+        return {
+            "available": False,
+            "ro": 0,
+            "revenue": 0,
+        }
 
-        if (
-            month != "All"
-            and int(target_month)
-            != int(month)
-        ):
-            continue
+    key = (
+        selected_branch,
+        selected_workshop,
+        int(year),
+        int(month),
+    )
 
-        target_ro += (
-            target_info.get("ro", 0)
-        )
+    target_info = targets.get(key)
 
-        target_revenue += (
-            target_info.get(
-                "revenue",
-                0,
-            )
-        )
+    if not target_info:
+        return {
+            "available": False,
+            "ro": 0,
+            "revenue": 0,
+        }
 
     return {
-        "ro": target_ro,
-        "revenue": target_revenue,
+        "available": True,
+        "ro": target_info.get("ro", 0),
+        "revenue": target_info.get(
+            "revenue",
+            0,
+        ),
     }
 
 
@@ -272,7 +276,7 @@ def calculate_dashboard_metrics(
     # 7. TARGET
     # --------------------------------------------------------
 
-    target_info = aggregate_targets(
+    target_info = get_target_for_scope(
         targets=targets,
         selected_branch=selected_branch,
         selected_workshop=(
@@ -281,6 +285,10 @@ def calculate_dashboard_metrics(
         year=year,
         month=month,
     )
+
+    target_available = target_info[
+        "available"
+    ]
 
     target_ro = target_info["ro"]
     target_revenue = (
@@ -365,6 +373,9 @@ def calculate_dashboard_metrics(
             total_after_tax
         ),
 
+        "target_available": (
+            target_available
+        ),
         "target_ro": target_ro,
         "target_revenue": (
             target_revenue
