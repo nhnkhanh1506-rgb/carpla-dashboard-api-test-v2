@@ -1546,6 +1546,7 @@ def build_ro_daily_chart(
     daily,
     days,
     workshop,
+    has_target=True,
 ):
     figure = make_subplots(
         specs=[
@@ -1591,48 +1592,49 @@ def build_ro_daily_chart(
         secondary_y=False,
     )
 
-    figure.add_trace(
-        go.Scatter(
-            x=daily["day"],
-            y=daily["cum_ro_pct"],
+    if has_target:
+        figure.add_trace(
+            go.Scatter(
+                x=daily["day"],
+                y=daily["cum_ro_pct"],
 
-            mode="lines+markers+text",
+                mode="lines+markers+text",
 
-            line=dict(
-                color=CUMULATIVE_LINE_COLOR,
-                width=3,
-                dash="dot",
-            ),
-
-            marker=dict(
-                size=7,
-                color=CUMULATIVE_MARKER_COLOR,
                 line=dict(
-                    color=CUMULATIVE_MARKER_BORDER,
-                    width=1,
+                    color=CUMULATIVE_LINE_COLOR,
+                    width=3,
+                    dash="dot",
                 ),
+
+                marker=dict(
+                    size=7,
+                    color=CUMULATIVE_MARKER_COLOR,
+                    line=dict(
+                        color=CUMULATIVE_MARKER_BORDER,
+                        width=1,
+                    ),
+                ),
+
+                text=[
+                    f"{value:.0f}%"
+                    if value > 0
+                    else ""
+                    for value in daily[
+                        "cum_ro_pct"
+                    ]
+                ],
+
+                textposition="bottom center",
+
+                textfont=dict(
+                    size=10,
+                    color=DAILY_CHART_TEXT,
+                ),
+
+                name="% đạt lũy kế",
             ),
-
-            text=[
-                f"{value:.0f}%"
-                if value > 0
-                else ""
-                for value in daily[
-                    "cum_ro_pct"
-                ]
-            ],
-
-            textposition="bottom center",
-
-            textfont=dict(
-                size=10,
-                color=DAILY_CHART_TEXT,
-            ),
-
-            name="% đạt lũy kế",
-        ),
-        secondary_y=True,
-    )
+            secondary_y=True,
+        )
 
     figure.update_layout(
         template="simple_white",
@@ -1711,6 +1713,7 @@ def build_revenue_daily_chart(
     daily,
     days,
     workshop,
+    has_target=True,
 ):
     figure = make_subplots(
         specs=[
@@ -1758,50 +1761,51 @@ def build_revenue_daily_chart(
         secondary_y=False,
     )
 
-    figure.add_trace(
-        go.Scatter(
-            x=daily["day"],
-            y=daily[
-                "cum_revenue_pct"
-            ],
-
-            mode="lines+markers+text",
-
-            line=dict(
-                color=CUMULATIVE_LINE_COLOR,
-                width=3,
-                dash="dot",
-            ),
-
-            marker=dict(
-                size=7,
-                color=CUMULATIVE_MARKER_COLOR,
-                line=dict(
-                    color=CUMULATIVE_MARKER_BORDER,
-                    width=1,
-                ),
-            ),
-
-            text=[
-                f"{value:.0f}%"
-                if value > 0
-                else ""
-                for value in daily[
+    if has_target:
+        figure.add_trace(
+            go.Scatter(
+                x=daily["day"],
+                y=daily[
                     "cum_revenue_pct"
-                ]
-            ],
+                ],
 
-            textposition="bottom center",
+                mode="lines+markers+text",
 
-            textfont=dict(
-                size=10,
-                color=DAILY_CHART_TEXT,
+                line=dict(
+                    color=CUMULATIVE_LINE_COLOR,
+                    width=3,
+                    dash="dot",
+                ),
+
+                marker=dict(
+                    size=7,
+                    color=CUMULATIVE_MARKER_COLOR,
+                    line=dict(
+                        color=CUMULATIVE_MARKER_BORDER,
+                        width=1,
+                    ),
+                ),
+
+                text=[
+                    f"{value:.0f}%"
+                    if value > 0
+                    else ""
+                    for value in daily[
+                        "cum_revenue_pct"
+                    ]
+                ],
+
+                textposition="bottom center",
+
+                textfont=dict(
+                    size=10,
+                    color=DAILY_CHART_TEXT,
+                ),
+
+                name="% đạt lũy kế",
             ),
-
-            name="% đạt lũy kế",
-        ),
-        secondary_y=True,
-    )
+            secondary_y=True,
+        )
 
     figure.update_layout(
         template="simple_white",
@@ -1884,6 +1888,7 @@ def render_daily_charts(
     target_ro,
     target_revenue,
     working_days,
+    target_available=True,
 ):
     is_year_view = (
         month == "All"
@@ -1960,6 +1965,7 @@ def render_daily_charts(
             daily=daily,
             days=days,
             workshop=workshop,
+            has_target=target_available,
         )
 
         ro_chart_card = st.container(
@@ -1985,20 +1991,22 @@ def render_daily_charts(
                 f"{actual_ro_average:.0f}",
             )
 
-            render_mini_kpi(
-                "CPUS/THÁNG TARGET",
-                f"{target_ro_day:.0f}",
-            )
+            if target_available:
+                render_mini_kpi(
+                    "CPUS/THÁNG TARGET",
+                    f"{target_ro_day:.0f}",
+                )
         else:
             render_mini_kpi(
                 "CPUS TB/NGÀY",
                 f"{actual_ro_average:.0f}",
             )
 
-            render_mini_kpi(
-                "CPUS/NGÀY TARGET",
-                f"{target_ro_day:.0f}",
-            )
+            if target_available:
+                render_mini_kpi(
+                    "CPUS/NGÀY TARGET",
+                    f"{target_ro_day:.0f}",
+                )
 
     # HÀNG 2: DOANH THU
     revenue_chart_column, revenue_kpi_column = (
@@ -2013,6 +2021,7 @@ def render_daily_charts(
                 daily=daily,
                 days=days,
                 workshop=workshop,
+                has_target=target_available,
             )
         )
 
@@ -2048,12 +2057,13 @@ def render_daily_charts(
                 ),
             )
 
-            render_mini_kpi(
-                "DT TB/THÁNG TARGET",
-                fmt_m(
-                    target_revenue_day
-                ),
-            )
+            if target_available:
+                render_mini_kpi(
+                    "DT TB/THÁNG TARGET",
+                    fmt_m(
+                        target_revenue_day
+                    ),
+                )
         else:
             render_mini_kpi(
                 "DT TB/NGÀY",
@@ -2062,12 +2072,13 @@ def render_daily_charts(
                 ),
             )
 
-            render_mini_kpi(
-                "DT TB/NGÀY TARGET",
-                fmt_m(
-                    target_revenue_day
-                ),
-            )
+            if target_available:
+                render_mini_kpi(
+                    "DT TB/NGÀY TARGET",
+                    fmt_m(
+                        target_revenue_day
+                    ),
+                )
 
 
 # ============================================================
@@ -2341,9 +2352,8 @@ def render_brand_section(data):
             "#FFFBEE",
         ]
 
-        # brand_chart đang được sắp xếp tăng dần để Plotly
-        # hiển thị hãng doanh thu cao nhất ở trên cùng.
-        # Vì vậy cần đảo danh sách màu để thanh trên cùng đậm nhất.
+        # brand_chart đang sort tăng dần để hãng doanh thu
+        # cao nhất hiển thị ở trên cùng trong horizontal bar.
         color_list = list(
             reversed(
                 carpla_yellow_gradient[
