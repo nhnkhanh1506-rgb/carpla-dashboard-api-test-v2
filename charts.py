@@ -2326,10 +2326,30 @@ def render_brand_section(data):
             / 1_000_000
         )
 
-        color_list = (
-            MUTED_BAR_COLORS[
-                :len(brand_chart)
-            ]
+        # Gradient vàng Carpla từ trên xuống dưới:
+        # hãng đứng đầu đậm nhất, các hãng phía dưới nhạt dần.
+        carpla_yellow_gradient = [
+            "#F1CD54",
+            "#F3D467",
+            "#F5DA7A",
+            "#F7E08D",
+            "#F8E6A0",
+            "#F9EAB0",
+            "#FBEFC0",
+            "#FCF3CF",
+            "#FDF7DE",
+            "#FFFBEE",
+        ]
+
+        # brand_chart đang được sắp xếp tăng dần để Plotly
+        # hiển thị hãng doanh thu cao nhất ở trên cùng.
+        # Vì vậy cần đảo danh sách màu để thanh trên cùng đậm nhất.
+        color_list = list(
+            reversed(
+                carpla_yellow_gradient[
+                    :len(brand_chart)
+                ]
+            )
         )
 
         figure = go.Figure()
