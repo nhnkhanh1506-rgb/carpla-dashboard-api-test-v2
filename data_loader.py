@@ -257,6 +257,12 @@ def read_branch_file(
         .str.strip()
     )
 
+    # Chỉ kiểm tra đây có phải "lệnh thật" hay không.
+    # KHÔNG lọc theo năm nằm trong Số lệnh.
+    #
+    # Ví dụ:
+    #   LSC.2025.... nhưng Ngày DT = 02/01/2026
+    #   => VẪN PHẢI TÍNH vào dashboard 2026.
     real_order_mask = (
         data["ro"]
         .str.upper()
@@ -348,6 +354,14 @@ def read_branch_file(
     # xuất hiện trong file nguồn.
 
     if branch_name == "Hà Nội":
+        # PHẠM VI DUY NHẤT DÙNG ĐỂ XÁC ĐỊNH KỲ DASHBOARD:
+        # cột "Ngày DT" đã được đổi tên thành "ngay_hoa_don".
+        #
+        # Chỉ lấy lệnh có:
+        #   01/01/2026 <= Ngày DT <= 31/07/2026
+        #
+        # Không quan tâm năm nằm trong Số lệnh,
+        # Ngày lập lệnh hay Ngày quyết toán.
         start_date = pd.Timestamp(
             "2026-01-01"
         )
@@ -365,6 +379,26 @@ def read_branch_file(
                 inclusive="both",
             )
         ].copy()
+
+        # Kiểm tra an toàn: sau khi lọc không được còn
+        # bất kỳ Ngày DT nào ngoài phạm vi trên.
+        if not data.empty:
+            min_dt = data[
+                "ngay_hoa_don"
+            ].min()
+
+            max_dt = data[
+                "ngay_hoa_don"
+            ].max()
+
+            if (
+                min_dt < start_date
+                or max_dt > end_date
+            ):
+                raise ValueError(
+                    "Lỗi lọc Ngày DT: dữ liệu còn nằm "
+                    "ngoài 01/01/2026 - 31/07/2026."
+                )
 
     # --------------------------------------------------------
     # 7. CỘT TIỀN
