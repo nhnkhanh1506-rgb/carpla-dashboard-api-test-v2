@@ -567,6 +567,11 @@ def render_top_kpis(metrics):
     total_after_tax = metrics["total_after_tax"]
     revenue_per_ro = metrics["revenue_per_ro"]
 
+    target_available = metrics.get(
+        "target_available",
+        False,
+    )
+
     target_ro = metrics["target_ro"]
     target_revenue = metrics["target_revenue"]
 
@@ -576,25 +581,37 @@ def render_top_kpis(metrics):
     column_1, column_2, column_3, column_4 = st.columns(4)
 
     with column_1:
-        render_kpi_card(
-            "Lượt xe / RO",
-            f"{actual_ro:,.0f}",
-            (
-                f"Target: {target_ro:,.0f} | "
-                f"Đạt: {ro_rate:.0%}"
-            ),
-        )
+        if target_available:
+            render_kpi_card(
+                "Lượt xe / RO",
+                f"{actual_ro:,.0f}",
+                (
+                    f"Target: {target_ro:,.0f} | "
+                    f"Đạt: {ro_rate:.0%}"
+                ),
+            )
+        else:
+            render_kpi_card(
+                "Lượt xe / RO",
+                f"{actual_ro:,.0f}",
+            )
 
     with column_2:
-        render_kpi_card(
-            "Tổng doanh thu",
-            fmt_m(actual_revenue),
-            (
-                f"Target: "
-                f"{target_revenue / 1_000_000:,.0f}M | "
-                f"Đạt: {revenue_rate:.0%}"
-            ),
-        )
+        if target_available:
+            render_kpi_card(
+                "Tổng doanh thu",
+                fmt_m(actual_revenue),
+                (
+                    f"Target: "
+                    f"{target_revenue / 1_000_000:,.0f}M | "
+                    f"Đạt: {revenue_rate:.0%}"
+                ),
+            )
+        else:
+            render_kpi_card(
+                "Tổng doanh thu",
+                fmt_m(actual_revenue),
+            )
 
     with column_3:
         render_kpi_card(
