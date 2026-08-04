@@ -2520,7 +2520,7 @@ def render_payment_section(data):
         font-weight: 700;
         line-height: 1.2;
         margin: 0;
-        padding: 16px 2px 4px 2px;
+        padding: 16px 2px 6px 2px;
     }
 
     .payment-legend {
@@ -2530,8 +2530,8 @@ def render_payment_section(data):
         gap: 24px;
         width: 100%;
         flex-wrap: nowrap;
-        margin-top: -4px;
-        margin-bottom: 12px;
+        margin-top: -6px;
+        margin-bottom: 10px;
         font-size: 12.5px;
         font-weight: 600;
         color: #475467;
@@ -2578,10 +2578,6 @@ def render_payment_section(data):
         unsafe_allow_html=True,
     )
 
-    # ========================================================
-    # LẤY TRỰC TIẾP TỪ FILE LỆNH SỬA CHỮA
-    # ========================================================
-
     customer_value = pd.to_numeric(
         data["khach_hang_chi_tra"],
         errors="coerce",
@@ -2596,10 +2592,6 @@ def render_payment_section(data):
         customer_value
         + insurance_value
     )
-
-    # ========================================================
-    # DỮ LIỆU BẢNG
-    # ========================================================
 
     payment_structure = pd.DataFrame(
         {
@@ -2671,19 +2663,11 @@ def render_payment_section(data):
         ignore_index=True,
     )
 
-    # ========================================================
-    # LAYOUT
-    # ========================================================
-
     left_column, right_column = (
         st.columns(
             [1, 1]
         )
     )
-
-    # ========================================================
-    # BẢNG NGUỒN THANH TOÁN
-    # ========================================================
 
     with left_column:
         st.dataframe(
@@ -2693,10 +2677,6 @@ def render_payment_section(data):
             use_container_width=True,
             hide_index=True,
         )
-
-    # ========================================================
-    # BIỂU ĐỒ DONUT
-    # ========================================================
 
     with right_column:
         payment_chart_card = st.container(
@@ -2727,11 +2707,7 @@ def render_payment_section(data):
                             colors=[
                                 DONUT_MAIN,
                                 DONUT_SECOND,
-                            ],
-                            line=dict(
-                                color="#FFFFFF",
-                                width=2,
-                            ),
+                            ]
                         ),
                         textinfo="percent",
                         texttemplate=(
@@ -2742,8 +2718,8 @@ def render_payment_section(data):
                             color="white",
                         ),
                         domain=dict(
-                            x=[0.20, 0.80],
-                            y=[0.18, 0.92],
+                            x=[0.22, 0.68],
+                            y=[0.20, 0.88],
                         ),
                         hovertemplate=(
                             "<b>%{label}</b><br>"
@@ -2757,7 +2733,7 @@ def render_payment_section(data):
 
             figure.update_layout(
                 template="simple_white",
-                height=320,
+                height=300,
                 margin=dict(
                     l=0,
                     r=0,
@@ -2777,7 +2753,6 @@ def render_payment_section(data):
                 use_container_width=True,
                 config={
                     "displayModeBar": False,
-                    "responsive": True,
                 },
             )
 
@@ -2800,4 +2775,3 @@ def render_payment_section(data):
             )
 
     return total_payment
-
