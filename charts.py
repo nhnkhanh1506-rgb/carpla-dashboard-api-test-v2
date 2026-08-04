@@ -2805,6 +2805,15 @@ def render_payment_section(data):
         )
 
         with payment_chart_card:
+            # Dùng cùng style title với card "Top nguồn khách theo số RO"
+            # để hai card nhìn đồng bộ.
+            st.markdown(
+                '<div class="customer-source-card-title">'
+                'Tỷ trọng nguồn thanh toán'
+                '</div>',
+                unsafe_allow_html=True,
+            )
+
             payment_figure = go.Figure(
                 data=[
                     go.Pie(
@@ -2816,7 +2825,7 @@ def render_payment_section(data):
                             customer_value,
                             insurance_value,
                         ],
-                        hole=0.60,
+                        hole=0.58,
                         sort=False,
                         direction="clockwise",
                         marker=dict(
@@ -2833,12 +2842,12 @@ def render_payment_section(data):
                         texttemplate="%{percent:.0%}",
                         textfont=dict(
                             color="#FFFFFF",
-                            size=14,
+                            size=15,
                         ),
-                        # Pie nhỏ lại và hạ xuống dưới tiêu đề.
+                        # Tăng mạnh vùng thật sự dành cho pie.
                         domain=dict(
-                            x=[0.12, 0.88],
-                            y=[0.18, 0.86],
+                            x=[0.15, 0.85],
+                            y=[0.22, 0.96],
                         ),
                         hovertemplate=(
                             "<b>%{label}</b><br>"
@@ -2852,7 +2861,7 @@ def render_payment_section(data):
 
             payment_figure.add_annotation(
                 x=0.5,
-                y=0.52,
+                y=0.59,
                 xref="paper",
                 yref="paper",
                 text=(
@@ -2866,35 +2875,26 @@ def render_payment_section(data):
                 align="center",
                 font=dict(
                     color="#1F2937",
-                    size=14,
+                    size=15,
                 ),
             )
 
             payment_figure.update_layout(
                 template="simple_white",
-                height=315,
+
+                # Tăng chiều cao thật của Plotly.
+                # Bản trước chỉ đổi domain nhưng chiều cao khả dụng vẫn quá thấp.
+                height=360,
+
                 margin=dict(
-                    l=10,
-                    r=10,
-                    t=54,
-                    b=48,
+                    l=0,
+                    r=0,
+                    t=0,
+                    b=0,
                 ),
 
-                # Tiêu đề dùng Plotly native nên không mất / không bị render sai.
-                title=dict(
-                    text="<b>Tỷ trọng nguồn thanh toán</b>",
-                    x=0.03,
-                    y=0.965,
-                    xanchor="left",
-                    yanchor="top",
-                    font=dict(
-                        color="#1F2937",
-                        size=18,
-                    ),
-                ),
-
-                # Legend native nằm trong figure, ngay dưới pie.
                 showlegend=True,
+
                 legend=dict(
                     orientation="h",
                     x=0.5,
@@ -2910,6 +2910,7 @@ def render_payment_section(data):
 
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
+
                 font=dict(
                     color="#475467",
                 ),
