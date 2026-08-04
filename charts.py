@@ -2837,8 +2837,8 @@ def render_payment_section(data):
                         ),
                         # Pie nhỏ lại và hạ xuống dưới tiêu đề.
                         domain=dict(
-                            x=[0.28, 0.72],
-                            y=[0.28, 0.78],
+                            x=[0.19, 0.81],
+                            y=[0.20, 0.82],
                         ),
                         hovertemplate=(
                             "<b>%{label}</b><br>"
@@ -2852,7 +2852,7 @@ def render_payment_section(data):
 
             payment_figure.add_annotation(
                 x=0.5,
-                y=0.53,
+                y=0.51,
                 xref="paper",
                 yref="paper",
                 text=(
