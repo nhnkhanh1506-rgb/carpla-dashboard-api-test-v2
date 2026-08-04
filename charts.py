@@ -2514,35 +2514,6 @@ def render_payment_section(data):
 
     payment_css = """
     <style>
-    .payment-legend {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 26px;
-        width: 100%;
-        flex-wrap: nowrap;
-        margin-top: -14px;
-        margin-bottom: 6px;
-        font-size: 12.5px;
-        font-weight: 600;
-        color: #475467;
-    }
-
-    .payment-legend-item {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        white-space: nowrap;
-    }
-
-    .payment-legend-dot {
-        width: 9px;
-        height: 9px;
-        border-radius: 50%;
-        display: inline-block;
-        flex: 0 0 9px;
-    }
-
     .st-key-payment_donut_card {
         width: 100% !important;
         background: #FFFFFF !important;
@@ -2551,7 +2522,7 @@ def render_payment_section(data):
         box-sizing: border-box !important;
         padding: 10px 18px 12px 18px !important;
         overflow: hidden !important;
-        min-height: 342px !important;
+        min-height: 336px !important;
     }
 
     .st-key-payment_donut_card div[data-testid="stVerticalBlock"] {
@@ -2755,8 +2726,8 @@ def render_payment_section(data):
                             color="white",
                         ),
                         domain=dict(
-                            x=[0.16, 0.84],
-                            y=[0.12, 0.76],
+                            x=[0.18, 0.82],
+                            y=[0.28, 0.84],
                         ),
                         hovertemplate=(
                             "<b>%{label}</b><br>"
@@ -2803,9 +2774,21 @@ def render_payment_section(data):
 
             figure.update_layout(
                 template="simple_white",
-                height=276,
+                height=300,
                 margin=dict(l=0, r=0, t=0, b=0),
-                showlegend=False,
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=0.035,
+                    xanchor="center",
+                    x=0.5,
+                    font=dict(
+                        color="#475467",
+                        size=12,
+                    ),
+                    itemsizing="constant",
+                ),
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
                 font=dict(color="#475467"),
@@ -2820,23 +2803,6 @@ def render_payment_section(data):
                 },
             )
 
-            payment_legend_html = (
-                '<div class="payment-legend">'
-                '<div class="payment-legend-item">'
-                f'<span class="payment-legend-dot" style="background:{DONUT_MAIN};"></span>'
-                '<span>Khách hàng chi trả</span>'
-                '</div>'
-                '<div class="payment-legend-item">'
-                f'<span class="payment-legend-dot" style="background:{DONUT_SECOND};"></span>'
-                '<span>Bảo hiểm chi trả</span>'
-                '</div>'
-                '</div>'
-            )
-
-            st.markdown(
-                payment_legend_html,
-                unsafe_allow_html=True,
-            )
 
         if "nguon_khach" in data.columns and source_summary is not None:
             st.markdown(
@@ -2892,7 +2858,7 @@ def render_payment_section(data):
                     margin=dict(
                         l=180,
                         r=40,
-                        t=38,
+                        t=46,
                         b=42,
                     ),
                     xaxis_title="Số RO",
