@@ -2512,6 +2512,72 @@ def render_payment_section(data):
         )
         return 0
 
+    payment_css = """
+    <style>
+    .payment-chart-title {
+        color: #1F2937;
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1.2;
+        margin: 0;
+        padding: 16px 2px 4px 2px;
+    }
+
+    .payment-legend {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 24px;
+        width: 100%;
+        flex-wrap: nowrap;
+        margin-top: -4px;
+        margin-bottom: 12px;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #475467;
+    }
+
+    .payment-legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    .payment-legend-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        display: inline-block;
+        flex: 0 0 9px;
+    }
+
+    .st-key-payment_donut_card {
+        width: 100%;
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 18px;
+        box-sizing: border-box;
+        padding: 0 18px 16px 18px;
+        overflow: hidden;
+    }
+
+    .st-key-payment_donut_card div[data-testid="stVerticalBlock"] {
+        gap: 0 !important;
+    }
+
+    .st-key-payment_donut_card div[data-testid="stPlotlyChart"] {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    </style>
+    """
+
+    st.markdown(
+        payment_css,
+        unsafe_allow_html=True,
+    )
+
     # ========================================================
     # LẤY TRỰC TIẾP TỪ FILE LỆNH SỬA CHỮA
     # ========================================================
@@ -2541,7 +2607,6 @@ def render_payment_section(data):
                 "Bảo hiểm chi trả",
                 "Khách hàng chi trả",
             ],
-
             "Giá trị": [
                 insurance_value,
                 customer_value,
@@ -2587,13 +2652,11 @@ def render_payment_section(data):
             "Nguồn thanh toán": [
                 "TỔNG"
             ],
-
             "Giá trị": [
                 fmt_m(
                     total_payment
                 )
             ],
-
             "Tỷ trọng": [
                 "100.00%"
             ],
@@ -2619,17 +2682,10 @@ def render_payment_section(data):
     )
 
     # ========================================================
-    # BẢNG CƠ CẤU NGUỒN THANH TOÁN
+    # BẢNG NGUỒN THANH TOÁN
     # ========================================================
 
     with left_column:
-        st.markdown(
-            '<div class="section-label">'
-            'Bảng cơ cấu nguồn thanh toán'
-            '</div>',
-            unsafe_allow_html=True,
-        )
-
         st.dataframe(
             style_white_table(
                 payment_display
@@ -2643,103 +2699,105 @@ def render_payment_section(data):
     # ========================================================
 
     with right_column:
-        st.markdown(
-            '<div class="section-label">'
-            'Tỷ trọng nguồn thanh toán'
-            '</div>',
-            unsafe_allow_html=True,
-        )
-
-        figure = go.Figure(
-            data=[
-                go.Pie(
-                    labels=[
-                        "Khách hàng chi trả",
-                        "Bảo hiểm chi trả",
-                    ],
-
-                    values=[
-                        customer_value,
-                        insurance_value,
-                    ],
-
-                    hole=0.58,
-
-                    marker=dict(
-                        colors=[
-                            DONUT_MAIN,
-                            DONUT_SECOND,
-                        ]
-                    ),
-
-                    textinfo="percent",
-
-                    texttemplate=(
-                        "%{percent:.0%}"
-                    ),
-
-                    textfont=dict(
-                        size=15,
-                        color="white",
-                    ),
-
-                    domain=dict(
-                        x=[0.08, 0.78],
-                        y=[0.10, 0.90],
-                    ),
-
-                    hovertemplate=(
-                        "<b>%{label}</b><br>"
-                        "Giá trị: %{value:,.0f}<br>"
-                        "Tỷ trọng: %{percent:.2%}"
-                        "<extra></extra>"
-                    ),
-                )
-            ]
-        )
-
-        figure.update_layout(
-            template="simple_white",
-            height=410,
-
-            margin=dict(
-                l=10,
-                r=20,
-                t=10,
-                b=10,
-            ),
-
-            legend=dict(
-                orientation="v",
-                y=0.5,
-                yanchor="middle",
-                x=0.82,
-                xanchor="left",
-
-                font=dict(
-                    color="#475467",
-                ),
-            ),
-
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-
-            font=dict(
-                color="#475467",
-            ),
-        )
-
         payment_chart_card = st.container(
             key="payment_donut_card"
         )
 
         with payment_chart_card:
+            st.markdown(
+                '<div class="payment-chart-title">'
+                'Tỷ trọng nguồn thanh toán'
+                '</div>',
+                unsafe_allow_html=True,
+            )
+
+            figure = go.Figure(
+                data=[
+                    go.Pie(
+                        labels=[
+                            "Khách hàng chi trả",
+                            "Bảo hiểm chi trả",
+                        ],
+                        values=[
+                            customer_value,
+                            insurance_value,
+                        ],
+                        hole=0.60,
+                        marker=dict(
+                            colors=[
+                                DONUT_MAIN,
+                                DONUT_SECOND,
+                            ],
+                            line=dict(
+                                color="#FFFFFF",
+                                width=2,
+                            ),
+                        ),
+                        textinfo="percent",
+                        texttemplate=(
+                            "%{percent:.0%}"
+                        ),
+                        textfont=dict(
+                            size=14,
+                            color="white",
+                        ),
+                        domain=dict(
+                            x=[0.20, 0.80],
+                            y=[0.18, 0.92],
+                        ),
+                        hovertemplate=(
+                            "<b>%{label}</b><br>"
+                            "Giá trị: %{value:,.0f}<br>"
+                            "Tỷ trọng: %{percent:.2%}"
+                            "<extra></extra>"
+                        ),
+                    )
+                ]
+            )
+
+            figure.update_layout(
+                template="simple_white",
+                height=320,
+                margin=dict(
+                    l=0,
+                    r=0,
+                    t=0,
+                    b=0,
+                ),
+                showlegend=False,
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(
+                    color="#475467",
+                ),
+            )
+
             st.plotly_chart(
                 figure,
                 use_container_width=True,
                 config={
                     "displayModeBar": False,
+                    "responsive": True,
                 },
             )
 
+            payment_legend_html = (
+                '<div class="payment-legend">'
+                '<div class="payment-legend-item">'
+                f'<span class="payment-legend-dot" style="background:{DONUT_MAIN};"></span>'
+                '<span>Khách hàng chi trả</span>'
+                '</div>'
+                '<div class="payment-legend-item">'
+                f'<span class="payment-legend-dot" style="background:{DONUT_SECOND};"></span>'
+                '<span>Bảo hiểm chi trả</span>'
+                '</div>'
+                '</div>'
+            )
+
+            st.markdown(
+                payment_legend_html,
+                unsafe_allow_html=True,
+            )
+
     return total_payment
+
