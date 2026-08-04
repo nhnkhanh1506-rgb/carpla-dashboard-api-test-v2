@@ -862,12 +862,12 @@ def build_vehicle_segment_bubble_chart(
 
     bubble_colors = {
         "Xe sang": {
-            "fill": "#FE9E2C",
-            "text": "#A84E00",
+            "fill": "#FFECD4",
+            "text": "#A45A00",
         },
         "Xe phổ thông": {
-            "fill": "#9DDBF5",
-            "text": "#1E5E7A",
+            "fill": "#D4EDFF",
+            "text": "#2F5F7A",
         },
         "Khác": {
             "fill": "#FDE7EB",
@@ -988,11 +988,11 @@ def render_vehicle_segment_legend():
     legend_items = [
         (
             "Xe phổ thông",
-            "#1E5E7A",
+            "#2F5F7A",
         ),
         (
             "Xe sang",
-            "#A84E00",
+            "#A45A00",
         ),
         (
             "Khác",
@@ -1302,11 +1302,8 @@ def prepare_daily_data(
     ).fillna(0)
 
     # ========================================================
-    # THÁNG = ALL
-    # Giữ nguyên hình dáng/màu chart.
-    # Chỉ đổi đơn vị trục X từ ngày sang tháng.
+    # THÁNG = ALL -> HIỂN THỊ THEO THÁNG
     # ========================================================
-
     if month == "All":
         days = list(
             range(
@@ -1341,35 +1338,14 @@ def prepare_daily_data(
             .reset_index()
         )
 
-        daily[
-            "revenue_m"
-        ] = (
-            daily["revenue"]
-            / 1_000_000
-        )
-
-        daily["cum_ro"] = (
-            daily["ro"].cumsum()
-        )
-
-        daily[
-            "cum_revenue"
-        ] = (
-            daily[
-                "revenue"
-            ].cumsum()
-        )
-
         target_ro_day = safe_div(
             target_ro,
             12,
         )
 
-        target_revenue_day = (
-            safe_div(
-                target_revenue,
-                12,
-            )
+        target_revenue_day = safe_div(
+            target_revenue,
+            12,
         )
 
         daily[
@@ -1386,6 +1362,9 @@ def prepare_daily_data(
             * target_revenue_day
         )
 
+    # ========================================================
+    # THÁNG CỤ THỂ -> HIỂN THỊ THEO NGÀY
+    # ========================================================
     else:
         days_in_month = calendar.monthrange(
             year,
@@ -1425,35 +1404,14 @@ def prepare_daily_data(
             .reset_index()
         )
 
-        daily[
-            "revenue_m"
-        ] = (
-            daily["revenue"]
-            / 1_000_000
-        )
-
-        daily["cum_ro"] = (
-            daily["ro"].cumsum()
-        )
-
-        daily[
-            "cum_revenue"
-        ] = (
-            daily[
-                "revenue"
-            ].cumsum()
-        )
-
         target_ro_day = safe_div(
             target_ro,
             working_days,
         )
 
-        target_revenue_day = (
-            safe_div(
-                target_revenue,
-                working_days,
-            )
+        target_revenue_day = safe_div(
+            target_revenue,
+            working_days,
         )
 
         daily[
@@ -1482,23 +1440,28 @@ def prepare_daily_data(
             ]
         ]
 
+    daily["revenue_m"] = (
+        daily["revenue"]
+        / 1_000_000
+    )
+
+    daily["cum_ro"] = (
+        daily["ro"].cumsum()
+    )
+
+    daily["cum_revenue"] = (
+        daily["revenue"].cumsum()
+    )
+
     daily["cum_ro_pct"] = (
         daily["cum_ro"]
-        / daily[
-            "target_cum_ro"
-        ]
+        / daily["target_cum_ro"]
         * 100
     )
 
-    daily[
-        "cum_revenue_pct"
-    ] = (
-        daily[
-            "cum_revenue"
-        ]
-        / daily[
-            "target_cum_revenue"
-        ]
+    daily["cum_revenue_pct"] = (
+        daily["cum_revenue"]
+        / daily["target_cum_revenue"]
         * 100
     )
 
@@ -1514,12 +1477,8 @@ def prepare_daily_data(
         .fillna(0)
     )
 
-    daily[
-        "cum_revenue_pct"
-    ] = (
-        daily[
-            "cum_revenue_pct"
-        ]
+    daily["cum_revenue_pct"] = (
+        daily["cum_revenue_pct"]
         .replace(
             [
                 float("inf"),
@@ -1546,6 +1505,7 @@ def build_ro_daily_chart(
     daily,
     days,
     workshop,
+    has_target=True,
 ):
     figure = make_subplots(
         specs=[
@@ -1591,48 +1551,49 @@ def build_ro_daily_chart(
         secondary_y=False,
     )
 
-    figure.add_trace(
-        go.Scatter(
-            x=daily["day"],
-            y=daily["cum_ro_pct"],
+    if has_target:
+        figure.add_trace(
+            go.Scatter(
+                x=daily["day"],
+                y=daily["cum_ro_pct"],
 
-            mode="lines+markers+text",
+                mode="lines+markers+text",
 
-            line=dict(
-                color=CUMULATIVE_LINE_COLOR,
-                width=3,
-                dash="dot",
-            ),
-
-            marker=dict(
-                size=7,
-                color=CUMULATIVE_MARKER_COLOR,
                 line=dict(
-                    color=CUMULATIVE_MARKER_BORDER,
-                    width=1,
+                    color=CUMULATIVE_LINE_COLOR,
+                    width=3,
+                    dash="dot",
                 ),
+
+                marker=dict(
+                    size=7,
+                    color=CUMULATIVE_MARKER_COLOR,
+                    line=dict(
+                        color=CUMULATIVE_MARKER_BORDER,
+                        width=1,
+                    ),
+                ),
+
+                text=[
+                    f"{value:.0f}%"
+                    if value > 0
+                    else ""
+                    for value in daily[
+                        "cum_ro_pct"
+                    ]
+                ],
+
+                textposition="bottom center",
+
+                textfont=dict(
+                    size=10,
+                    color=DAILY_CHART_TEXT,
+                ),
+
+                name="% đạt lũy kế",
             ),
-
-            text=[
-                f"{value:.0f}%"
-                if value > 0
-                else ""
-                for value in daily[
-                    "cum_ro_pct"
-                ]
-            ],
-
-            textposition="bottom center",
-
-            textfont=dict(
-                size=10,
-                color=DAILY_CHART_TEXT,
-            ),
-
-            name="% đạt lũy kế",
-        ),
-        secondary_y=True,
-    )
+            secondary_y=True,
+        )
 
     figure.update_layout(
         template="simple_white",
@@ -1711,6 +1672,7 @@ def build_revenue_daily_chart(
     daily,
     days,
     workshop,
+    has_target=True,
 ):
     figure = make_subplots(
         specs=[
@@ -1758,50 +1720,51 @@ def build_revenue_daily_chart(
         secondary_y=False,
     )
 
-    figure.add_trace(
-        go.Scatter(
-            x=daily["day"],
-            y=daily[
-                "cum_revenue_pct"
-            ],
-
-            mode="lines+markers+text",
-
-            line=dict(
-                color=CUMULATIVE_LINE_COLOR,
-                width=3,
-                dash="dot",
-            ),
-
-            marker=dict(
-                size=7,
-                color=CUMULATIVE_MARKER_COLOR,
-                line=dict(
-                    color=CUMULATIVE_MARKER_BORDER,
-                    width=1,
-                ),
-            ),
-
-            text=[
-                f"{value:.0f}%"
-                if value > 0
-                else ""
-                for value in daily[
+    if has_target:
+        figure.add_trace(
+            go.Scatter(
+                x=daily["day"],
+                y=daily[
                     "cum_revenue_pct"
-                ]
-            ],
+                ],
 
-            textposition="bottom center",
+                mode="lines+markers+text",
 
-            textfont=dict(
-                size=10,
-                color=DAILY_CHART_TEXT,
+                line=dict(
+                    color=CUMULATIVE_LINE_COLOR,
+                    width=3,
+                    dash="dot",
+                ),
+
+                marker=dict(
+                    size=7,
+                    color=CUMULATIVE_MARKER_COLOR,
+                    line=dict(
+                        color=CUMULATIVE_MARKER_BORDER,
+                        width=1,
+                    ),
+                ),
+
+                text=[
+                    f"{value:.0f}%"
+                    if value > 0
+                    else ""
+                    for value in daily[
+                        "cum_revenue_pct"
+                    ]
+                ],
+
+                textposition="bottom center",
+
+                textfont=dict(
+                    size=10,
+                    color=DAILY_CHART_TEXT,
+                ),
+
+                name="% đạt lũy kế",
             ),
-
-            name="% đạt lũy kế",
-        ),
-        secondary_y=True,
-    )
+            secondary_y=True,
+        )
 
     figure.update_layout(
         template="simple_white",
@@ -1884,6 +1847,7 @@ def render_daily_charts(
     target_ro,
     target_revenue,
     working_days,
+    target_available=True,
 ):
     is_year_view = (
         month == "All"
@@ -1960,6 +1924,7 @@ def render_daily_charts(
             daily=daily,
             days=days,
             workshop=workshop,
+            has_target=target_available,
         )
 
         ro_chart_card = st.container(
@@ -1985,20 +1950,22 @@ def render_daily_charts(
                 f"{actual_ro_average:.0f}",
             )
 
-            render_mini_kpi(
-                "CPUS/THÁNG TARGET",
-                f"{target_ro_day:.0f}",
-            )
+            if target_available:
+                render_mini_kpi(
+                    "CPUS/THÁNG TARGET",
+                    f"{target_ro_day:.0f}",
+                )
         else:
             render_mini_kpi(
                 "CPUS TB/NGÀY",
                 f"{actual_ro_average:.0f}",
             )
 
-            render_mini_kpi(
-                "CPUS/NGÀY TARGET",
-                f"{target_ro_day:.0f}",
-            )
+            if target_available:
+                render_mini_kpi(
+                    "CPUS/NGÀY TARGET",
+                    f"{target_ro_day:.0f}",
+                )
 
     # HÀNG 2: DOANH THU
     revenue_chart_column, revenue_kpi_column = (
@@ -2013,6 +1980,7 @@ def render_daily_charts(
                 daily=daily,
                 days=days,
                 workshop=workshop,
+                has_target=target_available,
             )
         )
 
@@ -2048,12 +2016,13 @@ def render_daily_charts(
                 ),
             )
 
-            render_mini_kpi(
-                "DT TB/THÁNG TARGET",
-                fmt_m(
-                    target_revenue_day
-                ),
-            )
+            if target_available:
+                render_mini_kpi(
+                    "DT TB/THÁNG TARGET",
+                    fmt_m(
+                        target_revenue_day
+                    ),
+                )
         else:
             render_mini_kpi(
                 "DT TB/NGÀY",
@@ -2062,12 +2031,13 @@ def render_daily_charts(
                 ),
             )
 
-            render_mini_kpi(
-                "DT TB/NGÀY TARGET",
-                fmt_m(
-                    target_revenue_day
-                ),
-            )
+            if target_available:
+                render_mini_kpi(
+                    "DT TB/NGÀY TARGET",
+                    fmt_m(
+                        target_revenue_day
+                    ),
+                )
 
 
 # ============================================================
@@ -2502,12 +2472,8 @@ def render_payment_section(data):
         )
         return 0
 
-    # ========================================================
-    # NGUỒN THANH TOÁN
-    # ========================================================
-    # data truyền vào đây đã được lọc theo Ngày DT
-    # trong data_loader.py / calculations.py.
-    # KHÔNG dùng Ngày lập lệnh hoặc Ngày quyết toán.
+    # data ở đây đã được lọc bằng cột Ngày DT.
+    # Không dùng Ngày lập lệnh / Ngày quyết toán.
 
     customer_value = pd.to_numeric(
         data["khach_hang_chi_tra"],
@@ -2641,9 +2607,7 @@ def render_payment_section(data):
                         ]
                     ),
                     textinfo="percent",
-                    texttemplate=(
-                        "%{percent:.0%}"
-                    ),
+                    texttemplate="%{percent:.0%}",
                     textfont=dict(
                         size=15,
                         color="white",
@@ -2715,12 +2679,12 @@ def render_payment_section(data):
         )
         return total_payment
 
-    customer_source_data = data.copy()
+    source_data = data.copy()
 
-    customer_source_data[
+    source_data[
         "nguon_khach"
     ] = (
-        customer_source_data[
+        source_data[
             "nguon_khach"
         ]
         .fillna("KHÔNG XÁC ĐỊNH")
@@ -2732,8 +2696,8 @@ def render_payment_section(data):
         )
     )
 
-    customer_source_summary = (
-        customer_source_data
+    source_summary = (
+        source_data
         .groupby(
             "nguon_khach",
             dropna=False,
@@ -2752,14 +2716,14 @@ def render_payment_section(data):
     )
 
     total_source_ro = (
-        customer_source_summary[
+        source_summary[
             "so_ro"
         ].sum()
     )
 
-    customer_source_summary[
+    source_summary[
         "ty_trong"
-    ] = customer_source_summary[
+    ] = source_summary[
         "so_ro"
     ].apply(
         lambda value:
@@ -2770,15 +2734,17 @@ def render_payment_section(data):
     )
 
     source_display = (
-        customer_source_summary.copy()
+        source_summary.copy()
     )
 
-    source_display = source_display.rename(
-        columns={
-            "nguon_khach": "Nguồn khách",
-            "so_ro": "Số RO",
-            "ty_trong": "Tỷ trọng",
-        }
+    source_display = (
+        source_display.rename(
+            columns={
+                "nguon_khach": "Nguồn khách",
+                "so_ro": "Số RO",
+                "ty_trong": "Tỷ trọng",
+            }
+        )
     )
 
     source_display[
@@ -2851,13 +2817,13 @@ def render_payment_section(data):
     with source_right:
         st.markdown(
             '<div class="section-label">'
-            'Tỷ trọng nguồn khách'
+            'Top nguồn khách theo số RO'
             '</div>',
             unsafe_allow_html=True,
         )
 
         source_chart = (
-            customer_source_summary
+            source_summary
             .head(8)
             .sort_values(
                 "so_ro",
