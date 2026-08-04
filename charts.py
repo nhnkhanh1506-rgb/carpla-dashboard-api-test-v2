@@ -2520,9 +2520,9 @@ def render_payment_section(data):
         border: 1px solid #E2E8F0 !important;
         border-radius: 18px !important;
         box-sizing: border-box !important;
-        padding: 18px 18px 10px 18px !important;
+        padding: 14px 18px 12px 18px !important;
         overflow: hidden !important;
-        min-height: 344px !important;
+        min-height: 356px !important;
     }
 
     .st-key-payment_donut_card div[data-testid="stVerticalBlock"] {
@@ -2535,12 +2535,11 @@ def render_payment_section(data):
     }
 
     .payment-card-title {
-        color: #1F2937;
-        font-size: 20px;
+        font-size: 24px;
+        line-height: 1.15;
         font-weight: 800;
-        line-height: 1.2;
-        margin: 0 0 2px 2px;
-        padding: 0;
+        color: #1F2937;
+        margin: 2px 0 -14px 4px;
     }
 
     .st-key-customer_source_chart_card {
@@ -2651,10 +2650,6 @@ def render_payment_section(data):
         ],
         ignore_index=True,
     )
-
-    # ========================================================
-    # NGUỒN KHÁCH
-    # ========================================================
 
     source_summary = None
     source_display = None
@@ -2769,16 +2764,12 @@ def render_payment_section(data):
             ignore_index=True,
         )
 
-    # ========================================================
-    # 2 CỘT CHÍNH
-    # ========================================================
-
     left_col, right_col = st.columns(
         [1, 1]
     )
 
     # ========================================================
-    # BÊN TRÁI: 2 TABLE
+    # BÊN TRÁI: 2 TABLE XẾP SÁT NHAU
     # ========================================================
 
     with left_col:
@@ -2805,7 +2796,7 @@ def render_payment_section(data):
             )
 
     # ========================================================
-    # BÊN PHẢI: PIE + BAR
+    # BÊN PHẢI: COPY ĐÚNG STYLE CƠ CẤU TỔNG DOANH THU
     # ========================================================
 
     with right_col:
@@ -2815,13 +2806,15 @@ def render_payment_section(data):
 
         with payment_chart_card:
             st.markdown(
-                '<div class="payment-card-title">'
-                'Tỷ trọng nguồn thanh toán'
-                '</div>',
+                """
+                <div class="payment-card-title">
+                    Tỷ trọng nguồn thanh toán
+                </div>
+                """,
                 unsafe_allow_html=True,
             )
 
-            figure = go.Figure(
+            payment_figure = go.Figure(
                 data=[
                     go.Pie(
                         labels=[
@@ -2832,7 +2825,10 @@ def render_payment_section(data):
                             customer_value,
                             insurance_value,
                         ],
-                        hole=0.56,
+                        hole=0.60,
+                        sort=False,
+                        direction="clockwise",
+
                         marker=dict(
                             colors=[
                                 DONUT_MAIN,
@@ -2840,137 +2836,123 @@ def render_payment_section(data):
                             ],
                             line=dict(
                                 color="#FFFFFF",
-                                width=2,
+                                width=3,
                             ),
                         ),
+
                         textinfo="percent",
                         texttemplate="%{percent:.0%}",
+
                         textfont=dict(
+                            color="#FFFFFF",
                             size=14,
-                            color="white",
                         ),
+
                         domain=dict(
-                            x=[0.20, 0.80],
-                            y=[0.24, 0.88],
+                            x=[0.08, 0.92],
+                            y=[0.13, 0.98],
                         ),
+
                         hovertemplate=(
                             "<b>%{label}</b><br>"
                             "Giá trị: %{value:,.0f}<br>"
-                            "Tỷ trọng: %{percent:.2%}"
+                            "Tỷ trọng: %{percent:.1%}"
                             "<extra></extra>"
                         ),
                     )
                 ]
             )
 
-            figure.add_annotation(
+            payment_figure.add_annotation(
                 x=0.5,
-                y=0.56,
-                xref="paper",
-                yref="paper",
+                y=0.57,
                 text=(
                     f"<b>{fmt_m(total_payment)}</b>"
-                    "<br>"
-                    "<span style='font-size:11px;'>"
+                    "<br><span style='font-size:12px;'>"
                     "Tổng thanh toán"
                     "</span>"
                 ),
                 showarrow=False,
-                align="center",
                 font=dict(
                     color="#1F2937",
-                    size=14,
+                    size=16,
                 ),
+                align="center",
             )
 
-            # Legend tự vẽ BÊN TRONG Plotly.
-            # Không thể bị Streamlit cắt hoặc render thành text HTML.
-            legend_y = 0.085
-
-            figure.add_shape(
-                type="circle",
-                xref="paper",
-                yref="paper",
-                x0=0.30,
-                x1=0.318,
-                y0=legend_y - 0.012,
-                y1=legend_y + 0.012,
-                fillcolor=DONUT_MAIN,
-                line=dict(
-                    color=DONUT_MAIN,
-                    width=0,
-                ),
-            )
-
-            figure.add_annotation(
-                x=0.325,
-                y=legend_y,
-                xref="paper",
-                yref="paper",
-                text="Khách hàng chi trả",
-                showarrow=False,
-                xanchor="left",
-                yanchor="middle",
-                font=dict(
-                    color="#475467",
-                    size=12,
-                ),
-            )
-
-            figure.add_shape(
-                type="circle",
-                xref="paper",
-                yref="paper",
-                x0=0.61,
-                x1=0.628,
-                y0=legend_y - 0.012,
-                y1=legend_y + 0.012,
-                fillcolor=DONUT_SECOND,
-                line=dict(
-                    color=DONUT_SECOND,
-                    width=0,
-                ),
-            )
-
-            figure.add_annotation(
-                x=0.635,
-                y=legend_y,
-                xref="paper",
-                yref="paper",
-                text="Bảo hiểm chi trả",
-                showarrow=False,
-                xanchor="left",
-                yanchor="middle",
-                font=dict(
-                    color="#475467",
-                    size=12,
-                ),
-            )
-
-            figure.update_layout(
+            payment_figure.update_layout(
                 template="simple_white",
-                height=285,
+                height=315,
+
                 margin=dict(
                     l=0,
                     r=0,
                     t=0,
                     b=0,
                 ),
-                showlegend=False,
+
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
-                font=dict(
-                    color="#475467",
-                ),
+
+                showlegend=False,
             )
 
             st.plotly_chart(
-                figure,
+                payment_figure,
                 use_container_width=True,
                 config={
                     "displayModeBar": False,
                     "responsive": True,
                 },
+            )
+
+            st.markdown(
+                f"""
+                <div style="
+                    display:flex;
+                    justify-content:center;
+                    gap:18px;
+                    flex-wrap:nowrap;
+                    margin-top:-22px;
+                    padding-bottom:4px;
+                    font-size:13px;
+                    color:#475467;
+                    font-weight:600;
+                ">
+                    <div style="
+                        display:flex;
+                        align-items:center;
+                        gap:6px;
+                        white-space:nowrap;
+                    ">
+                        <span style="
+                            width:10px;
+                            height:10px;
+                            border-radius:50%;
+                            background:{DONUT_MAIN};
+                            display:inline-block;
+                        "></span>
+                        <span>Khách hàng chi trả</span>
+                    </div>
+
+                    <div style="
+                        display:flex;
+                        align-items:center;
+                        gap:6px;
+                        white-space:nowrap;
+                    ">
+                        <span style="
+                            width:10px;
+                            height:10px;
+                            border-radius:50%;
+                            background:{DONUT_SECOND};
+                            display:inline-block;
+                        "></span>
+                        <span>Bảo hiểm chi trả</span>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
 
         if (
