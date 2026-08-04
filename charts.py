@@ -2521,8 +2521,8 @@ def render_payment_section(data):
         gap: 26px;
         width: 100%;
         flex-wrap: nowrap;
-        margin-top: 4px;
-        margin-bottom: 2px;
+        margin-top: -14px;
+        margin-bottom: 6px;
         font-size: 12.5px;
         font-weight: 600;
         color: #475467;
@@ -2588,7 +2588,7 @@ def render_payment_section(data):
         font-size: 18px;
         font-weight: 800;
         line-height: 1.2;
-        margin: 0 0 12px 0;
+        margin: 0 0 16px 0;
         padding: 0;
     }
     </style>
@@ -2756,7 +2756,7 @@ def render_payment_section(data):
                         ),
                         domain=dict(
                             x=[0.16, 0.84],
-                            y=[0.24, 0.88],
+                            y=[0.18, 0.82],
                         ),
                         hovertemplate=(
                             "<b>%{label}</b><br>"
@@ -2785,7 +2785,7 @@ def render_payment_section(data):
 
             figure.add_annotation(
                 x=0.5,
-                y=0.54,
+                y=0.49,
                 xref="paper",
                 yref="paper",
                 text=(
@@ -2892,7 +2892,7 @@ def render_payment_section(data):
                     margin=dict(
                         l=180,
                         r=40,
-                        t=12,
+                        t=28,
                         b=42,
                     ),
                     xaxis_title="Số RO",
