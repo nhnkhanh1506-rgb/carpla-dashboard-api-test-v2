@@ -2696,8 +2696,8 @@ def render_payment_section(data):
                             color="white",
                         ),
                         domain=dict(
-                            x=[0.31, 0.69],
-                            y=[0.19, 0.76],
+                            x=[0.27, 0.73],
+                            y=[0.16, 0.80],
                         ),
                         hovertemplate=(
                             "<b>%{label}</b><br>"
@@ -2728,7 +2728,7 @@ def render_payment_section(data):
 
             figure.add_annotation(
                 x=0.5,
-                y=0.475,
+                y=0.48,
                 xref="paper",
                 yref="paper",
                 text=(
@@ -2748,7 +2748,7 @@ def render_payment_section(data):
 
             figure.update_layout(
                 template="simple_white",
-                height=290,
+                height=300,
                 margin=dict(
                     l=0,
                     r=0,
