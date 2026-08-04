@@ -2497,6 +2497,7 @@ def render_payment_section(data):
     required_columns = [
         "khach_hang_chi_tra",
         "bao_hiem_chi_tra",
+        "nguon_khach",
     ]
 
     missing_columns = [
@@ -2507,7 +2508,7 @@ def render_payment_section(data):
 
     if missing_columns:
         st.error(
-            "Thiếu cột nguồn thanh toán: "
+            "Thiếu cột cho phần cơ cấu nguồn thanh toán: "
             + ", ".join(missing_columns)
         )
         return 0
@@ -2543,24 +2544,38 @@ def render_payment_section(data):
         flex: 0 0 9px;
     }
 
-    .st-key-payment_donut_card {
+    .st-key-payment_donut_card,
+    .st-key-customer_source_chart_card {
         width: 100% !important;
         background: #FFFFFF !important;
         border: 1px solid #E2E8F0 !important;
         border-radius: 18px !important;
         box-sizing: border-box !important;
-        padding: 8px 18px 14px 18px !important;
         overflow: hidden !important;
         min-height: 0 !important;
     }
 
-    .st-key-payment_donut_card div[data-testid="stVerticalBlock"] {
+    .st-key-payment_donut_card {
+        padding: 8px 18px 14px 18px !important;
+    }
+
+    .st-key-customer_source_chart_card {
+        padding: 8px 16px 10px 16px !important;
+    }
+
+    .st-key-payment_donut_card div[data-testid="stVerticalBlock"],
+    .st-key-customer_source_chart_card div[data-testid="stVerticalBlock"] {
         gap: 0 !important;
     }
 
-    .st-key-payment_donut_card div[data-testid="stPlotlyChart"] {
+    .st-key-payment_donut_card div[data-testid="stPlotlyChart"],
+    .st-key-customer_source_chart_card div[data-testid="stPlotlyChart"] {
         margin: 0 !important;
         padding: 0 !important;
+    }
+
+    .customer-source-spacer {
+        height: 22px;
     }
     </style>
     """
@@ -2569,6 +2584,10 @@ def render_payment_section(data):
         payment_css,
         unsafe_allow_html=True,
     )
+
+    # ========================================================
+    # A. CƠ CẤU NGUỒN THANH TOÁN
+    # ========================================================
 
     customer_value = pd.to_numeric(
         data["khach_hang_chi_tra"],
@@ -2629,20 +2648,17 @@ def render_payment_section(data):
 
     total_row = pd.DataFrame(
         {
-            "Nguồn thanh toán": [
-                "TỔNG"
-            ],
-            "Giá trị": [
-                fmt_m(total_payment)
-            ],
-            "Tỷ trọng": [
-                "100.00%"
-            ],
+            "Nguồn thanh toán": ["TỔNG"],
+            "Giá trị": [fmt_m(total_payment)],
+            "Tỷ trọng": ["100.00%"],
         }
     )
 
     payment_display = pd.concat(
-        [payment_display, total_row],
+        [
+            payment_display,
+            total_row,
+        ],
         ignore_index=True,
     )
 
@@ -2688,9 +2704,7 @@ def render_payment_section(data):
                             ),
                         ),
                         textinfo="percent",
-                        texttemplate=(
-                            "%{percent:.0%}"
-                        ),
+                        texttemplate="%{percent:.0%}",
                         textfont=dict(
                             size=13,
                             color="white",
@@ -2714,9 +2728,7 @@ def render_payment_section(data):
                 y=0.96,
                 xref="paper",
                 yref="paper",
-                text=(
-                    "<b>Tỷ trọng nguồn thanh toán</b>"
-                ),
+                text="<b>Tỷ trọng nguồn thanh toán</b>",
                 showarrow=False,
                 xanchor="left",
                 yanchor="top",
@@ -2775,11 +2787,13 @@ def render_payment_section(data):
             payment_legend_html = (
                 '<div class="payment-legend">'
                 '<div class="payment-legend-item">'
-                f'<span class="payment-legend-dot" style="background:{DONUT_MAIN};"></span>'
+                f'<span class="payment-legend-dot" '
+                f'style="background:{DONUT_MAIN};"></span>'
                 '<span>Khách hàng chi trả</span>'
                 '</div>'
                 '<div class="payment-legend-item">'
-                f'<span class="payment-legend-dot" style="background:{DONUT_SECOND};"></span>'
+                f'<span class="payment-legend-dot" '
+                f'style="background:{DONUT_SECOND};"></span>'
                 '<span>Bảo hiểm chi trả</span>'
                 '</div>'
                 '</div>'
@@ -2788,6 +2802,278 @@ def render_payment_section(data):
             st.markdown(
                 payment_legend_html,
                 unsafe_allow_html=True,
+            )
+
+    # ========================================================
+    # B. CƠ CẤU NGUỒN KHÁCH
+    # ========================================================
+    # data đã được calculations.py lọc theo:
+    # Chi nhánh + Xưởng + Năm/Tháng bằng Ngày DT.
+    # Không dùng Ngày lập lệnh / Ngày quyết toán.
+
+    st.markdown(
+        '<div class="customer-source-spacer"></div>',
+        unsafe_allow_html=True,
+    )
+
+    customer_source_data = data.copy()
+
+    customer_source_data[
+        "nguon_khach"
+    ] = (
+        customer_source_data[
+            "nguon_khach"
+        ]
+        .fillna("KHÔNG XÁC ĐỊNH")
+        .astype(str)
+        .str.strip()
+        .replace(
+            "",
+            "KHÔNG XÁC ĐỊNH",
+        )
+    )
+
+    order_key_column = (
+        "ro_key"
+        if "ro_key" in customer_source_data.columns
+        else "ro"
+    )
+
+    customer_source_summary = (
+        customer_source_data
+        .groupby(
+            "nguon_khach",
+            dropna=False,
+        )
+        .agg(
+            so_lenh=(
+                order_key_column,
+                "nunique",
+            )
+        )
+        .reset_index()
+        .sort_values(
+            [
+                "so_lenh",
+                "nguon_khach",
+            ],
+            ascending=[
+                False,
+                True,
+            ],
+        )
+        .reset_index(drop=True)
+    )
+
+    total_source_orders = int(
+        customer_source_summary[
+            "so_lenh"
+        ].sum()
+    )
+
+    customer_source_summary[
+        "ty_trong"
+    ] = customer_source_summary[
+        "so_lenh"
+    ].apply(
+        lambda value:
+        safe_div(
+            value,
+            total_source_orders,
+        )
+    )
+
+    customer_source_display = (
+        customer_source_summary.copy()
+    )
+
+    customer_source_display[
+        "so_lenh"
+    ] = customer_source_display[
+        "so_lenh"
+    ].astype(int).astype(str)
+
+    customer_source_display[
+        "ty_trong"
+    ] = customer_source_display[
+        "ty_trong"
+    ].map(
+        lambda value:
+        f"{value:.1%}"
+    )
+
+    customer_source_display = (
+        customer_source_display.rename(
+            columns={
+                "nguon_khach": "Nguồn khách",
+                "so_lenh": "Số lệnh",
+                "ty_trong": "Tỷ trọng",
+            }
+        )
+    )
+
+    source_total_row = pd.DataFrame(
+        {
+            "Nguồn khách": ["TỔNG"],
+            "Số lệnh": [str(total_source_orders)],
+            "Tỷ trọng": ["100.0%"],
+        }
+    )
+
+    customer_source_display = pd.concat(
+        [
+            customer_source_display,
+            source_total_row,
+        ],
+        ignore_index=True,
+    )
+
+    source_left, source_right = st.columns(
+        [1, 1]
+    )
+
+    with source_left:
+        st.dataframe(
+            style_white_table(
+                customer_source_display
+            ),
+            use_container_width=True,
+            hide_index=True,
+        )
+
+    with source_right:
+        source_chart_card = st.container(
+            key="customer_source_chart_card"
+        )
+
+        with source_chart_card:
+            source_chart_data = (
+                customer_source_summary
+                .sort_values(
+                    "so_lenh",
+                    ascending=True,
+                )
+                .copy()
+            )
+
+            source_chart_data[
+                "ty_trong_pct"
+            ] = (
+                source_chart_data[
+                    "ty_trong"
+                ] * 100
+            )
+
+            source_chart_height = max(
+                315,
+                70
+                + len(
+                    source_chart_data
+                ) * 34,
+            )
+
+            source_figure = go.Figure()
+
+            source_figure.add_trace(
+                go.Bar(
+                    x=source_chart_data[
+                        "so_lenh"
+                    ],
+                    y=source_chart_data[
+                        "nguon_khach"
+                    ],
+                    orientation="h",
+                    marker=dict(
+                        color="#F1CD54",
+                        line=dict(
+                            color="#E7C243",
+                            width=0.6,
+                        ),
+                    ),
+                    text=[
+                        (
+                            f"{int(order_count)}"
+                            f"  |  {share:.1f}%"
+                        )
+                        for order_count, share
+                        in zip(
+                            source_chart_data[
+                                "so_lenh"
+                            ],
+                            source_chart_data[
+                                "ty_trong_pct"
+                            ],
+                        )
+                    ],
+                    textposition="outside",
+                    textfont=dict(
+                        color="#667085",
+                        size=12,
+                    ),
+                    cliponaxis=False,
+                    hovertemplate=(
+                        "<b>%{y}</b><br>"
+                        "Số lệnh: %{x:,.0f}<br>"
+                        "<extra></extra>"
+                    ),
+                )
+            )
+
+            source_figure.update_layout(
+                template="simple_white",
+                height=source_chart_height,
+                margin=dict(
+                    l=20,
+                    r=80,
+                    t=58,
+                    b=38,
+                ),
+                title=dict(
+                    text="Cơ cấu nguồn khách",
+                    x=0.02,
+                    xanchor="left",
+                    font=dict(
+                        size=20,
+                        color="#1F2937",
+                    ),
+                ),
+                xaxis_title="Số lệnh",
+                yaxis_title="",
+                showlegend=False,
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(
+                    color="#475467",
+                ),
+            )
+
+            source_figure.update_xaxes(
+                showgrid=True,
+                gridcolor="#E5E7EB",
+                zeroline=False,
+                tickfont=dict(
+                    color="#667085",
+                ),
+                title_font=dict(
+                    color="#667085",
+                ),
+            )
+
+            source_figure.update_yaxes(
+                showgrid=False,
+                tickfont=dict(
+                    color="#667085",
+                    size=11,
+                ),
+            )
+
+            st.plotly_chart(
+                source_figure,
+                use_container_width=True,
+                config={
+                    "displayModeBar": False,
+                    "responsive": True,
+                },
             )
 
     return total_payment
