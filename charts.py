@@ -2521,8 +2521,8 @@ def render_payment_section(data):
         gap: 26px;
         width: 100%;
         flex-wrap: nowrap;
-        margin-top: -14px;
-        margin-bottom: 6px;
+        margin-top: -34px;
+        margin-bottom: 10px;
         font-size: 12.5px;
         font-weight: 600;
         color: #475467;
