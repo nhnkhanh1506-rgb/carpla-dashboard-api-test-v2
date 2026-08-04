@@ -1081,6 +1081,289 @@ def _map_chart(
     return figure
 
 
+
+def _multi_unit_monthly_line(
+    lsc,
+    accessory,
+    group_column,
+    title,
+    metric,
+):
+    """
+    Multi-line monthly chart:
+    - metric='ro'      -> số RO theo tháng
+    - metric='revenue' -> doanh thu theo tháng
+
+    Tự động hiển thị tất cả đơn vị có dữ liệu trong scope:
+    - Xưởng = All  -> mỗi xưởng 1 line
+    - Chi nhánh = All -> mỗi chi nhánh 1 line
+    """
+
+    if lsc.empty:
+        return go.Figure()
+
+    active_month = int(
+        lsc["ngay_hoa_don"].dt.month.max()
+    )
+
+    months = list(
+        range(
+            1,
+            active_month + 1,
+        )
+    )
+
+    service_monthly = (
+        lsc.assign(
+            month=lsc[
+                "ngay_hoa_don"
+            ].dt.month
+        )
+        .groupby(
+            [
+                group_column,
+                "month",
+            ],
+            dropna=False,
+        )
+        .agg(
+            ro=(
+                "ro_key",
+                "nunique",
+            ),
+            service_revenue=(
+                "doanh_thu_truoc_thue",
+                "sum",
+            ),
+        )
+        .reset_index()
+    )
+
+    if accessory.empty:
+        accessory_monthly = pd.DataFrame(
+            columns=[
+                group_column,
+                "month",
+                "accessory_revenue",
+            ]
+        )
+    else:
+        accessory_monthly = (
+            accessory.assign(
+                month=accessory[
+                    "ngay_hoa_don"
+                ].dt.month
+            )
+            .groupby(
+                [
+                    group_column,
+                    "month",
+                ],
+                dropna=False,
+            )
+            .agg(
+                accessory_revenue=(
+                    "doanh_thu_truoc_thue",
+                    "sum",
+                ),
+            )
+            .reset_index()
+        )
+
+    monthly_unit = service_monthly.merge(
+        accessory_monthly,
+        on=[
+            group_column,
+            "month",
+        ],
+        how="left",
+    )
+
+    monthly_unit[
+        "accessory_revenue"
+    ] = monthly_unit[
+        "accessory_revenue"
+    ].fillna(0)
+
+    monthly_unit[
+        "revenue"
+    ] = (
+        monthly_unit[
+            "service_revenue"
+        ]
+        + monthly_unit[
+            "accessory_revenue"
+        ]
+    )
+
+    units = (
+        monthly_unit[
+            group_column
+        ]
+        .dropna()
+        .astype(str)
+        .unique()
+        .tolist()
+    )
+
+    units = sorted(units)
+
+    # Muted corporate palette, tránh rainbow.
+    line_colors = [
+        "#2F5D8C",
+        "#4F81BD",
+        "#6F9FD0",
+        "#8FB8DF",
+        "#B09A6A",
+        "#C5A46D",
+        "#7B8E72",
+        "#9AA6B2",
+        "#6D7FA3",
+        "#A78374",
+    ]
+
+    figure = go.Figure()
+
+    for index, unit in enumerate(units):
+        unit_data = (
+            monthly_unit[
+                monthly_unit[
+                    group_column
+                ].astype(str)
+                == unit
+            ][
+                [
+                    "month",
+                    "ro",
+                    "revenue",
+                ]
+            ]
+            .set_index("month")
+            .reindex(
+                months,
+                fill_value=0,
+            )
+            .reset_index()
+        )
+
+        if metric == "revenue":
+            y_values = (
+                unit_data[
+                    "revenue"
+                ]
+                / 1_000_000
+            )
+
+            hover_text = (
+                "<b>%{fullData.name}</b><br>"
+                "Tháng %{x}<br>"
+                "Doanh thu: %{y:,.1f}M"
+                "<extra></extra>"
+            )
+
+        else:
+            y_values = unit_data[
+                "ro"
+            ]
+
+            hover_text = (
+                "<b>%{fullData.name}</b><br>"
+                "Tháng %{x}<br>"
+                "Lượt xe: %{y:,.0f}"
+                "<extra></extra>"
+            )
+
+        figure.add_trace(
+            go.Scatter(
+                x=months,
+                y=y_values,
+                mode="lines+markers",
+                name=unit,
+                line=dict(
+                    width=2.4,
+                    color=line_colors[
+                        index
+                        % len(line_colors)
+                    ],
+                ),
+                marker=dict(
+                    size=6,
+                    color=line_colors[
+                        index
+                        % len(line_colors)
+                    ],
+                    line=dict(
+                        color="#FFFFFF",
+                        width=1.2,
+                    ),
+                ),
+                hovertemplate=hover_text,
+            )
+        )
+
+    y_title = (
+        "Doanh thu (M)"
+        if metric == "revenue"
+        else "Lượt xe / RO"
+    )
+
+    figure.update_layout(
+        template="simple_white",
+        height=430,
+        margin=dict(
+            l=55,
+            r=25,
+            t=58,
+            b=78,
+        ),
+        title=dict(
+            text=f"<b>{title}</b>",
+            x=0.02,
+            y=0.96,
+            xanchor="left",
+            yanchor="top",
+            font=dict(
+                size=18,
+                color="#1F2937",
+            ),
+        ),
+        xaxis=dict(
+            tickmode="array",
+            tickvals=months,
+            ticktext=[
+                f"T{month}"
+                for month in months
+            ],
+            showgrid=False,
+            title="",
+        ),
+        yaxis=dict(
+            title=y_title,
+            gridcolor="#E5E7EB",
+            zeroline=False,
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.14,
+            xanchor="center",
+            x=0.5,
+            font=dict(
+                size=11,
+                color="#475467",
+            ),
+        ),
+        paper_bgcolor="#FFFFFF",
+        plot_bgcolor="#FFFFFF",
+        font=dict(
+            color="#667085",
+        ),
+        hovermode="x unified",
+    )
+
+    return figure
+
+
 # ============================================================
 # MAIN EXECUTIVE DASHBOARD
 # ============================================================
@@ -1333,6 +1616,97 @@ def render_executive_dashboard(
                 "displayModeBar": False,
             },
         )
+
+
+    # ========================================================
+    # TREND THEO TỪNG ĐƠN VỊ
+    # ========================================================
+    # Nếu Xưởng = All:
+    #   mỗi xưởng là 1 line.
+    #
+    # Nếu Chi nhánh = All:
+    #   mỗi chi nhánh là 1 line.
+    #
+    # Nếu đang chọn 1 xưởng cụ thể:
+    #   không cần lặp thêm chart này.
+
+    if (
+        selected_workshop == "All"
+        or selected_branch == "All"
+    ):
+        if selected_branch == "All":
+            trend_group_column = "chi_nhanh"
+            trend_group_label = "chi nhánh"
+        else:
+            trend_group_column = "xuong"
+            trend_group_label = "xưởng"
+
+        st.markdown(
+            f"""
+            <div style="
+                color:#475467;
+                font-size:14px;
+                font-weight:700;
+                margin:2px 0 10px 2px;
+            ">
+                So sánh xu hướng theo từng {trend_group_label}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        unit_trend_left, unit_trend_right = (
+            st.columns(2)
+        )
+
+        with unit_trend_left:
+            unit_ro_line = (
+                _multi_unit_monthly_line(
+                    lsc=lsc,
+                    accessory=accessory,
+                    group_column=(
+                        trend_group_column
+                    ),
+                    title=(
+                        "Lượt xe theo tháng "
+                        f"– từng {trend_group_label}"
+                    ),
+                    metric="ro",
+                )
+            )
+
+            st.plotly_chart(
+                unit_ro_line,
+                use_container_width=True,
+                config={
+                    "displayModeBar": False,
+                },
+            )
+
+        with unit_trend_right:
+            unit_revenue_line = (
+                _multi_unit_monthly_line(
+                    lsc=lsc,
+                    accessory=accessory,
+                    group_column=(
+                        trend_group_column
+                    ),
+                    title=(
+                        "Doanh thu theo tháng "
+                        f"– từng {trend_group_label}"
+                    ),
+                    metric="revenue",
+                )
+            )
+
+            st.plotly_chart(
+                unit_revenue_line,
+                use_container_width=True,
+                config={
+                    "displayModeBar": False,
+                },
+            )
+
 
     # ========================================================
     # MAP + RANKING UNITS
