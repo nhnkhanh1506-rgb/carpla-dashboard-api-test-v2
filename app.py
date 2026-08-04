@@ -114,6 +114,7 @@ summary_css = """
 
     font-size: 14px;
 
+    /* KHÔNG BOLD DATA */
     font-weight: 400;
 
     line-height: 1.15;
@@ -135,6 +136,7 @@ summary_css = """
     border-bottom: none;
 }
 
+/* chỉ TOTAL đậm nhẹ */
 .compact-dashboard-table .total-row td {
     font-weight: 600;
 }
@@ -164,9 +166,6 @@ summary_css = """
 
     box-sizing: border-box;
 
-    /*
-    tăng padding dưới để legend không dính sát mép card
-    */
     padding: 0 18px 18px 18px;
 
     overflow: hidden;
@@ -182,6 +181,7 @@ div[data-testid="stVerticalBlock"] {
 
 /* ==========================================================
    PIE TITLE
+   giống style phần cơ cấu thương hiệu bên dưới
    ========================================================== */
 
 .revenue-card-title {
@@ -224,14 +224,9 @@ div[data-testid="stPlotlyChart"] {
 
     flex-wrap: nowrap;
 
-    /*
-    chỉ nhấc legend lên nhẹ
-    */
     margin-top: -6px;
 
-    /*
-    tạo khoảng thở rõ ở dưới legend
-    */
+    /* chừa khoảng dưới đẹp hơn */
     margin-bottom: 12px;
 
     font-size: 12.5px;
@@ -864,6 +859,7 @@ with right_revenue_column:
                         accessory_revenue,
                     ],
 
+                    # donut nhỏ hơn
                     hole=0.62,
 
                     sort=False,
@@ -901,10 +897,8 @@ with right_revenue_column:
                         "<extra></extra>"
                     ),
 
-                    /*
-                    donut nhích lên nhẹ
-                    và chừa thêm khoảng phía dưới cho legend
-                    */
+                    # QUAN TRỌNG:
+                    # thu pie vào giữa card
                     domain=dict(
                         x=[0.16, 0.84],
                         y=[0.14, 0.94],
@@ -948,6 +942,7 @@ with right_revenue_column:
         revenue_mix_figure.update_layout(
             template="simple_white",
 
+            # giảm từ 300 xuống
             height=250,
 
             margin=dict(
