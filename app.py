@@ -113,7 +113,10 @@ summary_css = """
     color: #1F2937;
 
     font-size: 14px;
-    font-weight: 600;
+
+    /* KHÔNG BOLD DATA */
+    font-weight: 400;
+
     line-height: 1.15;
 
     text-align: left;
@@ -133,8 +136,9 @@ summary_css = """
     border-bottom: none;
 }
 
+/* chỉ TOTAL đậm nhẹ */
 .compact-dashboard-table .total-row td {
-    font-weight: 700;
+    font-weight: 600;
 }
 
 
@@ -143,7 +147,7 @@ summary_css = """
    ========================================================== */
 
 .summary-table-gap {
-    height: 28px;
+    height: 26px;
     width: 100%;
 }
 
@@ -162,13 +166,13 @@ summary_css = """
 
     box-sizing: border-box;
 
-    padding: 0 18px 12px 18px;
+    padding: 0 18px 10px 18px;
 
     overflow: hidden;
 }
 
 
-/* reduce internal Streamlit gaps */
+/* giảm khoảng trống Streamlit */
 .st-key-revenue_mix_card
 div[data-testid="stVerticalBlock"] {
     gap: 0 !important;
@@ -177,18 +181,19 @@ div[data-testid="stVerticalBlock"] {
 
 /* ==========================================================
    PIE TITLE
+   giống style phần cơ cấu thương hiệu bên dưới
    ========================================================== */
 
 .revenue-card-title {
     color: #1F2937;
 
-    font-size: 24px;
-    font-weight: 800;
-    line-height: 1.15;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.2;
 
     margin: 0;
 
-    padding: 18px 2px 6px 2px;
+    padding: 16px 2px 2px 2px;
 }
 
 
@@ -213,16 +218,18 @@ div[data-testid="stPlotlyChart"] {
     justify-content: center;
     align-items: center;
 
-    gap: 20px;
+    gap: 22px;
 
     width: 100%;
 
     flex-wrap: nowrap;
 
-    margin-top: -8px;
-    margin-bottom: 4px;
+    margin-top: -10px;
 
-    font-size: 13px;
+    /* chừa khoảng dưới đẹp hơn */
+    margin-bottom: 8px;
+
+    font-size: 12.5px;
     font-weight: 600;
 
     color: #475467;
@@ -239,25 +246,20 @@ div[data-testid="stPlotlyChart"] {
 }
 
 .revenue-pie-dot {
-    width: 10px;
-    height: 10px;
+    width: 9px;
+    height: 9px;
 
     border-radius: 50%;
 
     display: inline-block;
 
-    flex: 0 0 10px;
+    flex: 0 0 9px;
 }
 
 
 /* ==========================================================
    SUMMARY ROW ALIGNMENT
    ========================================================== */
-
-/*
-Hai cột summary dùng đúng 50/50
-để thẳng với hai KPI target phía trên.
-*/
 
 div[data-testid="stHorizontalBlock"] {
     align-items: flex-start;
@@ -745,9 +747,6 @@ revenue_display = pd.concat(
 
 # ============================================================
 # 15.1 SUMMARY SECTION
-#
-# QUAN TRỌNG:
-# 50 / 50 để thẳng đúng với hai target card phía trên.
 # ============================================================
 
 left_revenue_column, right_revenue_column = (
@@ -765,7 +764,7 @@ left_revenue_column, right_revenue_column = (
 with left_revenue_column:
 
     # --------------------------------------------------------
-    # TABLE 1 - KPI
+    # TABLE 1
     # --------------------------------------------------------
 
     if target_available:
@@ -803,7 +802,7 @@ with left_revenue_column:
 
 
     # --------------------------------------------------------
-    # TABLE 2 - REVENUE SOURCES
+    # TABLE 2
     # --------------------------------------------------------
 
     render_compact_table(
@@ -817,7 +816,7 @@ with left_revenue_column:
 
 
 # ============================================================
-# 15.3 RIGHT COLUMN - ONE SINGLE PIE CARD
+# 15.3 RIGHT COLUMN
 # ============================================================
 
 with right_revenue_column:
@@ -829,7 +828,7 @@ with right_revenue_column:
     with revenue_mix_card:
 
         # ----------------------------------------------------
-        # TITLE INSIDE SAME CARD
+        # TITLE
         # ----------------------------------------------------
 
         render_html(
@@ -842,7 +841,7 @@ with right_revenue_column:
 
 
         # ----------------------------------------------------
-        # PIE
+        # PIE CHART
         # ----------------------------------------------------
 
         revenue_mix_figure = go.Figure(
@@ -860,7 +859,8 @@ with right_revenue_column:
                         accessory_revenue,
                     ],
 
-                    hole=0.60,
+                    # donut nhỏ hơn
+                    hole=0.62,
 
                     sort=False,
 
@@ -887,7 +887,7 @@ with right_revenue_column:
 
                     textfont=dict(
                         color="#FFFFFF",
-                        size=14,
+                        size=13,
                     ),
 
                     hovertemplate=(
@@ -895,6 +895,13 @@ with right_revenue_column:
                         "Giá trị: %{value:,.0f}<br>"
                         "Tỷ trọng: %{percent:.1%}"
                         "<extra></extra>"
+                    ),
+
+                    # QUAN TRỌNG:
+                    # thu pie vào giữa card
+                    domain=dict(
+                        x=[0.16, 0.84],
+                        y=[0.08, 0.92],
                     ),
                 )
             ]
@@ -907,12 +914,12 @@ with right_revenue_column:
 
         revenue_mix_figure.add_annotation(
             x=0.5,
-            y=0.51,
+            y=0.50,
 
             text=(
                 f"<b>{fmt_m(actual_revenue)}</b>"
                 "<br>"
-                "<span style='font-size:12px;'>"
+                "<span style='font-size:11px;'>"
                 "Tổng doanh thu"
                 "</span>"
             ),
@@ -921,7 +928,7 @@ with right_revenue_column:
 
             font=dict(
                 color="#1F2937",
-                size=16,
+                size=15,
             ),
 
             align="center",
@@ -935,11 +942,12 @@ with right_revenue_column:
         revenue_mix_figure.update_layout(
             template="simple_white",
 
-            height=300,
+            # giảm từ 300 xuống
+            height=250,
 
             margin=dict(
-                l=6,
-                r=6,
+                l=0,
+                r=0,
                 t=0,
                 b=0,
             ),
