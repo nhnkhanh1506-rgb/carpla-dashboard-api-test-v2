@@ -2521,8 +2521,8 @@ def render_payment_section(data):
         gap: 26px;
         width: 100%;
         flex-wrap: nowrap;
-        margin-top: -34px;
-        margin-bottom: 10px;
+        margin-top: -14px;
+        margin-bottom: 6px;
         font-size: 12.5px;
         font-weight: 600;
         color: #475467;
@@ -2551,7 +2551,7 @@ def render_payment_section(data):
         box-sizing: border-box !important;
         padding: 10px 18px 12px 18px !important;
         overflow: hidden !important;
-        min-height: 356px !important;
+        min-height: 342px !important;
     }
 
     .st-key-payment_donut_card div[data-testid="stVerticalBlock"] {
@@ -2756,7 +2756,7 @@ def render_payment_section(data):
                         ),
                         domain=dict(
                             x=[0.16, 0.84],
-                            y=[0.18, 0.82],
+                            y=[0.12, 0.76],
                         ),
                         hovertemplate=(
                             "<b>%{label}</b><br>"
@@ -2803,7 +2803,7 @@ def render_payment_section(data):
 
             figure.update_layout(
                 template="simple_white",
-                height=305,
+                height=276,
                 margin=dict(l=0, r=0, t=0, b=0),
                 showlegend=False,
                 paper_bgcolor="rgba(0,0,0,0)",
@@ -2892,7 +2892,7 @@ def render_payment_section(data):
                     margin=dict(
                         l=180,
                         r=40,
-                        t=28,
+                        t=38,
                         b=42,
                     ),
                     xaxis_title="Số RO",
