@@ -2563,13 +2563,23 @@ def render_payment_section(data):
         padding: 0 !important;
     }
 
-    /* Kéo cả hàng Nguồn khách lên sát hàng thanh toán phía trên */
+    /* Giữ hàng dưới ở vị trí tự nhiên để card bên phải không chạm card trên */
     .st-key-customer_source_row {
-        margin-top: -34px !important;
+        margin-top: 0 !important;
     }
 
     .st-key-customer_source_row div[data-testid="stVerticalBlock"] {
         gap: 0 !important;
+    }
+
+    /* Riêng bảng Nguồn khách kéo lên sát bảng thanh toán bên trái */
+    .st-key-customer_source_table_card {
+        margin-top: -195px !important;
+    }
+
+    /* Card chart bên phải giữ khoảng hở nhỏ với card phía trên */
+    .st-key-customer_source_chart_card {
+        margin-top: 10px !important;
     }
 
     .st-key-customer_source_chart_card {
@@ -2965,13 +2975,18 @@ def render_payment_section(data):
         )
 
         with source_left:
-            st.dataframe(
-                style_white_table(
-                    source_display
-                ),
-                use_container_width=True,
-                hide_index=True,
+            source_table_card = st.container(
+                key="customer_source_table_card"
             )
+
+            with source_table_card:
+                st.dataframe(
+                    style_white_table(
+                        source_display
+                    ),
+                    use_container_width=True,
+                    hide_index=True,
+                )
 
         with source_right:
             source_chart_card = st.container(
