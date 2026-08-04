@@ -2520,9 +2520,9 @@ def render_payment_section(data):
         border: 1px solid #E2E8F0 !important;
         border-radius: 18px !important;
         box-sizing: border-box !important;
-        padding: 10px 18px 12px 18px !important;
+        padding: 18px 18px 12px 18px !important;
         overflow: visible !important;
-        min-height: 318px !important;
+        min-height: 330px !important;
     }
 
     .st-key-payment_donut_card div[data-testid="stVerticalBlock"] {
@@ -2704,18 +2704,15 @@ def render_payment_section(data):
 
         with payment_chart_card:
             # Tiêu đề nằm riêng trong card, không phụ thuộc Plotly.
+            payment_title_html = (
+                '<div style="color:#1F2937;font-size:20px;font-weight:800;'
+                'line-height:1.2;margin:0 0 8px 2px;">'
+                'Tỷ trọng nguồn thanh toán'
+                '</div>'
+            )
+
             st.markdown(
-                """
-                <div style="
-                    color:#1F2937;
-                    font-size:20px;
-                    font-weight:800;
-                    line-height:1.2;
-                    margin:0 0 4px 2px;
-                ">
-                    Tỷ trọng nguồn thanh toán
-                </div>
-                """,
+                payment_title_html,
                 unsafe_allow_html=True,
             )
 
@@ -2748,8 +2745,8 @@ def render_payment_section(data):
                             color="white",
                         ),
                         domain=dict(
-                            x=[0.22, 0.78],
-                            y=[0.08, 0.92],
+                            x=[0.20, 0.80],
+                            y=[0.10, 0.86],
                         ),
                         hovertemplate=(
                             "<b>%{label}</b><br>"
@@ -2783,7 +2780,7 @@ def render_payment_section(data):
 
             figure.update_layout(
                 template="simple_white",
-                height=238,
+                height=228,
                 margin=dict(
                     l=0,
                     r=0,
@@ -2807,57 +2804,28 @@ def render_payment_section(data):
                 },
             )
 
-            # Legend HTML nằm thật sự bên trong card.
-            # Không dùng Plotly legend để tránh bị Streamlit clip.
-            st.markdown(
-                f"""
-                <div style="
-                    display:flex;
-                    justify-content:center;
-                    align-items:center;
-                    gap:24px;
-                    width:100%;
-                    margin-top:-6px;
-                    margin-bottom:2px;
-                    font-size:12.5px;
-                    font-weight:600;
-                    color:#475467;
-                ">
-                    <div style="
-                        display:flex;
-                        align-items:center;
-                        gap:6px;
-                        white-space:nowrap;
-                    ">
-                        <span style="
-                            width:9px;
-                            height:9px;
-                            border-radius:50%;
-                            background:{DONUT_MAIN};
-                            display:inline-block;
-                        "></span>
-                        <span>Khách hàng chi trả</span>
-                    </div>
+            # Legend viết thành một chuỗi HTML liền để Streamlit
+            # không hiểu nhầm thành code block Markdown.
+            payment_legend_html = (
+                '<div style="display:flex;justify-content:center;align-items:center;'
+                'gap:24px;width:100%;margin-top:-2px;margin-bottom:2px;'
+                'font-size:12.5px;font-weight:600;color:#475467;">'
+                '<div style="display:flex;align-items:center;gap:6px;white-space:nowrap;">'
+                f'<span style="width:9px;height:9px;border-radius:50%;background:{DONUT_MAIN};display:inline-block;"></span>'
+                '<span>Khách hàng chi trả</span>'
+                '</div>'
+                '<div style="display:flex;align-items:center;gap:6px;white-space:nowrap;">'
+                f'<span style="width:9px;height:9px;border-radius:50%;background:{DONUT_SECOND};display:inline-block;"></span>'
+                '<span>Bảo hiểm chi trả</span>'
+                '</div>'
+                '</div>'
+            )
 
-                    <div style="
-                        display:flex;
-                        align-items:center;
-                        gap:6px;
-                        white-space:nowrap;
-                    ">
-                        <span style="
-                            width:9px;
-                            height:9px;
-                            border-radius:50%;
-                            background:{DONUT_SECOND};
-                            display:inline-block;
-                        "></span>
-                        <span>Bảo hiểm chi trả</span>
-                    </div>
-                </div>
-                """,
+            st.markdown(
+                payment_legend_html,
                 unsafe_allow_html=True,
             )
+
 
         if "nguon_khach" in data.columns and source_summary is not None:
             st.markdown(
