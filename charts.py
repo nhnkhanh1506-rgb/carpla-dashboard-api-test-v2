@@ -2968,7 +2968,7 @@ def render_payment_section(data):
                             "nguon_khach"
                         ],
                         orientation="h",
-                        width=0.72,
+                        width=0.82,
                         marker=dict(
                             color="#F5D96B",
                             line=dict(
@@ -2986,7 +2986,7 @@ def render_payment_section(data):
                         textposition="outside",
                         textfont=dict(
                             color="#667085",
-                            size=13,
+                            size=14,
                         ),
                         cliponaxis=False,
                         hovertemplate=(
@@ -2999,12 +2999,12 @@ def render_payment_section(data):
 
                 source_figure.update_layout(
                     template="simple_white",
-                    height=270,
+                    height=305,
                     margin=dict(
-                        l=180,
-                        r=40,
-                        t=42,
-                        b=42,
+                        l=190,
+                        r=46,
+                        t=44,
+                        b=46,
                     ),
                     xaxis_title="Số RO",
                     yaxis_title="",
@@ -3012,7 +3012,7 @@ def render_payment_section(data):
                     plot_bgcolor="rgba(0,0,0,0)",
                     font=dict(
                         color="#475467",
-                        size=12,
+                        size=13,
                     ),
                     showlegend=False,
                 )
@@ -3027,7 +3027,7 @@ def render_payment_section(data):
                     showgrid=False,
                     automargin=True,
                     tickfont=dict(
-                        size=12,
+                        size=13,
                     ),
                 )
 
