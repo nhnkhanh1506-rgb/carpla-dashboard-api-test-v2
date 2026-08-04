@@ -2514,25 +2514,15 @@ def render_payment_section(data):
 
     payment_css = """
     <style>
-    .payment-chart-title {
-        color: #1F2937;
-        font-size: 20px;
-        font-weight: 700;
-        line-height: 1.2;
-        margin: 0;
-        padding: 16px 4px 0 4px;
-        text-align: left;
-    }
-
     .payment-legend {
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 28px;
+        gap: 26px;
         width: 100%;
         flex-wrap: nowrap;
-        margin-top: -2px;
-        margin-bottom: 14px;
+        margin-top: -4px;
+        margin-bottom: 12px;
         font-size: 12.5px;
         font-weight: 600;
         color: #475467;
@@ -2559,7 +2549,7 @@ def render_payment_section(data):
         border: 1px solid #E2E8F0 !important;
         border-radius: 18px !important;
         box-sizing: border-box !important;
-        padding: 0 18px 12px 18px !important;
+        padding: 8px 18px 14px 18px !important;
         overflow: hidden !important;
         min-height: 0 !important;
     }
@@ -2620,17 +2610,13 @@ def render_payment_section(data):
         )
     )
 
-    payment_display = (
-        payment_structure.copy()
-    )
+    payment_display = payment_structure.copy()
 
     payment_display[
         "Giá trị"
     ] = payment_display[
         "Giá trị"
-    ].map(
-        fmt_m
-    )
+    ].map(fmt_m)
 
     payment_display[
         "Tỷ trọng"
@@ -2647,9 +2633,7 @@ def render_payment_section(data):
                 "TỔNG"
             ],
             "Giá trị": [
-                fmt_m(
-                    total_payment
-                )
+                fmt_m(total_payment)
             ],
             "Tỷ trọng": [
                 "100.00%"
@@ -2658,17 +2642,12 @@ def render_payment_section(data):
     )
 
     payment_display = pd.concat(
-        [
-            payment_display,
-            total_row,
-        ],
+        [payment_display, total_row],
         ignore_index=True,
     )
 
-    left_column, right_column = (
-        st.columns(
-            [1, 1]
-        )
+    left_column, right_column = st.columns(
+        [1, 1]
     )
 
     with left_column:
@@ -2686,13 +2665,6 @@ def render_payment_section(data):
         )
 
         with payment_chart_card:
-            st.markdown(
-                '<div class="payment-chart-title">'
-                'Tỷ trọng nguồn thanh toán'
-                '</div>',
-                unsafe_allow_html=True,
-            )
-
             figure = go.Figure(
                 data=[
                     go.Pie(
@@ -2709,19 +2681,23 @@ def render_payment_section(data):
                             colors=[
                                 DONUT_MAIN,
                                 DONUT_SECOND,
-                            ]
+                            ],
+                            line=dict(
+                                color="#FFFFFF",
+                                width=2,
+                            ),
                         ),
                         textinfo="percent",
                         texttemplate=(
                             "%{percent:.0%}"
                         ),
                         textfont=dict(
-                            size=14,
+                            size=13,
                             color="white",
                         ),
                         domain=dict(
-                            x=[0.29, 0.71],
-                            y=[0.24, 0.84],
+                            x=[0.31, 0.69],
+                            y=[0.19, 0.76],
                         ),
                         hovertemplate=(
                             "<b>%{label}</b><br>"
@@ -2734,11 +2710,31 @@ def render_payment_section(data):
             )
 
             figure.add_annotation(
+                x=0.02,
+                y=0.96,
+                xref="paper",
+                yref="paper",
+                text=(
+                    "<b>Tỷ trọng nguồn thanh toán</b>"
+                ),
+                showarrow=False,
+                xanchor="left",
+                yanchor="top",
+                font=dict(
+                    color="#1F2937",
+                    size=20,
+                ),
+            )
+
+            figure.add_annotation(
                 x=0.5,
-                y=0.54,
+                y=0.475,
+                xref="paper",
+                yref="paper",
                 text=(
                     f"<b>{fmt_m(total_payment)}</b>"
-                    "<br><span style='font-size:11px;'>"
+                    "<br>"
+                    "<span style='font-size:11px;'>"
                     "Tổng thanh toán"
                     "</span>"
                 ),
@@ -2752,7 +2748,7 @@ def render_payment_section(data):
 
             figure.update_layout(
                 template="simple_white",
-                height=260,
+                height=290,
                 margin=dict(
                     l=0,
                     r=0,
@@ -2772,6 +2768,7 @@ def render_payment_section(data):
                 use_container_width=True,
                 config={
                     "displayModeBar": False,
+                    "responsive": True,
                 },
             )
 
