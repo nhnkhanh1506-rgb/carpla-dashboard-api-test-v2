@@ -35,48 +35,6 @@ from styles import apply_global_style
 
 
 # ============================================================
-# HÀM ĐỊNH DẠNG BẢNG
-# ============================================================
-
-def style_white_table(dataframe):
-    return (
-        dataframe.style
-        .set_properties(
-            **{
-                "background-color": "#FFFFFF",
-                "color": "#1F2937",
-                "border-color": "#E5E7EB",
-                "font-weight": "500",
-            }
-        )
-        .set_table_styles(
-            [
-                {
-                    "selector": "thead th",
-                    "props": [
-                        ("background-color", "#F3F4F6"),
-                        ("color", "#6B7280"),
-                        ("font-weight", "600"),
-                        ("border-color", "#E5E7EB"),
-                        ("text-align", "left"),
-                    ],
-                },
-                {
-                    "selector": "tbody td",
-                    "props": [
-                        ("background-color", "#FFFFFF"),
-                        ("color", "#1F2937"),
-                        ("border-color", "#E5E7EB"),
-                    ],
-                },
-            ],
-            overwrite=False,
-        )
-        .hide(axis="index")
-    )
-
-
-# ============================================================
 # 1. PAGE CONFIG
 # ============================================================
 
@@ -95,12 +53,265 @@ apply_global_style()
 
 
 # ============================================================
+# 2.1 LOCAL STYLE FOR SUMMARY SECTION
+# ============================================================
+
+st.markdown(
+    """
+<style>
+
+/* ==========================================================
+   COMPACT HTML TABLES
+   ========================================================== */
+
+.compact-dashboard-table {
+    width: 100%;
+    background: #FFFFFF;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+.compact-dashboard-table table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    table-layout: fixed;
+    margin: 0;
+    padding: 0;
+}
+
+.compact-dashboard-table th {
+    background: #F3F4F6;
+    color: #6B7280;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.2;
+    text-align: left;
+
+    padding: 10px 10px;
+
+    border-right: 1px solid #E5E7EB;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.compact-dashboard-table td {
+    background: #FFFFFF;
+    color: #1F2937;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: left;
+
+    padding: 10px 10px;
+
+    border-right: 1px solid #E5E7EB;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.compact-dashboard-table th:last-child,
+.compact-dashboard-table td:last-child {
+    border-right: none;
+}
+
+.compact-dashboard-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.compact-dashboard-table .total-row td {
+    font-weight: 700;
+}
+
+
+/* ==========================================================
+   PIE CARD
+   ========================================================== */
+
+.revenue-pie-card {
+    width: 100%;
+    background: #FFFFFF;
+
+    border: 1px solid #E5E7EB;
+    border-radius: 18px;
+
+    padding: 16px 18px 12px 18px;
+
+    box-sizing: border-box;
+}
+
+.revenue-pie-title {
+    color: #1F2937;
+
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.15;
+
+    padding: 0;
+    margin: 0 0 2px 2px;
+}
+
+.revenue-pie-legend {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    gap: 18px;
+    flex-wrap: nowrap;
+
+    margin-top: -10px;
+    margin-bottom: 2px;
+
+    font-size: 13px;
+    color: #475467;
+    font-weight: 600;
+}
+
+.revenue-pie-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    white-space: nowrap;
+}
+
+.revenue-pie-dot {
+    width: 10px;
+    height: 10px;
+
+    border-radius: 50%;
+    display: inline-block;
+
+    flex: 0 0 10px;
+}
+
+
+/* ==========================================================
+   SUMMARY SECTION SPACING
+   ========================================================== */
+
+.summary-table-gap {
+    height: 28px;
+}
+
+
+/* giảm khoảng trống mặc định trong vertical block */
+div[data-testid="stVerticalBlock"] {
+    gap: 0.65rem;
+}
+
+
+/* riêng Plotly trong revenue card */
+div[data-testid="stPlotlyChart"] {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+# ============================================================
+# HELPER: HTML TABLE
+# ============================================================
+
+def render_compact_table(
+    dataframe,
+    column_widths=None,
+):
+    columns = list(
+        dataframe.columns
+    )
+
+    if column_widths is None:
+        column_widths = [
+            100 / len(columns)
+        ] * len(columns)
+
+    colgroup_html = ""
+
+    for width in column_widths:
+        colgroup_html += (
+            f'<col style="width:{width}%;">'
+        )
+
+    header_html = ""
+
+    for column in columns:
+        header_html += (
+            f"<th>{column}</th>"
+        )
+
+    body_html = ""
+
+    for _, row in dataframe.iterrows():
+
+        first_value = (
+            str(row.iloc[0])
+            .strip()
+            .upper()
+        )
+
+        is_total = (
+            first_value
+            == "TỔNG DOANH THU"
+        )
+
+        row_class = (
+            "total-row"
+            if is_total
+            else ""
+        )
+
+        body_html += (
+            f'<tr class="{row_class}">'
+        )
+
+        for value in row:
+            body_html += (
+                f"<td>{value}</td>"
+            )
+
+        body_html += "</tr>"
+
+    table_html = f"""
+<div class="compact-dashboard-table">
+    <table>
+        <colgroup>
+            {colgroup_html}
+        </colgroup>
+
+        <thead>
+            <tr>
+                {header_html}
+            </tr>
+        </thead>
+
+        <tbody>
+            {body_html}
+        </tbody>
+    </table>
+</div>
+"""
+
+    st.markdown(
+        table_html,
+        unsafe_allow_html=True,
+    )
+
+
+# ============================================================
 # 3. LOAD DATA
 # ============================================================
 
-data_raw, parts_data, accessory_data = load_all_data(
-    data_files=DATA_FILES,
-    workshop_name_map=WORKSHOP_NAME_MAP,
+data_raw, parts_data, accessory_data = (
+    load_all_data(
+        data_files=DATA_FILES,
+        workshop_name_map=WORKSHOP_NAME_MAP,
+    )
 )
 
 
@@ -118,6 +329,7 @@ selection = render_sidebar(
 # ============================================================
 
 if not selection["show_dashboard"]:
+
     render_homepage(
         logo_path=LOGO_FILE
     )
@@ -129,12 +341,21 @@ if not selection["show_dashboard"]:
 # 6. SELECTED FILTERS
 # ============================================================
 
-selected_branch = selection["branch"]
-selected_workshop = selection["workshop"]
+selected_branch = selection[
+    "branch"
+]
 
-year = int(selection["year"])
+selected_workshop = selection[
+    "workshop"
+]
 
-month = selection["month"]
+year = int(
+    selection["year"]
+)
+
+month = selection[
+    "month"
+]
 
 if month != "All":
     month = int(month)
@@ -148,10 +369,13 @@ metrics = calculate_dashboard_metrics(
     data_raw=data_raw,
     parts_data=parts_data,
     accessory_data=accessory_data,
+
     selected_branch=selected_branch,
     selected_workshop=selected_workshop,
+
     year=year,
     month=month,
+
     targets=TARGETS,
 )
 
@@ -160,33 +384,73 @@ metrics = calculate_dashboard_metrics(
 # 8. GET METRICS
 # ============================================================
 
-data = metrics["data"]
-merged_data = metrics["merged_data"]
+data = metrics[
+    "data"
+]
 
-actual_ro = metrics["actual_ro"]
+merged_data = metrics[
+    "merged_data"
+]
 
-matched_orders = metrics["matched_orders"]
-missing_orders = metrics["missing_orders"]
+actual_ro = metrics[
+    "actual_ro"
+]
 
-service_revenue = metrics["service_revenue"]
-labor_revenue = metrics["labor_revenue"]
-parts_revenue = metrics["parts_revenue"]
-accessory_revenue = metrics["accessory_revenue"]
+matched_orders = metrics[
+    "matched_orders"
+]
 
-actual_revenue = metrics["actual_revenue"]
-total_after_tax = metrics["total_after_tax"]
+missing_orders = metrics[
+    "missing_orders"
+]
 
-target_available = metrics["target_available"]
+service_revenue = metrics[
+    "service_revenue"
+]
 
-target_ro = metrics["target_ro"]
-target_revenue = metrics["target_revenue"]
+labor_revenue = metrics[
+    "labor_revenue"
+]
 
-ro_rate = metrics["ro_rate"]
-revenue_rate = metrics["revenue_rate"]
+parts_revenue = metrics[
+    "parts_revenue"
+]
+
+accessory_revenue = metrics[
+    "accessory_revenue"
+]
+
+actual_revenue = metrics[
+    "actual_revenue"
+]
+
+total_after_tax = metrics[
+    "total_after_tax"
+]
+
+target_available = metrics[
+    "target_available"
+]
+
+target_ro = metrics[
+    "target_ro"
+]
+
+target_revenue = metrics[
+    "target_revenue"
+]
+
+ro_rate = metrics[
+    "ro_rate"
+]
+
+revenue_rate = metrics[
+    "revenue_rate"
+]
 
 
 # ============================================================
-# 10. DASHBOARD HEADER
+# 9. DASHBOARD HEADER
 # ============================================================
 
 render_dashboard_header(
@@ -198,7 +462,7 @@ render_dashboard_header(
 
 
 # ============================================================
-# 10.1 THÔNG BÁO KỲ DỮ LIỆU
+# 10. DATA PERIOD NOTICE
 # ============================================================
 
 valid_dates = data[
@@ -209,8 +473,13 @@ if (
     month == "All"
     and not valid_dates.empty
 ):
-    min_date = valid_dates.min()
-    max_date = valid_dates.max()
+    min_date = (
+        valid_dates.min()
+    )
+
+    max_date = (
+        valid_dates.max()
+    )
 
     st.caption(
         "Dữ liệu hiện có: "
@@ -230,18 +499,22 @@ render_top_kpis(
 
 
 # ============================================================
-# 12. TÍNH SỐ NGÀY LÀM VIỆC
+# 12. WORKING DAYS
 # ============================================================
 
-working_day_info = calculate_working_days(
-    year=year,
-    month=month,
-    data=data,
+working_day_info = (
+    calculate_working_days(
+        year=year,
+        month=month,
+        data=data,
+    )
 )
 
-actual_working_days = working_day_info[
-    "total_working_days"
-]
+actual_working_days = (
+    working_day_info[
+        "total_working_days"
+    ]
+)
 
 
 # ============================================================
@@ -249,13 +522,19 @@ actual_working_days = working_day_info[
 # ============================================================
 
 if target_available:
+
     render_interactive_target_planner(
         actual_ro=actual_ro,
         target_ro=target_ro,
+
         actual_revenue=actual_revenue,
         target_revenue=target_revenue,
+
         working_day_info=working_day_info,
-        calculate_target_plan_function=calculate_target_plan,
+
+        calculate_target_plan_function=(
+            calculate_target_plan
+        ),
     )
 
 
@@ -264,43 +543,56 @@ if target_available:
 # ============================================================
 
 if target_available:
+
     summary_kpi = pd.DataFrame(
         {
             "Hạng mục": [
                 "Lượt xe / RO",
                 "Tổng Doanh thu",
             ],
+
             "Thực hiện": [
                 f"{actual_ro:,.0f}",
-                fmt_m(actual_revenue),
+                fmt_m(
+                    actual_revenue
+                ),
             ],
+
             "Chỉ tiêu": [
                 f"{target_ro:,.0f}",
-                fmt_m(target_revenue),
+                fmt_m(
+                    target_revenue
+                ),
             ],
+
             "% đạt": [
                 f"{ro_rate:.0%}",
                 f"{revenue_rate:.0%}",
             ],
         }
     )
+
 else:
+
     summary_kpi = pd.DataFrame(
         {
             "Hạng mục": [
                 "Lượt xe / RO",
                 "Tổng Doanh thu",
             ],
+
             "Thực hiện": [
                 f"{actual_ro:,.0f}",
-                fmt_m(actual_revenue),
+                fmt_m(
+                    actual_revenue
+                ),
             ],
         }
     )
 
 
 # ============================================================
-# 15. CƠ CẤU TỔNG DOANH THU
+# 15. REVENUE BREAKDOWN DATA
 # ============================================================
 
 revenue_breakdown = pd.DataFrame(
@@ -310,6 +602,7 @@ revenue_breakdown = pd.DataFrame(
             "Doanh thu phụ tùng",
             "Doanh thu phụ kiện",
         ],
+
         "Giá trị": [
             labor_revenue,
             parts_revenue,
@@ -318,7 +611,10 @@ revenue_breakdown = pd.DataFrame(
     }
 )
 
-revenue_breakdown["Tỷ trọng"] = revenue_breakdown[
+
+revenue_breakdown[
+    "Tỷ trọng"
+] = revenue_breakdown[
     "Giá trị"
 ].apply(
     lambda value:
@@ -327,31 +623,49 @@ revenue_breakdown["Tỷ trọng"] = revenue_breakdown[
     else 0
 )
 
-revenue_display = revenue_breakdown.copy()
 
-revenue_display["Giá trị"] = revenue_display[
+revenue_display = (
+    revenue_breakdown.copy()
+)
+
+
+revenue_display[
     "Giá trị"
-].map(fmt_m)
+] = revenue_display[
+    "Giá trị"
+].map(
+    fmt_m
+)
 
-revenue_display["Tỷ trọng"] = revenue_display[
+
+revenue_display[
+    "Tỷ trọng"
+] = revenue_display[
     "Tỷ trọng"
 ].map(
-    lambda value: f"{value:.0%}"
+    lambda value:
+    f"{value:.0%}"
 )
+
 
 total_row = pd.DataFrame(
     {
         "Nguồn doanh thu": [
             "TỔNG DOANH THU"
         ],
+
         "Giá trị": [
-            fmt_m(actual_revenue)
+            fmt_m(
+                actual_revenue
+            )
         ],
+
         "Tỷ trọng": [
             "100%"
         ],
     }
 )
+
 
 revenue_display = pd.concat(
     [
@@ -363,77 +677,85 @@ revenue_display = pd.concat(
 
 
 # ============================================================
-# 15.1 LAYOUT:
-#      TRÁI = 2 BẢNG
-#      PHẢI = DONUT
+# 15.1 SUMMARY + PIE LAYOUT
 # ============================================================
 
-left_revenue_column, right_revenue_column = st.columns(
-    [1.08, 0.92],
-    gap="large",
+left_revenue_column, right_revenue_column = (
+    st.columns(
+        [1.08, 0.92],
+        gap="large",
+    )
 )
 
 
 # ============================================================
-# 15.2 CỘT TRÁI - 2 BẢNG
+# 15.2 LEFT COLUMN
 # ============================================================
 
 with left_revenue_column:
 
     # --------------------------------------------------------
-    # BẢNG 1 - KPI
-    # Chiều cao cố định để không sinh dòng trống phía dưới
+    # TABLE 1
     # --------------------------------------------------------
 
-    st.dataframe(
-        style_white_table(
-            summary_kpi
-        ),
-        use_container_width=True,
-        hide_index=True,
-        height=112,
-    )
+    if target_available:
 
-    # Khoảng cách nhỏ giữa hai bảng
+        render_compact_table(
+            summary_kpi,
+            column_widths=[
+                30,
+                25,
+                24,
+                21,
+            ],
+        )
+
+    else:
+
+        render_compact_table(
+            summary_kpi,
+            column_widths=[
+                55,
+                45,
+            ],
+        )
+
+
+    # --------------------------------------------------------
+    # GAP
+    # --------------------------------------------------------
+
     st.markdown(
-        "<div style='height:10px'></div>",
+        """
+<div class="summary-table-gap"></div>
+""",
         unsafe_allow_html=True,
     )
 
+
     # --------------------------------------------------------
-    # BẢNG 2 - CƠ CẤU DOANH THU
+    # TABLE 2
     # --------------------------------------------------------
 
-    st.dataframe(
-        style_white_table(
-            revenue_display
-        ),
-        use_container_width=True,
-        hide_index=True,
-        height=181,
+    render_compact_table(
+        revenue_display,
+        column_widths=[
+            42,
+            31,
+            27,
+        ],
     )
 
 
 # ============================================================
-# 15.3 CỘT PHẢI - DONUT CHART
+# 15.3 RIGHT COLUMN
 # ============================================================
 
 with right_revenue_column:
 
-    st.markdown(
-        """
-<div style="
-    font-size:24px;
-    line-height:1.2;
-    font-weight:800;
-    color:#1F2937;
-    margin:8px 0 2px 4px;
-">
-    Cơ cấu tổng doanh thu
-</div>
-""",
-        unsafe_allow_html=True,
-    )
+    # --------------------------------------------------------
+    # PIE CHART
+    # --------------------------------------------------------
 
     revenue_mix_figure = go.Figure(
         data=[
@@ -443,31 +765,43 @@ with right_revenue_column:
                     "Doanh thu phụ tùng",
                     "Doanh thu phụ kiện",
                 ],
+
                 values=[
                     labor_revenue,
                     parts_revenue,
                     accessory_revenue,
                 ],
+
                 hole=0.60,
+
                 sort=False,
+
                 direction="clockwise",
+
                 marker=dict(
                     colors=[
                         "#386FAE",
                         "#F86D53",
                         "#F9B43A",
                     ],
+
                     line=dict(
                         color="#FFFFFF",
                         width=3,
                     ),
                 ),
+
                 textinfo="percent",
-                texttemplate="%{percent:.0%}",
+
+                texttemplate=(
+                    "%{percent:.0%}"
+                ),
+
                 textfont=dict(
                     color="#FFFFFF",
                     size=14,
                 ),
+
                 hovertemplate=(
                     "<b>%{label}</b><br>"
                     "Giá trị: %{value:,.0f}<br>"
@@ -478,9 +812,15 @@ with right_revenue_column:
         ]
     )
 
+
+    # --------------------------------------------------------
+    # CENTER TEXT
+    # --------------------------------------------------------
+
     revenue_mix_figure.add_annotation(
         x=0.5,
-        y=0.53,
+        y=0.51,
+
         text=(
             f"<b>{fmt_m(actual_revenue)}</b>"
             "<br>"
@@ -488,65 +828,151 @@ with right_revenue_column:
             "Tổng doanh thu"
             "</span>"
         ),
+
         showarrow=False,
+
         font=dict(
             color="#1F2937",
             size=16,
         ),
+
         align="center",
     )
 
+
+    # --------------------------------------------------------
+    # FIGURE LAYOUT
+    # --------------------------------------------------------
+
     revenue_mix_figure.update_layout(
         template="simple_white",
-        height=285,
+
+        height=300,
+
         margin=dict(
             l=5,
             r=5,
             t=0,
             b=0,
         ),
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
+
+        paper_bgcolor=(
+            "rgba(0,0,0,0)"
+        ),
+
+        plot_bgcolor=(
+            "rgba(0,0,0,0)"
+        ),
+
         showlegend=False,
     )
+
+
+    # --------------------------------------------------------
+    # CARD TOP / TITLE
+    # --------------------------------------------------------
+
+    st.markdown(
+        """
+<div style="
+    width:100%;
+    background:#FFFFFF;
+    border:1px solid #E5E7EB;
+    border-bottom:none;
+    border-radius:18px 18px 0 0;
+    box-sizing:border-box;
+    padding:18px 20px 0 20px;
+    margin:0;
+">
+    <div style="
+        color:#1F2937;
+        font-size:24px;
+        font-weight:800;
+        line-height:1.15;
+        margin:0;
+        padding:0;
+    ">
+        Cơ cấu tổng doanh thu
+    </div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+
+    # --------------------------------------------------------
+    # CARD BODY
+    # --------------------------------------------------------
 
     revenue_mix_card = st.container(
         key="revenue_mix_donut_card"
     )
 
+
     with revenue_mix_card:
 
         st.plotly_chart(
             revenue_mix_figure,
+
             use_container_width=True,
+
             config={
                 "displayModeBar": False,
                 "responsive": True,
             },
         )
 
-        # ----------------------------------------------------
-        # CUSTOM LEGEND
-        #
-        # QUAN TRỌNG:
-        # HTML bắt đầu ngay từ đầu dòng.
-        # Không indent HTML vì Markdown sẽ hiểu là code block.
-        # ----------------------------------------------------
 
         legend_html = """
-<div style="display:flex;justify-content:center;align-items:center;gap:18px;flex-wrap:nowrap;margin-top:-6px;margin-bottom:4px;font-size:13px;color:#475467;font-weight:600;">
-<div style="display:flex;align-items:center;gap:6px;white-space:nowrap;">
-<span style="width:10px;height:10px;border-radius:50%;background:#386FAE;display:inline-block;"></span>
-<span>Công việc</span>
-</div>
-<div style="display:flex;align-items:center;gap:6px;white-space:nowrap;">
-<span style="width:10px;height:10px;border-radius:50%;background:#F86D53;display:inline-block;"></span>
-<span>Phụ tùng</span>
-</div>
-<div style="display:flex;align-items:center;gap:6px;white-space:nowrap;">
-<span style="width:10px;height:10px;border-radius:50%;background:#F9B43A;display:inline-block;"></span>
-<span>Phụ kiện</span>
-</div>
+<div class="revenue-pie-legend">
+
+    <div class="revenue-pie-legend-item">
+
+        <span
+            class="revenue-pie-dot"
+            style="
+                background:#386FAE;
+            "
+        ></span>
+
+        <span>
+            Công việc
+        </span>
+
+    </div>
+
+
+    <div class="revenue-pie-legend-item">
+
+        <span
+            class="revenue-pie-dot"
+            style="
+                background:#F86D53;
+            "
+        ></span>
+
+        <span>
+            Phụ tùng
+        </span>
+
+    </div>
+
+
+    <div class="revenue-pie-legend-item">
+
+        <span
+            class="revenue-pie-dot"
+            style="
+                background:#F9B43A;
+            "
+        ></span>
+
+        <span>
+            Phụ kiện
+        </span>
+
+    </div>
+
 </div>
 """
 
@@ -561,24 +987,45 @@ with right_revenue_column:
 # ============================================================
 
 if selected_branch == "All":
-    chart_scope_name = "TOÀN HO"
+
+    chart_scope_name = (
+        "TOÀN HO"
+    )
 
 elif selected_workshop == "All":
-    chart_scope_name = selected_branch
+
+    chart_scope_name = (
+        selected_branch
+    )
 
 else:
-    chart_scope_name = selected_workshop
+
+    chart_scope_name = (
+        selected_workshop
+    )
 
 
 render_daily_charts(
     data=data,
+
     year=year,
     month=month,
+
     workshop=chart_scope_name,
+
     target_ro=target_ro,
-    target_revenue=target_revenue,
-    working_days=actual_working_days,
-    target_available=target_available,
+
+    target_revenue=(
+        target_revenue
+    ),
+
+    working_days=(
+        actual_working_days
+    ),
+
+    target_available=(
+        target_available
+    ),
 )
 
 
@@ -595,8 +1042,10 @@ render_brand_section(
 # 18. PAYMENT STRUCTURE
 # ============================================================
 
-total_payment = render_payment_section(
-    data=data
+total_payment = (
+    render_payment_section(
+        data=data
+    )
 )
 
 
@@ -620,32 +1069,44 @@ with st.expander(
 
     st.write(
         "Doanh thu công việc:",
-        fmt_m(labor_revenue),
+        fmt_m(
+            labor_revenue
+        ),
     )
 
     st.write(
         "Doanh thu phụ tùng:",
-        fmt_m(parts_revenue),
+        fmt_m(
+            parts_revenue
+        ),
     )
 
     st.write(
         "Doanh thu phụ kiện:",
-        fmt_m(accessory_revenue),
+        fmt_m(
+            accessory_revenue
+        ),
     )
 
     st.write(
         "Tổng doanh thu:",
-        fmt_m(actual_revenue),
+        fmt_m(
+            actual_revenue
+        ),
     )
 
     st.write(
         "Tổng thanh toán:",
-        fmt_m(total_after_tax),
+        fmt_m(
+            total_after_tax
+        ),
     )
 
     st.write(
         "Tổng cơ cấu nguồn thanh toán:",
-        fmt_m(total_payment),
+        fmt_m(
+            total_payment
+        ),
     )
 
     st.write(
@@ -664,6 +1125,7 @@ with st.expander(
 with st.expander(
     "Xem dữ liệu lệnh sửa chữa"
 ):
+
     st.dataframe(
         data,
         use_container_width=True,
@@ -685,8 +1147,10 @@ with st.expander(
             "nguon_khach",
             "xuong",
         ]
-        if column in merged_data.columns
+        if column
+        in merged_data.columns
     ]
+
 
     st.dataframe(
         merged_data[
