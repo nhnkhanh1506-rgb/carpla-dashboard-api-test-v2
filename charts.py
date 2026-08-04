@@ -2520,18 +2520,19 @@ def render_payment_section(data):
         font-weight: 700;
         line-height: 1.2;
         margin: 0;
-        padding: 16px 2px 6px 2px;
+        padding: 16px 4px 0 4px;
+        text-align: left;
     }
 
     .payment-legend {
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 24px;
+        gap: 28px;
         width: 100%;
         flex-wrap: nowrap;
-        margin-top: -6px;
-        margin-bottom: 10px;
+        margin-top: -2px;
+        margin-bottom: 14px;
         font-size: 12.5px;
         font-weight: 600;
         color: #475467;
@@ -2553,13 +2554,14 @@ def render_payment_section(data):
     }
 
     .st-key-payment_donut_card {
-        width: 100%;
-        background: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 18px;
-        box-sizing: border-box;
-        padding: 0 18px 16px 18px;
-        overflow: hidden;
+        width: 100% !important;
+        background: #FFFFFF !important;
+        border: 1px solid #E2E8F0 !important;
+        border-radius: 18px !important;
+        box-sizing: border-box !important;
+        padding: 0 18px 12px 18px !important;
+        overflow: hidden !important;
+        min-height: 0 !important;
     }
 
     .st-key-payment_donut_card div[data-testid="stVerticalBlock"] {
@@ -2718,8 +2720,8 @@ def render_payment_section(data):
                             color="white",
                         ),
                         domain=dict(
-                            x=[0.22, 0.68],
-                            y=[0.20, 0.88],
+                            x=[0.29, 0.71],
+                            y=[0.24, 0.84],
                         ),
                         hovertemplate=(
                             "<b>%{label}</b><br>"
@@ -2731,9 +2733,26 @@ def render_payment_section(data):
                 ]
             )
 
+            figure.add_annotation(
+                x=0.5,
+                y=0.54,
+                text=(
+                    f"<b>{fmt_m(total_payment)}</b>"
+                    "<br><span style='font-size:11px;'>"
+                    "Tổng thanh toán"
+                    "</span>"
+                ),
+                showarrow=False,
+                align="center",
+                font=dict(
+                    color="#1F2937",
+                    size=14,
+                ),
+            )
+
             figure.update_layout(
                 template="simple_white",
-                height=300,
+                height=260,
                 margin=dict(
                     l=0,
                     r=0,
