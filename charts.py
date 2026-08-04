@@ -2847,8 +2847,8 @@ def render_payment_section(data):
                         ),
                         # Tăng mạnh vùng thật sự dành cho pie.
                         domain=dict(
-                            x=[0.11, 0.89],
-                            y=[0.18, 0.96],
+                            x=[0.14, 0.86],
+                            y=[0.20, 0.94],
                         ),
                         hovertemplate=(
                             "<b>%{label}</b><br>"
