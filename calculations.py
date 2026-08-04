@@ -36,6 +36,22 @@ def filter_scope(
     year,
     month,
 ):
+    """
+    Lọc phạm vi dashboard theo:
+    - Chi nhánh
+    - Xưởng
+    - Năm
+    - Tháng
+
+    QUAN TRỌNG:
+    Năm/tháng CHỈ lấy từ cột ngay_hoa_don,
+    tức cột "Ngày DT" trong file nguồn.
+
+    Không dùng:
+    - Ngày lập lệnh
+    - Ngày quyết toán
+    """
+
     data = data_raw.copy()
 
     if selected_branch != "All":
@@ -49,6 +65,10 @@ def filter_scope(
             data["xuong"]
             == selected_workshop
         ].copy()
+
+    data = data[
+        data["ngay_hoa_don"].notna()
+    ].copy()
 
     data = data[
         data["ngay_hoa_don"].dt.year
@@ -75,18 +95,6 @@ def get_target_for_scope(
     year,
     month,
 ):
-    """
-    Target chỉ tồn tại cho đúng 1 xưởng Hà Nội,
-    tháng 7/2026.
-
-    Không cộng target khi:
-    - Chi nhánh = All
-    - Xưởng = All
-    - Tháng = All
-    - Tháng khác 7
-    - Chi nhánh khác Hà Nội
-    """
-
     if selected_branch == "All":
         return {
             "available": False,
@@ -175,8 +183,6 @@ def calculate_dashboard_metrics(
     # --------------------------------------------------------
     # 2. LỆNH SỬA CHỮA LSC
     # --------------------------------------------------------
-    # Dashboard hiện tại về RO, daily, hãng xe,
-    # thanh toán vẫn dùng LSC giống logic cũ.
 
     data = scoped_data[
         scoped_data["loai_lenh"]
@@ -201,6 +207,35 @@ def calculate_dashboard_metrics(
 
     actual_ro = (
         data["ro_key"].nunique()
+    )
+
+    # --------------------------------------------------------
+    # 2.1 NGUỒN KHÁCH
+    # --------------------------------------------------------
+    # Dùng đúng tập lệnh LSC đang hiển thị trên dashboard.
+    # Tập này đã được lọc:
+    # Chi nhánh + Xưởng + Năm/Tháng theo Ngày DT.
+
+    customer_source_data = data.copy()
+
+    if "nguon_khach" not in customer_source_data.columns:
+        customer_source_data[
+            "nguon_khach"
+        ] = "KHÔNG XÁC ĐỊNH"
+
+    customer_source_data[
+        "nguon_khach"
+    ] = (
+        customer_source_data[
+            "nguon_khach"
+        ]
+        .fillna("KHÔNG XÁC ĐỊNH")
+        .astype(str)
+        .str.strip()
+        .replace(
+            "",
+            "KHÔNG XÁC ĐỊNH",
+        )
     )
 
     # --------------------------------------------------------
@@ -253,8 +288,6 @@ def calculate_dashboard_metrics(
     # --------------------------------------------------------
     # 5. TỔNG DOANH THU
     # --------------------------------------------------------
-    # Giữ logic dashboard hiện tại:
-    # Tổng DT = DT từ LSC + DT phụ kiện LPK.
 
     actual_revenue = (
         service_revenue
@@ -317,8 +350,6 @@ def calculate_dashboard_metrics(
     # --------------------------------------------------------
     # 9. ĐỐI CHIẾU
     # --------------------------------------------------------
-    # File mới đã có doanh thu phụ tùng trực tiếp.
-    # Giữ merged_data để app cũ không lỗi.
 
     merged_data = data.copy()
 
@@ -332,6 +363,9 @@ def calculate_dashboard_metrics(
     return {
         "data": data,
         "scoped_data": scoped_data,
+        "customer_source_data": (
+            customer_source_data
+        ),
         "accessory_orders": (
             accessory_orders
         ),
@@ -400,11 +434,6 @@ def calculate_working_days(
     data,
 ):
     year = int(year)
-
-    # --------------------------------------------------------
-    # NẾU THÁNG = ALL:
-    # TÍNH TOÀN BỘ NĂM
-    # --------------------------------------------------------
 
     if month == "All":
         start_date = date(
