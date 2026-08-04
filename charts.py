@@ -2837,8 +2837,8 @@ def render_payment_section(data):
                         ),
                         # Pie nhỏ lại và hạ xuống dưới tiêu đề.
                         domain=dict(
-                            x=[0.19, 0.81],
-                            y=[0.20, 0.82],
+                            x=[0.12, 0.88],
+                            y=[0.18, 0.86],
                         ),
                         hovertemplate=(
                             "<b>%{label}</b><br>"
@@ -2852,7 +2852,7 @@ def render_payment_section(data):
 
             payment_figure.add_annotation(
                 x=0.5,
-                y=0.51,
+                y=0.52,
                 xref="paper",
                 yref="paper",
                 text=(
@@ -2872,7 +2872,7 @@ def render_payment_section(data):
 
             payment_figure.update_layout(
                 template="simple_white",
-                height=300,
+                height=315,
                 margin=dict(
                     l=10,
                     r=10,
@@ -2884,12 +2884,12 @@ def render_payment_section(data):
                 title=dict(
                     text="<b>Tỷ trọng nguồn thanh toán</b>",
                     x=0.03,
-                    y=0.97,
+                    y=0.965,
                     xanchor="left",
                     yanchor="top",
                     font=dict(
                         color="#1F2937",
-                        size=20,
+                        size=18,
                     ),
                 ),
 
@@ -2898,7 +2898,7 @@ def render_payment_section(data):
                 legend=dict(
                     orientation="h",
                     x=0.5,
-                    y=0.02,
+                    y=0.035,
                     xanchor="center",
                     yanchor="bottom",
                     font=dict(
