@@ -2549,7 +2549,7 @@ def render_payment_section(data):
         border: 1px solid #E2E8F0 !important;
         border-radius: 18px !important;
         box-sizing: border-box !important;
-        padding: 8px 18px 14px 18px !important;
+        padding: 6px 16px 8px 16px !important;
         overflow: hidden !important;
         min-height: 0 !important;
     }
@@ -2588,9 +2588,9 @@ def render_payment_section(data):
         border: 1px solid #E2E8F0 !important;
         border-radius: 18px !important;
         box-sizing: border-box !important;
-        padding: 14px 18px 10px 18px !important;
+        padding: 14px 18px 12px 18px !important;
         overflow: hidden !important;
-        min-height: 0 !important;
+        min-height: 360px !important;
     }
 
     .st-key-customer_source_chart_card div[data-testid="stVerticalBlock"] {
@@ -2607,7 +2607,7 @@ def render_payment_section(data):
         font-size: 18px;
         font-weight: 800;
         line-height: 1.2;
-        margin: 0 0 8px 0;
+        margin: 0 0 14px 0;
         padding: 0;
     }
     </style>
@@ -2748,8 +2748,8 @@ def render_payment_section(data):
                             color="white",
                         ),
                         domain=dict(
-                            x=[0.27, 0.73],
-                            y=[0.16, 0.80],
+                            x=[0.28, 0.72],
+                            y=[0.18, 0.76],
                         ),
                         hovertemplate=(
                             "<b>%{label}</b><br>"
@@ -2763,7 +2763,7 @@ def render_payment_section(data):
 
             figure.add_annotation(
                 x=0.02,
-                y=0.96,
+                y=0.94,
                 xref="paper",
                 yref="paper",
                 text=(
@@ -2800,7 +2800,7 @@ def render_payment_section(data):
 
             figure.update_layout(
                 template="simple_white",
-                height=300,
+                height=245,
                 margin=dict(
                     l=0,
                     r=0,
@@ -3054,12 +3054,12 @@ def render_payment_section(data):
 
                 source_figure.update_layout(
                     template="simple_white",
-                    height=260,
+                    height=235,
                     margin=dict(
-                        l=145,
-                        r=45,
-                        t=4,
-                        b=40,
+                        l=170,
+                        r=38,
+                        t=22,
+                        b=42,
                     ),
                     xaxis_title="Số RO",
                     yaxis_title="",
