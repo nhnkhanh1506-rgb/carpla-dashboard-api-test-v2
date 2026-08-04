@@ -2569,6 +2569,7 @@ def render_payment_section(data):
         line-height: 1.2;
         margin: 0 0 12px 0;
         padding: 0;
+        text-align: left;
     }
     </style>
     """
@@ -2846,8 +2847,8 @@ def render_payment_section(data):
                         ),
                         # Tăng mạnh vùng thật sự dành cho pie.
                         domain=dict(
-                            x=[0.15, 0.85],
-                            y=[0.22, 0.96],
+                            x=[0.11, 0.89],
+                            y=[0.18, 0.96],
                         ),
                         hovertemplate=(
                             "<b>%{label}</b><br>"
@@ -2861,7 +2862,7 @@ def render_payment_section(data):
 
             payment_figure.add_annotation(
                 x=0.5,
-                y=0.59,
+                y=0.57,
                 xref="paper",
                 yref="paper",
                 text=(
@@ -2967,6 +2968,7 @@ def render_payment_section(data):
                             "nguon_khach"
                         ],
                         orientation="h",
+                        width=0.72,
                         marker=dict(
                             color="#F5D96B",
                             line=dict(
@@ -2984,7 +2986,7 @@ def render_payment_section(data):
                         textposition="outside",
                         textfont=dict(
                             color="#667085",
-                            size=12,
+                            size=13,
                         ),
                         cliponaxis=False,
                         hovertemplate=(
@@ -2997,7 +2999,7 @@ def render_payment_section(data):
 
                 source_figure.update_layout(
                     template="simple_white",
-                    height=245,
+                    height=270,
                     margin=dict(
                         l=180,
                         r=40,
@@ -3010,6 +3012,7 @@ def render_payment_section(data):
                     plot_bgcolor="rgba(0,0,0,0)",
                     font=dict(
                         color="#475467",
+                        size=12,
                     ),
                     showlegend=False,
                 )
@@ -3024,7 +3027,7 @@ def render_payment_section(data):
                     showgrid=False,
                     automargin=True,
                     tickfont=dict(
-                        size=11,
+                        size=12,
                     ),
                 )
 
