@@ -2520,9 +2520,9 @@ def render_payment_section(data):
         border: 1px solid #E2E8F0 !important;
         border-radius: 18px !important;
         box-sizing: border-box !important;
-        padding: 18px 18px 12px 18px !important;
-        overflow: visible !important;
-        min-height: 330px !important;
+        padding: 18px 18px 10px 18px !important;
+        overflow: hidden !important;
+        min-height: 344px !important;
     }
 
     .st-key-payment_donut_card div[data-testid="stVerticalBlock"] {
@@ -2534,13 +2534,22 @@ def render_payment_section(data):
         padding: 0 !important;
     }
 
+    .payment-card-title {
+        color: #1F2937;
+        font-size: 20px;
+        font-weight: 800;
+        line-height: 1.2;
+        margin: 0 0 2px 2px;
+        padding: 0;
+    }
+
     .st-key-customer_source_chart_card {
         width: 100% !important;
         background: #FFFFFF !important;
         border: 1px solid #E2E8F0 !important;
         border-radius: 18px !important;
         box-sizing: border-box !important;
-        padding: 14px 18px 14px 18px !important;
+        padding: 14px 18px 12px 18px !important;
         overflow: hidden !important;
         min-height: 334px !important;
     }
@@ -2559,7 +2568,7 @@ def render_payment_section(data):
         font-size: 18px;
         font-weight: 800;
         line-height: 1.2;
-        margin: 0 0 16px 0;
+        margin: 0 0 12px 0;
         padding: 0;
     }
     </style>
@@ -2580,7 +2589,10 @@ def render_payment_section(data):
         errors="coerce",
     ).fillna(0).sum()
 
-    total_payment = customer_value + insurance_value
+    total_payment = (
+        customer_value
+        + insurance_value
+    )
 
     payment_structure = pd.DataFrame(
         {
@@ -2598,104 +2610,203 @@ def render_payment_section(data):
     payment_structure["Tỷ trọng"] = payment_structure[
         "Giá trị"
     ].apply(
-        lambda value: safe_div(
+        lambda value:
+        safe_div(
             value,
             total_payment,
         )
     )
 
     payment_display = payment_structure.copy()
-    payment_display["Giá trị"] = payment_display["Giá trị"].map(fmt_m)
-    payment_display["Tỷ trọng"] = payment_display["Tỷ trọng"].map(
-        lambda value: f"{value:.2%}"
+
+    payment_display["Giá trị"] = payment_display[
+        "Giá trị"
+    ].map(fmt_m)
+
+    payment_display["Tỷ trọng"] = payment_display[
+        "Tỷ trọng"
+    ].map(
+        lambda value:
+        f"{value:.2%}"
     )
 
     payment_total_row = pd.DataFrame(
         {
-            "Nguồn thanh toán": ["TỔNG"],
-            "Giá trị": [fmt_m(total_payment)],
-            "Tỷ trọng": ["100.00%"],
+            "Nguồn thanh toán": [
+                "TỔNG"
+            ],
+            "Giá trị": [
+                fmt_m(total_payment)
+            ],
+            "Tỷ trọng": [
+                "100.00%"
+            ],
         }
     )
 
     payment_display = pd.concat(
-        [payment_display, payment_total_row],
+        [
+            payment_display,
+            payment_total_row,
+        ],
         ignore_index=True,
     )
 
-    left_col, right_col = st.columns([1, 1])
+    # ========================================================
+    # NGUỒN KHÁCH
+    # ========================================================
 
-    with left_col:
-        st.dataframe(
-            style_white_table(payment_display),
-            use_container_width=True,
-            hide_index=True,
+    source_summary = None
+    source_display = None
+
+    if "nguon_khach" in data.columns:
+        source_data = data.copy()
+
+        source_data[
+            "nguon_khach"
+        ] = (
+            source_data[
+                "nguon_khach"
+            ]
+            .fillna("KHÔNG XÁC ĐỊNH")
+            .astype(str)
+            .str.strip()
+            .replace(
+                "",
+                "KHÔNG XÁC ĐỊNH",
+            )
         )
 
-        if "nguon_khach" in data.columns:
-            source_data = data.copy()
-            source_data["nguon_khach"] = (
-                source_data["nguon_khach"]
-                .fillna("KHÔNG XÁC ĐỊNH")
-                .astype(str)
-                .str.strip()
-                .replace("", "KHÔNG XÁC ĐỊNH")
+        source_summary = (
+            source_data
+            .groupby(
+                "nguon_khach",
+                dropna=False,
             )
-
-            source_summary = (
-                source_data
-                .groupby("nguon_khach", dropna=False)
-                .agg(so_ro=("ro", "nunique"))
-                .reset_index()
-                .sort_values("so_ro", ascending=False)
+            .agg(
+                so_ro=(
+                    "ro",
+                    "nunique",
+                )
             )
-
-            total_source_ro = source_summary["so_ro"].sum()
-            source_summary["ty_trong"] = source_summary["so_ro"].apply(
-                lambda value: safe_div(value, total_source_ro)
+            .reset_index()
+            .sort_values(
+                "so_ro",
+                ascending=False,
             )
+        )
 
-            source_display = source_summary.copy().rename(
+        total_source_ro = source_summary[
+            "so_ro"
+        ].sum()
+
+        source_summary[
+            "ty_trong"
+        ] = source_summary[
+            "so_ro"
+        ].apply(
+            lambda value:
+            safe_div(
+                value,
+                total_source_ro,
+            )
+        )
+
+        source_display = (
+            source_summary
+            .copy()
+            .rename(
                 columns={
                     "nguon_khach": "Nguồn khách",
                     "so_ro": "Số RO",
                     "ty_trong": "Tỷ trọng",
                 }
             )
+        )
 
-            source_display["Số RO"] = (
-                source_display["Số RO"].astype(int).astype(str)
-            )
-            source_display["Tỷ trọng"] = source_display["Tỷ trọng"].map(
-                lambda value: f"{value:.1%}"
-            )
+        source_display[
+            "Số RO"
+        ] = (
+            source_display[
+                "Số RO"
+            ]
+            .astype(int)
+            .astype(str)
+        )
 
-            source_total_row = pd.DataFrame(
-                {
-                    "Nguồn khách": ["TỔNG"],
-                    "Số RO": [str(int(total_source_ro))],
-                    "Tỷ trọng": ["100.0%"],
-                }
-            )
+        source_display[
+            "Tỷ trọng"
+        ] = source_display[
+            "Tỷ trọng"
+        ].map(
+            lambda value:
+            f"{value:.1%}"
+        )
 
-            source_display = pd.concat(
-                [source_display, source_total_row],
-                ignore_index=True,
-            )
+        source_total_row = pd.DataFrame(
+            {
+                "Nguồn khách": [
+                    "TỔNG"
+                ],
+                "Số RO": [
+                    str(
+                        int(
+                            total_source_ro
+                        )
+                    )
+                ],
+                "Tỷ trọng": [
+                    "100.0%"
+                ],
+            }
+        )
 
-            st.markdown(
-                "<div style='height: 6px;'></div>",
-                unsafe_allow_html=True,
-            )
+        source_display = pd.concat(
+            [
+                source_display,
+                source_total_row,
+            ],
+            ignore_index=True,
+        )
 
+    # ========================================================
+    # 2 CỘT CHÍNH
+    # ========================================================
+
+    left_col, right_col = st.columns(
+        [1, 1]
+    )
+
+    # ========================================================
+    # BÊN TRÁI: 2 TABLE
+    # ========================================================
+
+    with left_col:
+        st.dataframe(
+            style_white_table(
+                payment_display
+            ),
+            use_container_width=True,
+            hide_index=True,
+        )
+
+        st.markdown(
+            "<div style='height:6px;'></div>",
+            unsafe_allow_html=True,
+        )
+
+        if source_display is not None:
             st.dataframe(
-                style_white_table(source_display),
+                style_white_table(
+                    source_display
+                ),
                 use_container_width=True,
                 hide_index=True,
             )
-        else:
-            source_summary = None
-            st.info("File hiện tại chưa có cột Nguồn khách.")
+
+    # ========================================================
+    # BÊN PHẢI: PIE + BAR
+    # ========================================================
 
     with right_col:
         payment_chart_card = st.container(
@@ -2703,16 +2814,10 @@ def render_payment_section(data):
         )
 
         with payment_chart_card:
-            # Tiêu đề nằm riêng trong card, không phụ thuộc Plotly.
-            payment_title_html = (
-                '<div style="color:#1F2937;font-size:20px;font-weight:800;'
-                'line-height:1.2;margin:0 0 8px 2px;">'
-                'Tỷ trọng nguồn thanh toán'
-                '</div>'
-            )
-
             st.markdown(
-                payment_title_html,
+                '<div class="payment-card-title">'
+                'Tỷ trọng nguồn thanh toán'
+                '</div>',
                 unsafe_allow_html=True,
             )
 
@@ -2746,7 +2851,7 @@ def render_payment_section(data):
                         ),
                         domain=dict(
                             x=[0.20, 0.80],
-                            y=[0.10, 0.86],
+                            y=[0.24, 0.88],
                         ),
                         hovertemplate=(
                             "<b>%{label}</b><br>"
@@ -2760,7 +2865,7 @@ def render_payment_section(data):
 
             figure.add_annotation(
                 x=0.5,
-                y=0.50,
+                y=0.56,
                 xref="paper",
                 yref="paper",
                 text=(
@@ -2778,9 +2883,73 @@ def render_payment_section(data):
                 ),
             )
 
+            # Legend tự vẽ BÊN TRONG Plotly.
+            # Không thể bị Streamlit cắt hoặc render thành text HTML.
+            legend_y = 0.085
+
+            figure.add_shape(
+                type="circle",
+                xref="paper",
+                yref="paper",
+                x0=0.30,
+                x1=0.318,
+                y0=legend_y - 0.012,
+                y1=legend_y + 0.012,
+                fillcolor=DONUT_MAIN,
+                line=dict(
+                    color=DONUT_MAIN,
+                    width=0,
+                ),
+            )
+
+            figure.add_annotation(
+                x=0.325,
+                y=legend_y,
+                xref="paper",
+                yref="paper",
+                text="Khách hàng chi trả",
+                showarrow=False,
+                xanchor="left",
+                yanchor="middle",
+                font=dict(
+                    color="#475467",
+                    size=12,
+                ),
+            )
+
+            figure.add_shape(
+                type="circle",
+                xref="paper",
+                yref="paper",
+                x0=0.61,
+                x1=0.628,
+                y0=legend_y - 0.012,
+                y1=legend_y + 0.012,
+                fillcolor=DONUT_SECOND,
+                line=dict(
+                    color=DONUT_SECOND,
+                    width=0,
+                ),
+            )
+
+            figure.add_annotation(
+                x=0.635,
+                y=legend_y,
+                xref="paper",
+                yref="paper",
+                text="Bảo hiểm chi trả",
+                showarrow=False,
+                xanchor="left",
+                yanchor="middle",
+                font=dict(
+                    color="#475467",
+                    size=12,
+                ),
+            )
+
             figure.update_layout(
                 template="simple_white",
-                height=228,
+                height=285,
                 margin=dict(
                     l=0,
                     r=0,
@@ -2804,54 +2973,47 @@ def render_payment_section(data):
                 },
             )
 
-            # Legend viết thành một chuỗi HTML liền để Streamlit
-            # không hiểu nhầm thành code block Markdown.
-            payment_legend_html = (
-                '<div style="display:flex;justify-content:center;align-items:center;'
-                'gap:24px;width:100%;margin-top:-2px;margin-bottom:2px;'
-                'font-size:12.5px;font-weight:600;color:#475467;">'
-                '<div style="display:flex;align-items:center;gap:6px;white-space:nowrap;">'
-                f'<span style="width:9px;height:9px;border-radius:50%;background:{DONUT_MAIN};display:inline-block;"></span>'
-                '<span>Khách hàng chi trả</span>'
-                '</div>'
-                '<div style="display:flex;align-items:center;gap:6px;white-space:nowrap;">'
-                f'<span style="width:9px;height:9px;border-radius:50%;background:{DONUT_SECOND};display:inline-block;"></span>'
-                '<span>Bảo hiểm chi trả</span>'
-                '</div>'
-                '</div>'
-            )
-
+        if (
+            source_summary is not None
+            and not source_summary.empty
+        ):
             st.markdown(
-                payment_legend_html,
+                "<div style='height:12px;'></div>",
                 unsafe_allow_html=True,
             )
 
-
-        if "nguon_khach" in data.columns and source_summary is not None:
-            st.markdown(
-                "<div style='height: 12px;'></div>",
-                unsafe_allow_html=True,
+            source_chart_card = st.container(
+                key="customer_source_chart_card"
             )
 
-            source_chart_card = st.container(key="customer_source_chart_card")
             with source_chart_card:
                 st.markdown(
-                    '<div class="customer-source-card-title">Top nguồn khách theo số RO</div>',
+                    '<div class="customer-source-card-title">'
+                    'Top nguồn khách theo số RO'
+                    '</div>',
                     unsafe_allow_html=True,
                 )
 
                 source_chart = (
                     source_summary
                     .head(8)
-                    .sort_values("so_ro", ascending=True)
+                    .sort_values(
+                        "so_ro",
+                        ascending=True,
+                    )
                     .copy()
                 )
 
                 source_figure = go.Figure()
+
                 source_figure.add_trace(
                     go.Bar(
-                        x=source_chart["so_ro"],
-                        y=source_chart["nguon_khach"],
+                        x=source_chart[
+                            "so_ro"
+                        ],
+                        y=source_chart[
+                            "nguon_khach"
+                        ],
                         orientation="h",
                         marker=dict(
                             color="#F5D96B",
@@ -2860,7 +3022,13 @@ def render_payment_section(data):
                                 width=0.5,
                             ),
                         ),
-                        text=[f"{int(value)}" for value in source_chart["so_ro"]],
+                        text=[
+                            f"{int(value)}"
+                            for value
+                            in source_chart[
+                                "so_ro"
+                            ]
+                        ],
                         textposition="outside",
                         textfont=dict(
                             color="#667085",
@@ -2881,14 +3049,16 @@ def render_payment_section(data):
                     margin=dict(
                         l=180,
                         r=40,
-                        t=46,
+                        t=42,
                         b=42,
                     ),
                     xaxis_title="Số RO",
                     yaxis_title="",
                     paper_bgcolor="rgba(0,0,0,0)",
                     plot_bgcolor="rgba(0,0,0,0)",
-                    font=dict(color="#475467"),
+                    font=dict(
+                        color="#475467",
+                    ),
                     showlegend=False,
                 )
 
@@ -2901,7 +3071,9 @@ def render_payment_section(data):
                 source_figure.update_yaxes(
                     showgrid=False,
                     automargin=True,
-                    tickfont=dict(size=11),
+                    tickfont=dict(
+                        size=11,
+                    ),
                 )
 
                 st.plotly_chart(
@@ -2914,5 +3086,3 @@ def render_payment_section(data):
                 )
 
     return total_payment
-
-
