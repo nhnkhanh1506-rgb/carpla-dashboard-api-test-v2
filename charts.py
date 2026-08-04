@@ -2521,8 +2521,8 @@ def render_payment_section(data):
         border-radius: 18px !important;
         box-sizing: border-box !important;
         padding: 10px 18px 12px 18px !important;
-        overflow: hidden !important;
-        min-height: 336px !important;
+        overflow: visible !important;
+        min-height: 318px !important;
     }
 
     .st-key-payment_donut_card div[data-testid="stVerticalBlock"] {
@@ -2698,8 +2698,27 @@ def render_payment_section(data):
             st.info("File hiện tại chưa có cột Nguồn khách.")
 
     with right_col:
-        payment_chart_card = st.container(key="payment_donut_card")
+        payment_chart_card = st.container(
+            key="payment_donut_card"
+        )
+
         with payment_chart_card:
+            # Tiêu đề nằm riêng trong card, không phụ thuộc Plotly.
+            st.markdown(
+                """
+                <div style="
+                    color:#1F2937;
+                    font-size:20px;
+                    font-weight:800;
+                    line-height:1.2;
+                    margin:0 0 4px 2px;
+                ">
+                    Tỷ trọng nguồn thanh toán
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
             figure = go.Figure(
                 data=[
                     go.Pie(
@@ -2713,7 +2732,10 @@ def render_payment_section(data):
                         ],
                         hole=0.56,
                         marker=dict(
-                            colors=[DONUT_MAIN, DONUT_SECOND],
+                            colors=[
+                                DONUT_MAIN,
+                                DONUT_SECOND,
+                            ],
                             line=dict(
                                 color="#FFFFFF",
                                 width=2,
@@ -2726,8 +2748,8 @@ def render_payment_section(data):
                             color="white",
                         ),
                         domain=dict(
-                            x=[0.18, 0.82],
-                            y=[0.28, 0.84],
+                            x=[0.22, 0.78],
+                            y=[0.08, 0.92],
                         ),
                         hovertemplate=(
                             "<b>%{label}</b><br>"
@@ -2740,29 +2762,16 @@ def render_payment_section(data):
             )
 
             figure.add_annotation(
-                x=0.02,
-                y=0.97,
-                xref="paper",
-                yref="paper",
-                text="<b>Tỷ trọng nguồn thanh toán</b>",
-                showarrow=False,
-                xanchor="left",
-                yanchor="top",
-                font=dict(
-                    color="#1F2937",
-                    size=20,
-                ),
-            )
-
-            figure.add_annotation(
                 x=0.5,
-                y=0.49,
+                y=0.50,
                 xref="paper",
                 yref="paper",
                 text=(
                     f"<b>{fmt_m(total_payment)}</b>"
                     "<br>"
-                    "<span style='font-size:11px;'>Tổng thanh toán</span>"
+                    "<span style='font-size:11px;'>"
+                    "Tổng thanh toán"
+                    "</span>"
                 ),
                 showarrow=False,
                 align="center",
@@ -2774,24 +2783,19 @@ def render_payment_section(data):
 
             figure.update_layout(
                 template="simple_white",
-                height=300,
-                margin=dict(l=0, r=0, t=0, b=0),
-                showlegend=True,
-                legend=dict(
-                    orientation="h",
-                    yanchor="bottom",
-                    y=0.035,
-                    xanchor="center",
-                    x=0.5,
-                    font=dict(
-                        color="#475467",
-                        size=12,
-                    ),
-                    itemsizing="constant",
+                height=238,
+                margin=dict(
+                    l=0,
+                    r=0,
+                    t=0,
+                    b=0,
                 ),
+                showlegend=False,
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
-                font=dict(color="#475467"),
+                font=dict(
+                    color="#475467",
+                ),
             )
 
             st.plotly_chart(
@@ -2803,6 +2807,57 @@ def render_payment_section(data):
                 },
             )
 
+            # Legend HTML nằm thật sự bên trong card.
+            # Không dùng Plotly legend để tránh bị Streamlit clip.
+            st.markdown(
+                f"""
+                <div style="
+                    display:flex;
+                    justify-content:center;
+                    align-items:center;
+                    gap:24px;
+                    width:100%;
+                    margin-top:-6px;
+                    margin-bottom:2px;
+                    font-size:12.5px;
+                    font-weight:600;
+                    color:#475467;
+                ">
+                    <div style="
+                        display:flex;
+                        align-items:center;
+                        gap:6px;
+                        white-space:nowrap;
+                    ">
+                        <span style="
+                            width:9px;
+                            height:9px;
+                            border-radius:50%;
+                            background:{DONUT_MAIN};
+                            display:inline-block;
+                        "></span>
+                        <span>Khách hàng chi trả</span>
+                    </div>
+
+                    <div style="
+                        display:flex;
+                        align-items:center;
+                        gap:6px;
+                        white-space:nowrap;
+                    ">
+                        <span style="
+                            width:9px;
+                            height:9px;
+                            border-radius:50%;
+                            background:{DONUT_SECOND};
+                            display:inline-block;
+                        "></span>
+                        <span>Bảo hiểm chi trả</span>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
         if "nguon_khach" in data.columns and source_summary is not None:
             st.markdown(
