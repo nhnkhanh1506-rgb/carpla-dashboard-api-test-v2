@@ -174,6 +174,7 @@ def read_branch_file(
             "Ngày DT",
             "Chi nhánh",
             "Tổng doanh thu",
+            "Nguồn khách",
         ],
         preferred_sheet="Báo cáo",
     )
@@ -227,6 +228,7 @@ def read_branch_file(
         "doanh_thu_truoc_thue",
         "tong_tien_sau_thue",
         "xuong_dms",
+        "nguon_khach",
     ]
 
     missing_columns = [
@@ -330,6 +332,10 @@ def read_branch_file(
     # --------------------------------------------------------
     # 6. NGÀY
     # --------------------------------------------------------
+    # QUY TẮC DUY NHẤT CHO KỲ DASHBOARD:
+    # - "Ngày DT" -> "ngay_hoa_don" là ngày dùng để lọc năm/tháng.
+    # - "Ngày lập lệnh" và "Ngày quyết toán" chỉ giữ để tham chiếu,
+    #   KHÔNG dùng để xác định kỳ dashboard.
 
     for column in [
         "ngay_hoa_don",
