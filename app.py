@@ -419,82 +419,212 @@ st.markdown(
     "## Cơ cấu tổng doanh thu"
 )
 
-revenue_breakdown = (
-    pd.DataFrame(
-        {
-            "Nguồn doanh thu": [
-                "Doanh thu công việc",
-                "Doanh thu phụ tùng",
-                "Doanh thu phụ kiện",
-                "TỔNG DOANH THU",
-            ],
+revenue_breakdown = pd.DataFrame(
+    {
+        "Nguồn doanh thu": [
+            "Doanh thu công việc",
+            "Doanh thu phụ tùng",
+            "Doanh thu phụ kiện",
+        ],
 
-            "Giá trị": [
-                labor_revenue,
-                parts_revenue,
-                accessory_revenue,
-                actual_revenue,
-            ],
-        }
-    )
-)
-
-revenue_breakdown[
-    "Giá trị hiển thị"
-] = (
-    revenue_breakdown[
-        "Giá trị"
-    ].map(fmt_m)
+        "Giá trị": [
+            labor_revenue,
+            parts_revenue,
+            accessory_revenue,
+        ],
+    }
 )
 
 revenue_breakdown[
     "Tỷ trọng"
-] = [
+] = revenue_breakdown[
+    "Giá trị"
+].apply(
+    lambda value:
     value / actual_revenue
     if actual_revenue
     else 0
-    for value in [
-        labor_revenue,
-        parts_revenue,
-        accessory_revenue,
-        actual_revenue,
-    ]
-]
+)
 
-revenue_breakdown[
+revenue_display = (
+    revenue_breakdown.copy()
+)
+
+revenue_display[
+    "Giá trị"
+] = revenue_display[
+    "Giá trị"
+].map(
+    fmt_m
+)
+
+revenue_display[
     "Tỷ trọng"
-] = (
-    revenue_breakdown[
-        "Tỷ trọng"
-    ].map(
-        lambda value:
-        f"{value:.0%}"
+] = revenue_display[
+    "Tỷ trọng"
+].map(
+    lambda value:
+    f"{value:.0%}"
+)
+
+total_row = pd.DataFrame(
+    {
+        "Nguồn doanh thu": [
+            "TỔNG DOANH THU"
+        ],
+        "Giá trị": [
+            fmt_m(
+                actual_revenue
+            )
+        ],
+        "Tỷ trọng": [
+            "100%"
+        ],
+    }
+)
+
+revenue_display = pd.concat(
+    [
+        revenue_display,
+        total_row,
+    ],
+    ignore_index=True,
+)
+
+left_revenue_column, right_revenue_column = (
+    st.columns(
+        [1.12, 0.88]
     )
 )
 
-revenue_breakdown_display = (
-    revenue_breakdown[
-        [
-            "Nguồn doanh thu",
-            "Giá trị hiển thị",
-            "Tỷ trọng",
+with left_revenue_column:
+    st.dataframe(
+        style_white_table(
+            revenue_display
+        ),
+        use_container_width=True,
+        hide_index=True,
+    )
+
+with right_revenue_column:
+    import plotly.graph_objects as go
+
+    revenue_mix_figure = go.Figure(
+        data=[
+            go.Pie(
+                labels=[
+                    "Doanh thu công việc",
+                    "Doanh thu phụ tùng",
+                    "Doanh thu phụ kiện",
+                ],
+                values=[
+                    labor_revenue,
+                    parts_revenue,
+                    accessory_revenue,
+                ],
+                hole=0.60,
+                sort=False,
+                direction="clockwise",
+                marker=dict(
+                    colors=[
+                        "#386FAE",
+                        "#F86D53",
+                        "#F9B43A",
+                    ],
+                    line=dict(
+                        color="#FFFFFF",
+                        width=3,
+                    ),
+                ),
+                textinfo="percent",
+                texttemplate="%{percent:.0%}",
+                textfont=dict(
+                    color="#FFFFFF",
+                    size=14,
+                ),
+                hovertemplate=(
+                    "<b>%{label}</b><br>"
+                    "Giá trị: %{value:,.0f}<br>"
+                    "Tỷ trọng: %{percent:.1%}"
+                    "<extra></extra>"
+                ),
+            )
         ]
-    ]
-    .rename(
-        columns={
-            "Giá trị hiển thị":
-                "Giá trị",
-        }
     )
-)
 
-st.dataframe(
-    style_white_table(
-        revenue_breakdown_display
-    ),
-    use_container_width=True,
-    hide_index=True,
-)
+    revenue_mix_figure.add_annotation(
+        x=0.5,
+        y=0.53,
+        text=(
+            f"<b>{fmt_m(actual_revenue)}</b>"
+            "<br><span style='font-size:12px;'>"
+            "Tổng doanh thu"
+            "</span>"
+        ),
+        showarrow=False,
+        font=dict(
+            color="#1F2937",
+            size=16,
+        ),
+        align="center",
+    )
+
+    revenue_mix_figure.update_layout(
+        template="simple_white",
+        height=300,
+        margin=dict(
+            l=8,
+            r=8,
+            t=8,
+            b=8,
+        ),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        showlegend=False,
+    )
+
+    revenue_mix_card = st.container(
+        key="revenue_mix_donut_card"
+    )
+
+    with revenue_mix_card:
+        st.plotly_chart(
+            revenue_mix_figure,
+            use_container_width=True,
+            config={
+                "displayModeBar": False,
+                "responsive": True,
+            },
+        )
+
+        st.markdown(
+            """
+            <div style="
+                display:flex;
+                justify-content:center;
+                gap:18px;
+                flex-wrap:nowrap;
+                margin-top:-8px;
+                font-size:13px;
+                color:#475467;
+                font-weight:600;
+            ">
+                <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;">
+                    <span style="width:10px;height:10px;border-radius:50%;background:#386FAE;display:inline-block;"></span>
+                    <span>Công việc</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;">
+                    <span style="width:10px;height:10px;border-radius:50%;background:#F86D53;display:inline-block;"></span>
+                    <span>Phụ tùng</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;">
+                    <span style="width:10px;height:10px;border-radius:50%;background:#F9B43A;display:inline-block;"></span>
+                    <span>Phụ kiện</span>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 
 # ============================================================
