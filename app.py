@@ -354,8 +354,12 @@ if target_available:
 
 
 # ============================================================
-# 14. SUMMARY TABLE
+# 14-15. BẢNG KPI + CƠ CẤU TỔNG DOANH THU
 # ============================================================
+# Layout:
+# - Cột trái: 2 bảng xếp trên/dưới, thu gọn.
+# - Cột phải: card "Cơ cấu tổng doanh thu" + donut.
+# - Tiêu đề "Cơ cấu tổng doanh thu" nằm trong card chart.
 
 if target_available:
     summary_kpi = pd.DataFrame(
@@ -364,21 +368,18 @@ if target_available:
                 "Lượt xe / RO",
                 "Tổng Doanh thu",
             ],
-
             "Thực hiện": [
                 f"{actual_ro:,.0f}",
                 fmt_m(
                     actual_revenue
                 ),
             ],
-
             "Chỉ tiêu": [
                 f"{target_ro:,.0f}",
                 fmt_m(
                     target_revenue
                 ),
             ],
-
             "% đạt": [
                 f"{ro_rate:.0%}",
                 f"{revenue_rate:.0%}",
@@ -392,7 +393,6 @@ else:
                 "Lượt xe / RO",
                 "Tổng Doanh thu",
             ],
-
             "Thực hiện": [
                 f"{actual_ro:,.0f}",
                 fmt_m(
@@ -402,22 +402,10 @@ else:
         }
     )
 
-st.dataframe(
-    style_white_table(
-        summary_kpi
-    ),
-    use_container_width=True,
-    hide_index=True,
-)
-
 
 # ============================================================
-# 15. CƠ CẤU TỔNG DOANH THU
+# DỮ LIỆU CƠ CẤU DOANH THU
 # ============================================================
-
-st.markdown(
-    "## Cơ cấu tổng doanh thu"
-)
 
 revenue_breakdown = pd.DataFrame(
     {
@@ -426,7 +414,6 @@ revenue_breakdown = pd.DataFrame(
             "Doanh thu phụ tùng",
             "Doanh thu phụ kiện",
         ],
-
         "Giá trị": [
             labor_revenue,
             parts_revenue,
@@ -491,103 +478,163 @@ revenue_display = pd.concat(
     ignore_index=True,
 )
 
-left_revenue_column, right_revenue_column = (
+
+# ============================================================
+# LAYOUT 2 CỘT
+# ============================================================
+
+left_summary_column, right_pie_column = (
     st.columns(
-        [1.12, 0.88]
+        [1.10, 0.90],
+        gap="medium",
     )
 )
 
-with left_revenue_column:
+
+# ============================================================
+# CỘT TRÁI: 2 BẢNG XẾP TRÊN / DƯỚI
+# ============================================================
+
+with left_summary_column:
+    # Bảng thực hiện / chỉ tiêu - thu gọn
+    st.dataframe(
+        style_white_table(
+            summary_kpi
+        ),
+        use_container_width=True,
+        hide_index=True,
+        height=120,
+    )
+
+    st.markdown(
+        "<div style='height:10px;'></div>",
+        unsafe_allow_html=True,
+    )
+
+    # Bảng cơ cấu doanh thu
     st.dataframe(
         style_white_table(
             revenue_display
         ),
         use_container_width=True,
         hide_index=True,
+        height=178,
     )
 
-with right_revenue_column:
+
+# ============================================================
+# CỘT PHẢI: TITLE NẰM TRONG CARD + DONUT ĐẨY LÊN
+# ============================================================
+
+with right_pie_column:
     import plotly.graph_objects as go
-
-    revenue_mix_figure = go.Figure(
-        data=[
-            go.Pie(
-                labels=[
-                    "Doanh thu công việc",
-                    "Doanh thu phụ tùng",
-                    "Doanh thu phụ kiện",
-                ],
-                values=[
-                    labor_revenue,
-                    parts_revenue,
-                    accessory_revenue,
-                ],
-                hole=0.60,
-                sort=False,
-                direction="clockwise",
-                marker=dict(
-                    colors=[
-                        "#386FAE",
-                        "#F86D53",
-                        "#F9B43A",
-                    ],
-                    line=dict(
-                        color="#FFFFFF",
-                        width=3,
-                    ),
-                ),
-                textinfo="percent",
-                texttemplate="%{percent:.0%}",
-                textfont=dict(
-                    color="#FFFFFF",
-                    size=14,
-                ),
-                hovertemplate=(
-                    "<b>%{label}</b><br>"
-                    "Giá trị: %{value:,.0f}<br>"
-                    "Tỷ trọng: %{percent:.1%}"
-                    "<extra></extra>"
-                ),
-            )
-        ]
-    )
-
-    revenue_mix_figure.add_annotation(
-        x=0.5,
-        y=0.53,
-        text=(
-            f"<b>{fmt_m(actual_revenue)}</b>"
-            "<br><span style='font-size:12px;'>"
-            "Tổng doanh thu"
-            "</span>"
-        ),
-        showarrow=False,
-        font=dict(
-            color="#1F2937",
-            size=16,
-        ),
-        align="center",
-    )
-
-    revenue_mix_figure.update_layout(
-        template="simple_white",
-        height=300,
-        margin=dict(
-            l=8,
-            r=8,
-            t=8,
-            b=8,
-        ),
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        showlegend=False,
-    )
 
     revenue_mix_card = st.container(
         key="revenue_mix_donut_card"
     )
 
     with revenue_mix_card:
+        st.markdown(
+            """
+            <div style="
+                font-size:24px;
+                line-height:1.15;
+                font-weight:800;
+                color:#1F2937;
+                margin:2px 0 -14px 4px;
+            ">
+                Cơ cấu tổng doanh thu
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        revenue_mix_figure = go.Figure(
+            data=[
+                go.Pie(
+                    labels=[
+                        "Doanh thu công việc",
+                        "Doanh thu phụ tùng",
+                        "Doanh thu phụ kiện",
+                    ],
+                    values=[
+                        labor_revenue,
+                        parts_revenue,
+                        accessory_revenue,
+                    ],
+                    hole=0.60,
+                    sort=False,
+                    direction="clockwise",
+
+                    marker=dict(
+                        colors=[
+                            "#386FAE",
+                            "#F86D53",
+                            "#F9B43A",
+                        ],
+                        line=dict(
+                            color="#FFFFFF",
+                            width=3,
+                        ),
+                    ),
+
+                    textinfo="percent",
+                    texttemplate="%{percent:.0%}",
+
+                    textfont=dict(
+                        color="#FFFFFF",
+                        size=14,
+                    ),
+
+                    domain=dict(
+                        x=[0.08, 0.92],
+                        y=[0.13, 0.98],
+                    ),
+
+                    hovertemplate=(
+                        "<b>%{label}</b><br>"
+                        "Giá trị: %{value:,.0f}<br>"
+                        "Tỷ trọng: %{percent:.1%}"
+                        "<extra></extra>"
+                    ),
+                )
+            ]
+        )
+
+        revenue_mix_figure.add_annotation(
+            x=0.5,
+            y=0.57,
+            text=(
+                f"<b>{fmt_m(actual_revenue)}</b>"
+                "<br><span style='font-size:12px;'>"
+                "Tổng doanh thu"
+                "</span>"
+            ),
+            showarrow=False,
+            font=dict(
+                color="#1F2937",
+                size=16,
+            ),
+            align="center",
+        )
+
+        revenue_mix_figure.update_layout(
+            template="simple_white",
+            height=315,
+
+            margin=dict(
+                l=0,
+                r=0,
+                t=0,
+                b=0,
+            ),
+
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+
+            showlegend=False,
+        )
+
         st.plotly_chart(
             revenue_mix_figure,
             use_container_width=True,
@@ -604,21 +651,57 @@ with right_revenue_column:
                 justify-content:center;
                 gap:18px;
                 flex-wrap:nowrap;
-                margin-top:-8px;
+                margin-top:-22px;
+                padding-bottom:4px;
                 font-size:13px;
                 color:#475467;
                 font-weight:600;
             ">
-                <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;">
-                    <span style="width:10px;height:10px;border-radius:50%;background:#386FAE;display:inline-block;"></span>
+                <div style="
+                    display:flex;
+                    align-items:center;
+                    gap:6px;
+                    white-space:nowrap;
+                ">
+                    <span style="
+                        width:10px;
+                        height:10px;
+                        border-radius:50%;
+                        background:#386FAE;
+                        display:inline-block;
+                    "></span>
                     <span>Công việc</span>
                 </div>
-                <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;">
-                    <span style="width:10px;height:10px;border-radius:50%;background:#F86D53;display:inline-block;"></span>
+
+                <div style="
+                    display:flex;
+                    align-items:center;
+                    gap:6px;
+                    white-space:nowrap;
+                ">
+                    <span style="
+                        width:10px;
+                        height:10px;
+                        border-radius:50%;
+                        background:#F86D53;
+                        display:inline-block;
+                    "></span>
                     <span>Phụ tùng</span>
                 </div>
-                <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;">
-                    <span style="width:10px;height:10px;border-radius:50%;background:#F9B43A;display:inline-block;"></span>
+
+                <div style="
+                    display:flex;
+                    align-items:center;
+                    gap:6px;
+                    white-space:nowrap;
+                ">
+                    <span style="
+                        width:10px;
+                        height:10px;
+                        border-radius:50%;
+                        background:#F9B43A;
+                        display:inline-block;
+                    "></span>
                     <span>Phụ kiện</span>
                 </div>
             </div>
