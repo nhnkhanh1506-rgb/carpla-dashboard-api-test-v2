@@ -972,8 +972,8 @@ def _map_chart(
     )
 
     sizes = (
-        18
-        + 30
+        14
+        + 22
         * (
             revenue_values
             / max_revenue
@@ -1026,24 +1026,58 @@ def _map_chart(
         )
     )
 
+    # ========================================================
+    # AUTO CENTER + AUTO ZOOM THEO PHẠM VI CÁC ĐIỂM
+    # ========================================================
+    # Dùng midpoint của bounding box thay vì mean để map
+    # nằm đúng trọng tâm của toàn bộ xưởng/chi nhánh.
+
+    lat_min = map_data["lat"].min()
+    lat_max = map_data["lat"].max()
+    lon_min = map_data["lon"].min()
+    lon_max = map_data["lon"].max()
+
     center_lat = (
-        map_data["lat"].mean()
-    )
+        lat_min
+        + lat_max
+    ) / 2
 
     center_lon = (
-        map_data["lon"].mean()
+        lon_min
+        + lon_max
+    ) / 2
+
+    lat_span = max(
+        lat_max - lat_min,
+        0.01,
+    )
+
+    lon_span = max(
+        lon_max - lon_min,
+        0.01,
+    )
+
+    max_span = max(
+        lat_span,
+        lon_span,
     )
 
     if len(map_data) == 1:
-        zoom = 10
-    elif (
-        map_data["lat"].max()
-        - map_data["lat"].min()
-        < 0.5
-    ):
-        zoom = 7.3
+        zoom = 10.5
+    elif max_span <= 0.15:
+        zoom = 9.2
+    elif max_span <= 0.35:
+        zoom = 8.2
+    elif max_span <= 0.70:
+        zoom = 7.2
+    elif max_span <= 1.20:
+        zoom = 6.55
+    elif max_span <= 2.50:
+        zoom = 5.8
+    elif max_span <= 5.00:
+        zoom = 4.9
     else:
-        zoom = 4.5
+        zoom = 4.1
 
     figure.update_layout(
         height=455,
