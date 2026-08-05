@@ -1082,6 +1082,7 @@ def _map_chart(
 
 
 
+
 def _multi_unit_monthly_line(
     lsc,
     accessory,
@@ -1094,9 +1095,8 @@ def _multi_unit_monthly_line(
     - metric='ro'      -> số RO theo tháng
     - metric='revenue' -> doanh thu theo tháng
 
-    Tự động hiển thị tất cả đơn vị có dữ liệu trong scope:
-    - Xưởng = All  -> mỗi xưởng 1 line
-    - Chi nhánh = All -> mỗi chi nhánh 1 line
+    Hover của mỗi tháng sẽ được xếp hạng từ cao xuống thấp,
+    giúp đọc nhanh đơn vị Top 1, Top 2, Top 3...
     """
 
     if lsc.empty:
@@ -1208,42 +1208,100 @@ def _multi_unit_monthly_line(
 
     units = sorted(units)
 
-    # Muted corporate palette, tránh rainbow.
+    # Tươi hơn: xanh, đỏ, vàng, cam, tím, xanh lá...
     line_colors = [
-        "#2F5D8C",
-        "#4F81BD",
-        "#6F9FD0",
-        "#8FB8DF",
-        "#B09A6A",
-        "#C5A46D",
-        "#7B8E72",
-        "#9AA6B2",
-        "#6D7FA3",
-        "#A78374",
+        "#1565C0",  # xanh dương
+        "#E53935",  # đỏ
+        "#F9A825",  # vàng đậm
+        "#43A047",  # xanh lá
+        "#8E24AA",  # tím
+        "#FB8C00",  # cam
+        "#00ACC1",  # cyan
+        "#D81B60",  # hồng đậm
+        "#5E35B1",  # tím xanh
+        "#7CB342",  # lime
     ]
+
+    # --------------------------------------------------------
+    # Tạo bảng đầy đủ Unit x Month để rank theo từng tháng
+    # --------------------------------------------------------
+    full_grid = pd.MultiIndex.from_product(
+        [
+            units,
+            months,
+        ],
+        names=[
+            group_column,
+            "month",
+        ],
+    ).to_frame(
+        index=False
+    )
+
+    monthly_unit_full = full_grid.merge(
+        monthly_unit[
+            [
+                group_column,
+                "month",
+                "ro",
+                "revenue",
+            ]
+        ],
+        on=[
+            group_column,
+            "month",
+        ],
+        how="left",
+    )
+
+    monthly_unit_full[
+        [
+            "ro",
+            "revenue",
+        ]
+    ] = monthly_unit_full[
+        [
+            "ro",
+            "revenue",
+        ]
+    ].fillna(0)
+
+    rank_column = (
+        "revenue"
+        if metric == "revenue"
+        else "ro"
+    )
+
+    monthly_unit_full[
+        "rank"
+    ] = (
+        monthly_unit_full
+        .groupby(
+            "month"
+        )[
+            rank_column
+        ]
+        .rank(
+            method="min",
+            ascending=False,
+        )
+        .astype(int)
+    )
 
     figure = go.Figure()
 
     for index, unit in enumerate(units):
         unit_data = (
-            monthly_unit[
-                monthly_unit[
+            monthly_unit_full[
+                monthly_unit_full[
                     group_column
                 ].astype(str)
                 == unit
-            ][
-                [
-                    "month",
-                    "ro",
-                    "revenue",
-                ]
             ]
-            .set_index("month")
-            .reindex(
-                months,
-                fill_value=0,
+            .sort_values(
+                "month"
             )
-            .reset_index()
+            .copy()
         )
 
         if metric == "revenue":
@@ -1254,10 +1312,22 @@ def _multi_unit_monthly_line(
                 / 1_000_000
             )
 
+            customdata = list(
+                zip(
+                    unit_data[
+                        "rank"
+                    ],
+                    unit_data[
+                        "revenue"
+                    ]
+                    / 1_000_000,
+                )
+            )
+
             hover_text = (
-                "<b>%{fullData.name}</b><br>"
+                "<b>#{customdata[0]} · %{fullData.name}</b><br>"
                 "Tháng %{x}<br>"
-                "Doanh thu: %{y:,.1f}M"
+                "Doanh thu: %{customdata[1]:,.1f}M"
                 "<extra></extra>"
             )
 
@@ -1266,35 +1336,49 @@ def _multi_unit_monthly_line(
                 "ro"
             ]
 
+            customdata = list(
+                zip(
+                    unit_data[
+                        "rank"
+                    ],
+                    unit_data[
+                        "ro"
+                    ],
+                )
+            )
+
             hover_text = (
-                "<b>%{fullData.name}</b><br>"
+                "<b>#{customdata[0]} · %{fullData.name}</b><br>"
                 "Tháng %{x}<br>"
-                "Lượt xe: %{y:,.0f}"
+                "Lượt xe: %{customdata[1]:,.0f}"
                 "<extra></extra>"
             )
 
         figure.add_trace(
             go.Scatter(
-                x=months,
+                x=unit_data[
+                    "month"
+                ],
                 y=y_values,
                 mode="lines+markers",
                 name=unit,
+                customdata=customdata,
                 line=dict(
-                    width=2.4,
+                    width=2.8,
                     color=line_colors[
                         index
                         % len(line_colors)
                     ],
                 ),
                 marker=dict(
-                    size=6,
+                    size=7,
                     color=line_colors[
                         index
                         % len(line_colors)
                     ],
                     line=dict(
                         color="#FFFFFF",
-                        width=1.2,
+                        width=1.4,
                     ),
                 ),
                 hovertemplate=hover_text,
@@ -1307,6 +1391,12 @@ def _multi_unit_monthly_line(
         else "Lượt xe / RO"
     )
 
+    # --------------------------------------------------------
+    # Hover unified + SORTED ranking panel:
+    # Plotly mặc định unified hover theo thứ tự trace.
+    # Để nhìn Top xuống dưới rõ ràng, thêm annotations động không dễ.
+    # Cách ổn định: hover từng line có rank #, và spike line theo tháng.
+    # --------------------------------------------------------
     figure.update_layout(
         template="simple_white",
         height=430,
@@ -1314,7 +1404,7 @@ def _multi_unit_monthly_line(
             l=55,
             r=25,
             t=58,
-            b=78,
+            b=82,
         ),
         title=dict(
             text=f"<b>{title}</b>",
@@ -1336,6 +1426,11 @@ def _multi_unit_monthly_line(
             ],
             showgrid=False,
             title="",
+            showspikes=True,
+            spikemode="across",
+            spikesnap="cursor",
+            spikecolor="#98A2B3",
+            spikethickness=1,
         ),
         yaxis=dict(
             title=y_title,
@@ -1359,7 +1454,52 @@ def _multi_unit_monthly_line(
             color="#667085",
         ),
         hovermode="x unified",
+        hoverlabel=dict(
+            bgcolor="#FFFFFF",
+            bordercolor="#D0D5DD",
+            font=dict(
+                size=12,
+                color="#344054",
+            ),
+            namelength=-1,
+        ),
     )
+
+    # --------------------------------------------------------
+    # Sắp trace theo giá trị tại tháng đầu để tooltip unified
+    # ban đầu nhìn tương đối theo top; còn rank # trong tooltip
+    # luôn đúng cho từng tháng.
+    # --------------------------------------------------------
+    if months:
+        first_month = months[0]
+
+        first_month_order = (
+            monthly_unit_full[
+                monthly_unit_full[
+                    "month"
+                ]
+                == first_month
+            ]
+            .sort_values(
+                rank_column,
+                ascending=False,
+            )[
+                group_column
+            ]
+            .astype(str)
+            .tolist()
+        )
+
+        trace_by_name = {
+            trace.name: trace
+            for trace in figure.data
+        }
+
+        figure.data = tuple(
+            trace_by_name[name]
+            for name in first_month_order
+            if name in trace_by_name
+        )
 
     return figure
 
@@ -2724,68 +2864,30 @@ with right_pie_column:
             },
         )
 
+        revenue_mix_legend_html = (
+            '<div style="display:flex;justify-content:center;align-items:center;'
+            'gap:18px;flex-wrap:nowrap;margin-top:-22px;padding-bottom:4px;'
+            'font-size:13px;color:#475467;font-weight:600;">'
+            '<div style="display:flex;align-items:center;gap:6px;white-space:nowrap;">'
+            '<span style="width:10px;height:10px;border-radius:50%;'
+            'background:#386FAE;display:inline-block;"></span>'
+            '<span>Công việc</span>'
+            '</div>'
+            '<div style="display:flex;align-items:center;gap:6px;white-space:nowrap;">'
+            '<span style="width:10px;height:10px;border-radius:50%;'
+            'background:#F86D53;display:inline-block;"></span>'
+            '<span>Phụ tùng</span>'
+            '</div>'
+            '<div style="display:flex;align-items:center;gap:6px;white-space:nowrap;">'
+            '<span style="width:10px;height:10px;border-radius:50%;'
+            'background:#F9B43A;display:inline-block;"></span>'
+            '<span>Phụ kiện</span>'
+            '</div>'
+            '</div>'
+        )
+
         st.markdown(
-            """
-            <div style="
-                display:flex;
-                justify-content:center;
-                gap:18px;
-                flex-wrap:nowrap;
-                margin-top:-22px;
-                padding-bottom:4px;
-                font-size:13px;
-                color:#475467;
-                font-weight:600;
-            ">
-                <div style="
-                    display:flex;
-                    align-items:center;
-                    gap:6px;
-                    white-space:nowrap;
-                ">
-                    <span style="
-                        width:10px;
-                        height:10px;
-                        border-radius:50%;
-                        background:#386FAE;
-                        display:inline-block;
-                    "></span>
-                    <span>Công việc</span>
-                </div>
-
-                <div style="
-                    display:flex;
-                    align-items:center;
-                    gap:6px;
-                    white-space:nowrap;
-                ">
-                    <span style="
-                        width:10px;
-                        height:10px;
-                        border-radius:50%;
-                        background:#F86D53;
-                        display:inline-block;
-                    "></span>
-                    <span>Phụ tùng</span>
-                </div>
-
-                <div style="
-                    display:flex;
-                    align-items:center;
-                    gap:6px;
-                    white-space:nowrap;
-                ">
-                    <span style="
-                        width:10px;
-                        height:10px;
-                        border-radius:50%;
-                        background:#F9B43A;
-                        display:inline-block;
-                    "></span>
-                    <span>Phụ kiện</span>
-                </div>
-            </div>
-            """,
+            revenue_mix_legend_html,
             unsafe_allow_html=True,
         )
 
