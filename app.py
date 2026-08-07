@@ -2037,43 +2037,29 @@ def render_executive_dashboard(
         selected_branch == "All"
         or selected_workshop == "All"
     ):
-        map_col, rank_col = st.columns(
-            [1.05, 0.95]
-        )
-
-        with map_col:
-            if map_figure is not None:
-                st.plotly_chart(
-                    map_figure,
-                    use_container_width=True,
-                    config={
-                        "displayModeBar": False,
-                    },
-                )
-            else:
-                st.info(
-                    "Chưa cấu hình tọa độ cho phạm vi map này."
-                )
-
-        with rank_col:
-            ranking_metric = _horizontal_bar(
-                data=unit_summary,
-                name_column=group_column,
-                value_column="revenue",
-                title=(
-                    f"{unit_label} theo doanh thu YTD"
+        # Map chiếm toàn bộ chiều ngang, bỏ chart "theo doanh thu YTD"
+        # vì bị trùng với chart doanh thu phía dưới.
+        if map_figure is not None:
+            map_figure.update_layout(
+                height=500,
+                margin=dict(
+                    l=0,
+                    r=0,
+                    t=58,
+                    b=0,
                 ),
-                value_type="money",
-                top_n=10,
-                color="#E86B62",
             )
 
             st.plotly_chart(
-                ranking_metric,
+                map_figure,
                 use_container_width=True,
                 config={
                     "displayModeBar": False,
                 },
+            )
+        else:
+            st.info(
+                "Chưa cấu hình tọa độ cho phạm vi map này."
             )
 
         unit_left, unit_mid, unit_right = (
