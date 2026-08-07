@@ -1158,7 +1158,7 @@ def _map_chart(
     ):
         zoom = max(
             zoom,
-            9.15,
+            8.45,
         )
 
     figure.update_layout(
