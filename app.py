@@ -1123,21 +1123,43 @@ def _map_chart(
     )
 
     if len(map_data) == 1:
-        zoom = 10.5
+        zoom = 10.8
     elif max_span <= 0.15:
-        zoom = 9.2
+        zoom = 10.0
     elif max_span <= 0.35:
-        zoom = 8.2
+        zoom = 9.0
     elif max_span <= 0.70:
-        zoom = 7.2
+        zoom = 8.0
     elif max_span <= 1.20:
-        zoom = 6.55
+        zoom = 7.2
     elif max_span <= 2.50:
-        zoom = 5.8
+        zoom = 6.3
     elif max_span <= 5.00:
-        zoom = 4.9
+        zoom = 5.3
     else:
-        zoom = 4.1
+        zoom = 4.4
+
+    # Riêng dashboard các xưởng Hà Nội:
+    # zoom gần hơn một chút để nhìn rõ từng bubble trong khu vực Hà Nội.
+    unit_names = set(
+        map_data[name_column]
+        .dropna()
+        .astype(str)
+        .tolist()
+    )
+
+    hanoi_workshops = set(
+        WORKSHOP_COORDINATES.keys()
+    )
+
+    if (
+        len(unit_names) > 1
+        and unit_names.issubset(hanoi_workshops)
+    ):
+        zoom = max(
+            zoom,
+            9.15,
+        )
 
     figure.update_layout(
         height=455,
