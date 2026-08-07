@@ -1117,6 +1117,7 @@ def _map_chart(
 
 
 
+
 def _multi_unit_monthly_line(
     lsc,
     accessory,
@@ -1125,12 +1126,10 @@ def _multi_unit_monthly_line(
     metric,
 ):
     """
-    Multi-line monthly chart:
-    - metric='ro'      -> số RO theo tháng
-    - metric='revenue' -> doanh thu theo tháng
+    Multi-line monthly chart.
 
-    Hover của mỗi tháng sẽ được xếp hạng từ cao xuống thấp,
-    giúp đọc nhanh đơn vị Top 1, Top 2, Top 3...
+    Hover được gom thành 1 bảng xếp hạng duy nhất cho từng tháng,
+    sắp từ Top 1 xuống dưới theo giá trị của chính tháng đang hover.
     """
 
     if lsc.empty:
@@ -1242,23 +1241,20 @@ def _multi_unit_monthly_line(
 
     units = sorted(units)
 
-    # Tươi hơn: xanh, đỏ, vàng, cam, tím, xanh lá...
+    # Màu tươi, dễ phân biệt
     line_colors = [
         "#1565C0",  # xanh dương
         "#E53935",  # đỏ
-        "#F9A825",  # vàng đậm
+        "#F9A825",  # vàng
         "#43A047",  # xanh lá
         "#8E24AA",  # tím
         "#FB8C00",  # cam
         "#00ACC1",  # cyan
-        "#D81B60",  # hồng đậm
-        "#5E35B1",  # tím xanh
-        "#7CB342",  # lime
+        "#D81B60",  # hồng
+        "#5E35B1",
+        "#7CB342",
     ]
 
-    # --------------------------------------------------------
-    # Tạo bảng đầy đủ Unit x Month để rank theo từng tháng
-    # --------------------------------------------------------
     full_grid = pd.MultiIndex.from_product(
         [
             units,
@@ -1300,30 +1296,17 @@ def _multi_unit_monthly_line(
         ]
     ].fillna(0)
 
-    rank_column = (
+    value_column = (
         "revenue"
         if metric == "revenue"
         else "ro"
     )
 
-    monthly_unit_full[
-        "rank"
-    ] = (
-        monthly_unit_full
-        .groupby(
-            "month"
-        )[
-            rank_column
-        ]
-        .rank(
-            method="min",
-            ascending=False,
-        )
-        .astype(int)
-    )
-
     figure = go.Figure()
 
+    # ========================================================
+    # CÁC LINE
+    # ========================================================
     for index, unit in enumerate(units):
         unit_data = (
             monthly_unit_full[
@@ -1332,9 +1315,7 @@ def _multi_unit_monthly_line(
                 ].astype(str)
                 == unit
             ]
-            .sort_values(
-                "month"
-            )
+            .sort_values("month")
             .copy()
         )
 
@@ -1345,58 +1326,17 @@ def _multi_unit_monthly_line(
                 ]
                 / 1_000_000
             )
-
-            customdata = list(
-                zip(
-                    unit_data[
-                        "rank"
-                    ],
-                    unit_data[
-                        "revenue"
-                    ]
-                    / 1_000_000,
-                )
-            )
-
-            hover_text = (
-                "<b>#{customdata[0]} · %{fullData.name}</b><br>"
-                "Tháng %{x}<br>"
-                "Doanh thu: %{customdata[1]:,.1f}M"
-                "<extra></extra>"
-            )
-
         else:
             y_values = unit_data[
                 "ro"
             ]
 
-            customdata = list(
-                zip(
-                    unit_data[
-                        "rank"
-                    ],
-                    unit_data[
-                        "ro"
-                    ],
-                )
-            )
-
-            hover_text = (
-                "<b>#{customdata[0]} · %{fullData.name}</b><br>"
-                "Tháng %{x}<br>"
-                "Lượt xe: %{customdata[1]:,.0f}"
-                "<extra></extra>"
-            )
-
         figure.add_trace(
             go.Scatter(
-                x=unit_data[
-                    "month"
-                ],
+                x=unit_data["month"],
                 y=y_values,
                 mode="lines+markers",
                 name=unit,
-                customdata=customdata,
                 line=dict(
                     width=2.8,
                     color=line_colors[
@@ -1415,9 +1355,112 @@ def _multi_unit_monthly_line(
                         width=1.4,
                     ),
                 ),
-                hovertemplate=hover_text,
+
+                # Không hiện từng tooltip riêng lẻ.
+                # Tooltip xếp hạng sẽ do trace vô hình bên dưới đảm nhiệm.
+                hoverinfo="skip",
             )
         )
+
+    # ========================================================
+    # TẠO HOVER XẾP HẠNG THEO TỪNG THÁNG
+    # ========================================================
+    hover_texts = []
+    hover_y = []
+
+    for month_number in months:
+        month_rank = (
+            monthly_unit_full[
+                monthly_unit_full[
+                    "month"
+                ]
+                == month_number
+            ]
+            .sort_values(
+                value_column,
+                ascending=False,
+            )
+            .reset_index(
+                drop=True
+            )
+        )
+
+        lines = [
+            f"<b>Tháng {month_number}</b>"
+        ]
+
+        for rank_index, row in month_rank.iterrows():
+            unit_name = str(
+                row[group_column]
+            )
+
+            if metric == "revenue":
+                value = (
+                    row["revenue"]
+                    / 1_000_000
+                )
+
+                value_text = (
+                    f"{value:,.1f}M"
+                )
+            else:
+                value = row["ro"]
+
+                value_text = (
+                    f"{int(value):,}"
+                )
+
+            lines.append(
+                f"<b>#{rank_index + 1}</b> · "
+                f"{unit_name}: "
+                f"{value_text}"
+            )
+
+        hover_texts.append(
+            "<br>".join(lines)
+        )
+
+        month_values = month_rank[
+            value_column
+        ]
+
+        if metric == "revenue":
+            month_max = (
+                month_values.max()
+                / 1_000_000
+            )
+        else:
+            month_max = month_values.max()
+
+        hover_y.append(
+            max(
+                month_max,
+                1,
+            )
+        )
+
+    # Trace vô hình để tạo 1 tooltip duy nhất.
+    figure.add_trace(
+        go.Scatter(
+            x=months,
+            y=hover_y,
+            mode="markers",
+            marker=dict(
+                size=28,
+                color="rgba(0,0,0,0.001)",
+                line=dict(
+                    width=0,
+                ),
+            ),
+            text=hover_texts,
+            hovertemplate=(
+                "%{text}"
+                "<extra></extra>"
+            ),
+            showlegend=False,
+            name="",
+        )
+    )
 
     y_title = (
         "Doanh thu (M)"
@@ -1425,12 +1468,6 @@ def _multi_unit_monthly_line(
         else "Lượt xe / RO"
     )
 
-    # --------------------------------------------------------
-    # Hover unified + SORTED ranking panel:
-    # Plotly mặc định unified hover theo thứ tự trace.
-    # Để nhìn Top xuống dưới rõ ràng, thêm annotations động không dễ.
-    # Cách ổn định: hover từng line có rank #, và spike line theo tháng.
-    # --------------------------------------------------------
     figure.update_layout(
         template="simple_white",
         height=430,
@@ -1487,7 +1524,10 @@ def _multi_unit_monthly_line(
         font=dict(
             color="#667085",
         ),
-        hovermode="x unified",
+
+        # hover theo trục X để rê vào tháng là ra bảng ranking.
+        hovermode="x",
+
         hoverlabel=dict(
             bgcolor="#FFFFFF",
             bordercolor="#D0D5DD",
@@ -1495,45 +1535,10 @@ def _multi_unit_monthly_line(
                 size=12,
                 color="#344054",
             ),
+            align="left",
             namelength=-1,
         ),
     )
-
-    # --------------------------------------------------------
-    # Sắp trace theo giá trị tại tháng đầu để tooltip unified
-    # ban đầu nhìn tương đối theo top; còn rank # trong tooltip
-    # luôn đúng cho từng tháng.
-    # --------------------------------------------------------
-    if months:
-        first_month = months[0]
-
-        first_month_order = (
-            monthly_unit_full[
-                monthly_unit_full[
-                    "month"
-                ]
-                == first_month
-            ]
-            .sort_values(
-                rank_column,
-                ascending=False,
-            )[
-                group_column
-            ]
-            .astype(str)
-            .tolist()
-        )
-
-        trace_by_name = {
-            trace.name: trace
-            for trace in figure.data
-        }
-
-        figure.data = tuple(
-            trace_by_name[name]
-            for name in first_month_order
-            if name in trace_by_name
-        )
 
     return figure
 
