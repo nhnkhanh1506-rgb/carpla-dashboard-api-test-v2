@@ -703,11 +703,9 @@ def _line_chart(
             <= active_month
         ].copy()
 
-    # ========================================================
-    # MoM GROWTH
-    # ========================================================
     chart_data = chart_data.copy()
 
+    # Growth chỉ dùng trong hover, KHÔNG hiện trên chart.
     chart_data[
         "growth"
     ] = chart_data[
@@ -730,6 +728,7 @@ def _line_chart(
             value_text = (
                 f"{value:,.0f}{suffix}"
             )
+
             hover_value = (
                 f"{value:,.0f}"
             )
@@ -737,13 +736,18 @@ def _line_chart(
             value_text = (
                 f"{_money_to_m(value):,.1f}M"
             )
+
             hover_value = (
                 f"{_money_to_m(value):,.1f}M"
             )
 
+        # Trên line chart chỉ hiện GIÁ TRỊ như bản cũ.
+        value_texts.append(
+            value_text
+        )
+
         if pd.isna(growth):
-            growth_text = ""
-            hover_growth = "—"
+            growth_text = "—"
         else:
             sign = (
                 "+"
@@ -752,23 +756,15 @@ def _line_chart(
             )
 
             growth_text = (
-                f"<br>{sign}{growth:.1%}"
-            )
-
-            hover_growth = (
                 f"{sign}{growth:.1%}"
             )
 
-        value_texts.append(
-            value_text
-            + growth_text
-        )
-
+        # Percentage Growth chỉ hiện khi hover.
         hover_texts.append(
             (
                 f"<b>Tháng {int(row['month'])}</b><br>"
                 f"Giá trị: {hover_value}<br>"
-                f"Tăng trưởng MoM: {hover_growth}"
+                f"Tăng trưởng MoM: {growth_text}"
             )
         )
 
@@ -807,11 +803,11 @@ def _line_chart(
 
     figure.update_layout(
         template="simple_white",
-        height=375,
+        height=350,
         margin=dict(
             l=55,
             r=25,
-            t=66,
+            t=58,
             b=48,
         ),
         title=dict(
