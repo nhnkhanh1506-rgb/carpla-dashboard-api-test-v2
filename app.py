@@ -703,6 +703,75 @@ def _line_chart(
             <= active_month
         ].copy()
 
+    # ========================================================
+    # MoM GROWTH
+    # ========================================================
+    chart_data = chart_data.copy()
+
+    chart_data[
+        "growth"
+    ] = chart_data[
+        value_column
+    ].pct_change()
+
+    value_texts = []
+    hover_texts = []
+
+    for _, row in chart_data.iterrows():
+        value = row[
+            value_column
+        ]
+
+        growth = row[
+            "growth"
+        ]
+
+        if value_column == "ro":
+            value_text = (
+                f"{value:,.0f}{suffix}"
+            )
+            hover_value = (
+                f"{value:,.0f}"
+            )
+        else:
+            value_text = (
+                f"{_money_to_m(value):,.1f}M"
+            )
+            hover_value = (
+                f"{_money_to_m(value):,.1f}M"
+            )
+
+        if pd.isna(growth):
+            growth_text = ""
+            hover_growth = "—"
+        else:
+            sign = (
+                "+"
+                if growth > 0
+                else ""
+            )
+
+            growth_text = (
+                f"<br>{sign}{growth:.1%}"
+            )
+
+            hover_growth = (
+                f"{sign}{growth:.1%}"
+            )
+
+        value_texts.append(
+            value_text
+            + growth_text
+        )
+
+        hover_texts.append(
+            (
+                f"<b>Tháng {int(row['month'])}</b><br>"
+                f"Giá trị: {hover_value}<br>"
+                f"Tăng trưởng MoM: {hover_growth}"
+            )
+        )
+
     figure = go.Figure()
 
     figure.add_trace(
@@ -722,40 +791,27 @@ def _line_chart(
                     width=2,
                 ),
             ),
-            text=[
-                (
-                    f"{value:,.0f}{suffix}"
-                    if value_column == "ro"
-                    else f"{_money_to_m(value):,.1f}M"
-                )
-                for value in chart_data[
-                    value_column
-                ]
-            ],
+            text=value_texts,
             textposition="top center",
             textfont=dict(
                 size=11,
                 color="#667085",
             ),
+            customdata=hover_texts,
             hovertemplate=(
-                "Tháng %{x}<br>"
-                + (
-                    "Lượt xe: %{y:,.0f}"
-                    if value_column == "ro"
-                    else "Doanh thu: %{y:,.0f}"
-                )
-                + "<extra></extra>"
+                "%{customdata}"
+                "<extra></extra>"
             ),
         )
     )
 
     figure.update_layout(
         template="simple_white",
-        height=350,
+        height=375,
         margin=dict(
             l=55,
             r=25,
-            t=58,
+            t=66,
             b=48,
         ),
         title=dict(
@@ -791,6 +847,14 @@ def _line_chart(
             color="#667085",
         ),
         showlegend=False,
+        hoverlabel=dict(
+            bgcolor="#FFFFFF",
+            bordercolor="#D0D5DD",
+            font=dict(
+                size=12,
+                color="#344054",
+            ),
+        ),
     )
 
     return figure
@@ -1118,6 +1182,7 @@ def _map_chart(
 
 
 
+
 def _multi_unit_monthly_line(
     lsc,
     accessory,
@@ -1130,6 +1195,8 @@ def _multi_unit_monthly_line(
 
     Hover được gom thành 1 bảng xếp hạng duy nhất cho từng tháng,
     sắp từ Top 1 xuống dưới theo giá trị của chính tháng đang hover.
+
+    Mỗi đơn vị hiển thị thêm % tăng/giảm so với tháng trước.
     """
 
     if lsc.empty:
@@ -1241,16 +1308,15 @@ def _multi_unit_monthly_line(
 
     units = sorted(units)
 
-    # Màu tươi, dễ phân biệt
     line_colors = [
-        "#1565C0",  # xanh dương
-        "#E53935",  # đỏ
-        "#F9A825",  # vàng
-        "#43A047",  # xanh lá
-        "#8E24AA",  # tím
-        "#FB8C00",  # cam
-        "#00ACC1",  # cyan
-        "#D81B60",  # hồng
+        "#1565C0",
+        "#E53935",
+        "#F9A825",
+        "#43A047",
+        "#8E24AA",
+        "#FB8C00",
+        "#00ACC1",
+        "#D81B60",
         "#5E35B1",
         "#7CB342",
     ]
@@ -1302,10 +1368,38 @@ def _multi_unit_monthly_line(
         else "ro"
     )
 
+    # ========================================================
+    # GROWTH % THEO TỪNG ĐƠN VỊ
+    # ========================================================
+    monthly_unit_full = (
+        monthly_unit_full
+        .sort_values(
+            [
+                group_column,
+                "month",
+            ]
+        )
+        .reset_index(
+            drop=True
+        )
+    )
+
+    monthly_unit_full[
+        "growth"
+    ] = (
+        monthly_unit_full
+        .groupby(
+            group_column
+        )[
+            value_column
+        ]
+        .pct_change()
+    )
+
     figure = go.Figure()
 
     # ========================================================
-    # CÁC LINE
+    # LINE
     # ========================================================
     for index, unit in enumerate(units):
         unit_data = (
@@ -1355,15 +1449,12 @@ def _multi_unit_monthly_line(
                         width=1.4,
                     ),
                 ),
-
-                # Không hiện từng tooltip riêng lẻ.
-                # Tooltip xếp hạng sẽ do trace vô hình bên dưới đảm nhiệm.
                 hoverinfo="skip",
             )
         )
 
     # ========================================================
-    # TẠO HOVER XẾP HẠNG THEO TỪNG THÁNG
+    # HOVER RANKING + GROWTH
     # ========================================================
     hover_texts = []
     hover_y = []
@@ -1395,25 +1486,38 @@ def _multi_unit_monthly_line(
             )
 
             if metric == "revenue":
-                value = (
-                    row["revenue"]
-                    / 1_000_000
-                )
-
                 value_text = (
-                    f"{value:,.1f}M"
+                    f"{row['revenue'] / 1_000_000:,.1f}M"
                 )
             else:
-                value = row["ro"]
-
                 value_text = (
-                    f"{int(value):,}"
+                    f"{int(row['ro']):,}"
+                )
+
+            growth = row[
+                "growth"
+            ]
+
+            if pd.isna(growth):
+                growth_text = "—"
+            else:
+                sign = (
+                    "+"
+                    if growth > 0
+                    else ""
+                )
+
+                growth_text = (
+                    f"{sign}{growth:.1%}"
                 )
 
             lines.append(
                 f"<b>#{rank_index + 1}</b> · "
                 f"{unit_name}: "
-                f"{value_text}"
+                f"{value_text} "
+                f"<span style='color:#667085'>"
+                f"({growth_text})"
+                f"</span>"
             )
 
         hover_texts.append(
@@ -1439,7 +1543,6 @@ def _multi_unit_monthly_line(
             )
         )
 
-    # Trace vô hình để tạo 1 tooltip duy nhất.
     figure.add_trace(
         go.Scatter(
             x=months,
@@ -1524,10 +1627,7 @@ def _multi_unit_monthly_line(
         font=dict(
             color="#667085",
         ),
-
-        # hover theo trục X để rê vào tháng là ra bảng ranking.
         hovermode="x",
-
         hoverlabel=dict(
             bgcolor="#FFFFFF",
             bordercolor="#D0D5DD",
