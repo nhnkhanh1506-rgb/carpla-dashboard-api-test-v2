@@ -2522,7 +2522,7 @@ def render_payment_section(data):
         box-sizing: border-box !important;
         padding: 14px 18px 12px 18px !important;
         overflow: hidden !important;
-        min-height: 318px !important;
+        min-height: 356px !important;
     }
 
     .st-key-payment_donut_card div[data-testid="stVerticalBlock"] {
@@ -2569,7 +2569,6 @@ def render_payment_section(data):
         line-height: 1.2;
         margin: 0 0 12px 0;
         padding: 0;
-        text-align: left;
     }
     </style>
     """
@@ -2673,6 +2672,21 @@ def render_payment_section(data):
             )
         )
 
+        # Chuẩn hóa doanh thu để tổng hợp theo nguồn khách.
+        # data_loader.py đã đưa "Tổng doanh thu"
+        # về key "doanh_thu_truoc_thue".
+        if "doanh_thu_truoc_thue" not in source_data.columns:
+            source_data["doanh_thu_truoc_thue"] = 0
+
+        source_data[
+            "doanh_thu_truoc_thue"
+        ] = pd.to_numeric(
+            source_data[
+                "doanh_thu_truoc_thue"
+            ],
+            errors="coerce",
+        ).fillna(0)
+
         source_summary = (
             source_data
             .groupby(
@@ -2683,7 +2697,11 @@ def render_payment_section(data):
                 so_ro=(
                     "ro",
                     "nunique",
-                )
+                ),
+                doanh_thu=(
+                    "doanh_thu_truoc_thue",
+                    "sum",
+                ),
             )
             .reset_index()
             .sort_values(
@@ -2694,6 +2712,10 @@ def render_payment_section(data):
 
         total_source_ro = source_summary[
             "so_ro"
+        ].sum()
+
+        total_source_revenue = source_summary[
+            "doanh_thu"
         ].sum()
 
         source_summary[
@@ -2716,9 +2738,19 @@ def render_payment_section(data):
                     "nguon_khach": "Nguồn khách",
                     "so_ro": "Số RO",
                     "ty_trong": "Tỷ trọng",
+                    "doanh_thu": "Doanh thu",
                 }
             )
         )
+
+        source_display = source_display[
+            [
+                "Nguồn khách",
+                "Số RO",
+                "Tỷ trọng",
+                "Doanh thu",
+            ]
+        ]
 
         source_display[
             "Số RO"
@@ -2739,6 +2771,12 @@ def render_payment_section(data):
             f"{value:.1%}"
         )
 
+        source_display[
+            "Doanh thu"
+        ] = source_display[
+            "Doanh thu"
+        ].map(fmt_m)
+
         source_total_row = pd.DataFrame(
             {
                 "Nguồn khách": [
@@ -2753,6 +2791,11 @@ def render_payment_section(data):
                 ],
                 "Tỷ trọng": [
                     "100.0%"
+                ],
+                "Doanh thu": [
+                    fmt_m(
+                        total_source_revenue
+                    )
                 ],
             }
         )
@@ -2806,12 +2849,12 @@ def render_payment_section(data):
         )
 
         with payment_chart_card:
-            # Dùng cùng style title với card "Top nguồn khách theo số RO"
-            # để hai card nhìn đồng bộ.
             st.markdown(
-                '<div class="customer-source-card-title">'
-                'Tỷ trọng nguồn thanh toán'
-                '</div>',
+                """
+                <div class="payment-card-title">
+                    Tỷ trọng nguồn thanh toán
+                </div>
+                """,
                 unsafe_allow_html=True,
             )
 
@@ -2826,9 +2869,10 @@ def render_payment_section(data):
                             customer_value,
                             insurance_value,
                         ],
-                        hole=0.58,
+                        hole=0.60,
                         sort=False,
                         direction="clockwise",
+
                         marker=dict(
                             colors=[
                                 DONUT_MAIN,
@@ -2839,17 +2883,20 @@ def render_payment_section(data):
                                 width=3,
                             ),
                         ),
+
                         textinfo="percent",
                         texttemplate="%{percent:.0%}",
+
                         textfont=dict(
                             color="#FFFFFF",
-                            size=15,
+                            size=14,
                         ),
-                        # Tăng mạnh vùng thật sự dành cho pie.
+
                         domain=dict(
-                            x=[0.14, 0.86],
-                            y=[0.20, 0.94],
+                            x=[0.08, 0.92],
+                            y=[0.13, 0.98],
                         ),
+
                         hovertemplate=(
                             "<b>%{label}</b><br>"
                             "Giá trị: %{value:,.0f}<br>"
@@ -2863,29 +2910,23 @@ def render_payment_section(data):
             payment_figure.add_annotation(
                 x=0.5,
                 y=0.57,
-                xref="paper",
-                yref="paper",
                 text=(
                     f"<b>{fmt_m(total_payment)}</b>"
-                    "<br>"
-                    "<span style='font-size:11px;'>"
+                    "<br><span style='font-size:12px;'>"
                     "Tổng thanh toán"
                     "</span>"
                 ),
                 showarrow=False,
-                align="center",
                 font=dict(
                     color="#1F2937",
-                    size=15,
+                    size=16,
                 ),
+                align="center",
             )
 
             payment_figure.update_layout(
                 template="simple_white",
-
-                # Tăng chiều cao thật của Plotly.
-                # Bản trước chỉ đổi domain nhưng chiều cao khả dụng vẫn quá thấp.
-                height=360,
+                height=315,
 
                 margin=dict(
                     l=0,
@@ -2894,27 +2935,10 @@ def render_payment_section(data):
                     b=0,
                 ),
 
-                showlegend=True,
-
-                legend=dict(
-                    orientation="h",
-                    x=0.5,
-                    y=0.035,
-                    xanchor="center",
-                    yanchor="bottom",
-                    font=dict(
-                        color="#475467",
-                        size=12,
-                    ),
-                    itemsizing="constant",
-                ),
-
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
 
-                font=dict(
-                    color="#475467",
-                ),
+                showlegend=False,
             )
 
             st.plotly_chart(
@@ -2924,6 +2948,55 @@ def render_payment_section(data):
                     "displayModeBar": False,
                     "responsive": True,
                 },
+            )
+
+            st.markdown(
+                f"""
+                <div style="
+                    display:flex;
+                    justify-content:center;
+                    gap:18px;
+                    flex-wrap:nowrap;
+                    margin-top:-22px;
+                    padding-bottom:4px;
+                    font-size:13px;
+                    color:#475467;
+                    font-weight:600;
+                ">
+                    <div style="
+                        display:flex;
+                        align-items:center;
+                        gap:6px;
+                        white-space:nowrap;
+                    ">
+                        <span style="
+                            width:10px;
+                            height:10px;
+                            border-radius:50%;
+                            background:{DONUT_MAIN};
+                            display:inline-block;
+                        "></span>
+                        <span>Khách hàng chi trả</span>
+                    </div>
+
+                    <div style="
+                        display:flex;
+                        align-items:center;
+                        gap:6px;
+                        white-space:nowrap;
+                    ">
+                        <span style="
+                            width:10px;
+                            height:10px;
+                            border-radius:50%;
+                            background:{DONUT_SECOND};
+                            display:inline-block;
+                        "></span>
+                        <span>Bảo hiểm chi trả</span>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
 
         if (
@@ -2968,7 +3041,6 @@ def render_payment_section(data):
                             "nguon_khach"
                         ],
                         orientation="h",
-                        width=0.82,
                         marker=dict(
                             color="#F5D96B",
                             line=dict(
@@ -2986,12 +3058,16 @@ def render_payment_section(data):
                         textposition="outside",
                         textfont=dict(
                             color="#667085",
-                            size=14,
+                            size=12,
                         ),
                         cliponaxis=False,
+                        customdata=source_chart[
+                            "doanh_thu"
+                        ],
                         hovertemplate=(
                             "<b>%{y}</b><br>"
-                            "Số RO: %{x:.0f}"
+                            "Số RO: %{x:.0f}<br>"
+                            "Doanh thu: %{customdata:,.0f} VNĐ"
                             "<extra></extra>"
                         ),
                     )
@@ -2999,12 +3075,12 @@ def render_payment_section(data):
 
                 source_figure.update_layout(
                     template="simple_white",
-                    height=305,
+                    height=245,
                     margin=dict(
-                        l=190,
-                        r=46,
-                        t=44,
-                        b=46,
+                        l=180,
+                        r=40,
+                        t=42,
+                        b=42,
                     ),
                     xaxis_title="Số RO",
                     yaxis_title="",
@@ -3012,7 +3088,6 @@ def render_payment_section(data):
                     plot_bgcolor="rgba(0,0,0,0)",
                     font=dict(
                         color="#475467",
-                        size=13,
                     ),
                     showlegend=False,
                 )
@@ -3027,12 +3102,132 @@ def render_payment_section(data):
                     showgrid=False,
                     automargin=True,
                     tickfont=dict(
-                        size=13,
+                        size=11,
                     ),
                 )
 
                 st.plotly_chart(
                     source_figure,
+                    use_container_width=True,
+                    config={
+                        "displayModeBar": False,
+                        "responsive": True,
+                    },
+                )
+
+            # ====================================================
+            # TOP NGUỒN KHÁCH THEO DOANH THU
+            # ====================================================
+
+            st.markdown(
+                "<div style='height:12px;'></div>",
+                unsafe_allow_html=True,
+            )
+
+            source_revenue_card = st.container(
+                key="customer_source_revenue_chart_card"
+            )
+
+            with source_revenue_card:
+                st.markdown(
+                    '<div class="customer-source-card-title">'
+                    'Top nguồn khách theo doanh thu'
+                    '</div>',
+                    unsafe_allow_html=True,
+                )
+
+                source_revenue_chart = (
+                    source_summary
+                    .sort_values(
+                        "doanh_thu",
+                        ascending=False,
+                    )
+                    .head(8)
+                    .sort_values(
+                        "doanh_thu",
+                        ascending=True,
+                    )
+                    .copy()
+                )
+
+                source_revenue_figure = go.Figure()
+
+                source_revenue_figure.add_trace(
+                    go.Bar(
+                        x=source_revenue_chart[
+                            "doanh_thu"
+                        ] / 1_000_000,
+                        y=source_revenue_chart[
+                            "nguon_khach"
+                        ],
+                        orientation="h",
+                        marker=dict(
+                            color="#A9C7E8",
+                            line=dict(
+                                color="#8FB3DD",
+                                width=0.5,
+                            ),
+                        ),
+                        text=[
+                            f"{value / 1_000_000:,.1f}M"
+                            for value
+                            in source_revenue_chart[
+                                "doanh_thu"
+                            ]
+                        ],
+                        textposition="outside",
+                        textfont=dict(
+                            color="#667085",
+                            size=12,
+                        ),
+                        cliponaxis=False,
+                        customdata=source_revenue_chart[
+                            "so_ro"
+                        ],
+                        hovertemplate=(
+                            "<b>%{y}</b><br>"
+                            "Doanh thu: %{x:,.1f}M VNĐ<br>"
+                            "Số RO: %{customdata:.0f}"
+                            "<extra></extra>"
+                        ),
+                    )
+                )
+
+                source_revenue_figure.update_layout(
+                    template="simple_white",
+                    height=245,
+                    margin=dict(
+                        l=180,
+                        r=55,
+                        t=42,
+                        b=42,
+                    ),
+                    xaxis_title="Doanh thu (M)",
+                    yaxis_title="",
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    font=dict(
+                        color="#475467",
+                    ),
+                    showlegend=False,
+                )
+
+                source_revenue_figure.update_xaxes(
+                    showgrid=True,
+                    gridcolor="#E5E7EB",
+                    zeroline=False,
+                )
+
+                source_revenue_figure.update_yaxes(
+                    showgrid=False,
+                    automargin=True,
+                    tickfont=dict(
+                        size=11,
+                    ),
+                )
+
+                st.plotly_chart(
+                    source_revenue_figure,
                     use_container_width=True,
                     config={
                         "displayModeBar": False,
