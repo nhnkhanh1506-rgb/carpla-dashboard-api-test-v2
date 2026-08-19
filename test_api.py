@@ -1,10 +1,21 @@
 import json
 
 import requests
+import streamlit as st
 
 
 # ============================================================
-# API DEV - CARPLA
+# PAGE CONFIG
+# ============================================================
+
+st.set_page_config(
+    page_title="Test API - Carpla",
+    layout="wide",
+)
+
+
+# ============================================================
+# API DEV
 # ============================================================
 
 API_URL = (
@@ -15,154 +26,253 @@ API_URL = (
 
 
 # ============================================================
-# THÔNG TIN XÁC THỰC
+# TITLE
 # ============================================================
-# Không commit token thật lên GitHub public.
-#
-# Khi test local:
-# điền token vào đây tạm thời.
-#
-# Sau khi test xong chúng ta sẽ chuyển sang
-# Streamlit Secrets.
 
-AUTHORIZATION = "DAN_TOKEN_VAO_DAY"
+st.title("Test API DMS - Carpla")
 
-# Cookie có thể không bắt buộc nếu Authorization đã đủ.
-# Bước đầu để trống và test trước.
-COOKIE = ""
+st.caption(
+    "Môi trường DEV - dữ liệu test"
+)
 
 
 # ============================================================
-# HÀM CALL API
+# INPUT
 # ============================================================
 
-def call_repair_order_api(
-    date_from,
-    date_to,
-    branch_codes,
+date_from = st.date_input(
+    "Từ ngày",
+    value="2026-07-01",
+)
+
+date_to = st.date_input(
+    "Đến ngày",
+    value="2026-07-31",
+)
+
+branch_codes_text = st.text_input(
+    "Branch codes",
+    value="CSHN.HY",
+    help="Nếu nhiều mã, nhập cách nhau bằng dấu phẩy",
+)
+
+
+# ============================================================
+# TEST BUTTON
+# ============================================================
+
+if st.button(
+    "Test API",
+    type="primary",
 ):
+
+    # --------------------------------------------------------
+    # LẤY SECRET
+    # --------------------------------------------------------
+
+    try:
+        authorization = (
+            st.secrets["api"]["authorization"]
+        )
+
+    except Exception:
+        st.error(
+            "Chưa cấu hình Authorization "
+            "trong Streamlit Secrets."
+        )
+        st.stop()
+
+    cookie = ""
+
+    try:
+        cookie = (
+            st.secrets["api"].get(
+                "cookie",
+                "",
+            )
+        )
+
+    except Exception:
+        pass
+
+    # --------------------------------------------------------
+    # BRANCH CODES
+    # --------------------------------------------------------
+
+    branch_codes = [
+        code.strip()
+        for code
+        in branch_codes_text.split(",")
+        if code.strip()
+    ]
+
+    # --------------------------------------------------------
+    # HEADERS
+    # --------------------------------------------------------
+
     headers = {
-        "Authorization": AUTHORIZATION,
+        "Authorization": authorization,
         "Content-Type": "application/json",
     }
 
-    if COOKIE:
-        headers["Cookie"] = COOKIE
+    if cookie:
+        headers["Cookie"] = cookie
+
+    # --------------------------------------------------------
+    # PAYLOAD
+    # --------------------------------------------------------
 
     payload = {
-        "date_from": date_from,
-        "date_to": date_to,
+        "date_from": (
+            date_from.strftime(
+                "%Y-%m-%d"
+            )
+        ),
+        "date_to": (
+            date_to.strftime(
+                "%Y-%m-%d"
+            )
+        ),
         "branch_ids": [],
         "branch_codes": branch_codes,
     }
 
-    print("=" * 80)
-    print("CALL API")
-    print("=" * 80)
-
-    print(
-        json.dumps(
-            payload,
-            ensure_ascii=False,
-            indent=2,
-        )
+    st.subheader(
+        "Request"
     )
+
+    st.json(
+        payload
+    )
+
+    # --------------------------------------------------------
+    # CALL API
+    # --------------------------------------------------------
 
     try:
-        response = requests.post(
-            API_URL,
-            headers=headers,
-            json=payload,
-            timeout=60,
-        )
+
+        with st.spinner(
+            "Đang gọi API..."
+        ):
+
+            response = (
+                requests.post(
+                    API_URL,
+                    headers=headers,
+                    json=payload,
+                    timeout=60,
+                )
+            )
 
     except requests.RequestException as error:
-        print("\nLỖI KẾT NỐI API:")
-        print(error)
-        return None
 
-    print("\nHTTP STATUS:")
-    print(response.status_code)
-
-    print("\nCONTENT TYPE:")
-    print(
-        response.headers.get(
-            "Content-Type"
+        st.error(
+            "Không kết nối được API."
         )
+
+        st.exception(
+            error
+        )
+
+        st.stop()
+
+    # --------------------------------------------------------
+    # STATUS
+    # --------------------------------------------------------
+
+    st.subheader(
+        "HTTP Status"
     )
 
-    if not response.ok:
-        print("\nAPI TRẢ VỀ LỖI:")
-        print(response.text)
-        return None
+    if response.status_code == 200:
+        st.success(
+            f"API OK - Status {response.status_code}"
+        )
+
+    else:
+        st.error(
+            f"API lỗi - Status {response.status_code}"
+        )
+
+        st.code(
+            response.text
+        )
+
+        st.stop()
+
+    # --------------------------------------------------------
+    # JSON RESPONSE
+    # --------------------------------------------------------
 
     try:
         data = response.json()
 
     except ValueError:
-        print("\nAPI KHÔNG TRẢ JSON:")
-        print(response.text)
-        return None
 
-    return data
+        st.error(
+            "API không trả JSON."
+        )
 
+        st.code(
+            response.text
+        )
 
-# ============================================================
-# HÀM XEM CẤU TRÚC RESPONSE
-# ============================================================
+        st.stop()
 
-def inspect_response(data):
-    print("\n")
-    print("=" * 80)
-    print("KIỂM TRA RESPONSE")
-    print("=" * 80)
+    # --------------------------------------------------------
+    # RESPONSE TYPE
+    # --------------------------------------------------------
 
-    print("\nTYPE:")
-    print(type(data))
+    st.subheader(
+        "Response type"
+    )
 
-    if isinstance(data, dict):
+    st.write(
+        type(data).__name__
+    )
 
-        print("\nTOP LEVEL KEYS:")
+    # --------------------------------------------------------
+    # TOP LEVEL
+    # --------------------------------------------------------
 
-        for key in data.keys():
-            print(
-                f"- {key}"
+    if isinstance(
+        data,
+        dict,
+    ):
+
+        st.subheader(
+            "Top-level keys"
+        )
+
+        st.write(
+            list(
+                data.keys()
             )
+        )
 
         # ----------------------------------------------------
-        # Tìm thử các list nằm trong response
+        # TÌM LIST RECORD
         # ----------------------------------------------------
 
-        list_candidates = []
+        found_records = False
 
         for key, value in data.items():
+
             if isinstance(
                 value,
                 list,
             ):
-                list_candidates.append(
-                    (
-                        key,
-                        value,
-                    )
+
+                st.subheader(
+                    f"{key}"
                 )
 
-        if list_candidates:
-
-            print(
-                "\nCÁC FIELD DẠNG LIST:"
-            )
-
-            for (
-                key,
-                value,
-            ) in list_candidates:
-                print(
-                    f"- {key}: "
-                    f"{len(value)} records"
+                st.write(
+                    f"Số record: {len(value)}"
                 )
 
                 if value:
+
                     first_record = (
                         value[0]
                     )
@@ -172,115 +282,116 @@ def inspect_response(data):
                         dict,
                     ):
 
-                        print(
-                            "\nFIELD CỦA "
-                            "RECORD ĐẦU TIÊN:"
+                        found_records = True
+
+                        st.markdown(
+                            "### Field API trả về"
                         )
 
-                        for field in (
-                            first_record.keys()
-                        ):
-                            print(
-                                f"  - {field}"
-                            )
-
-                        print(
-                            "\nRECORD ĐẦU TIÊN:"
-                        )
-
-                        print(
-                            json.dumps(
-                                first_record,
-                                ensure_ascii=False,
-                                indent=2,
-                                default=str,
+                        fields = (
+                            list(
+                                first_record.keys()
                             )
                         )
 
-                        return
+                        st.write(
+                            fields
+                        )
+
+                        st.markdown(
+                            "### Record đầu tiên"
+                        )
+
+                        st.json(
+                            first_record
+                        )
+
+                        st.markdown(
+                            "### Preview dữ liệu"
+                        )
+
+                        try:
+
+                            import pandas as pd
+
+                            df = pd.DataFrame(
+                                value
+                            )
+
+                            st.dataframe(
+                                df.head(50),
+                                use_container_width=True,
+                            )
+
+                        except Exception:
+                            pass
+
+        if not found_records:
+
+            st.markdown(
+                "### Full response"
+            )
+
+            st.json(
+                data
+            )
 
     elif isinstance(
         data,
         list,
     ):
 
-        print(
-            "\nSỐ RECORD:"
-        )
-        print(
-            len(data)
+        st.write(
+            f"Số record: {len(data)}"
         )
 
         if data:
 
-            first_record = (
+            st.markdown(
+                "### Field API trả về"
+            )
+
+            st.write(
+                list(
+                    data[0].keys()
+                )
+                if isinstance(
+                    data[0],
+                    dict,
+                )
+                else "Không phải dict"
+            )
+
+            st.markdown(
+                "### Record đầu tiên"
+            )
+
+            st.json(
                 data[0]
             )
 
-            if isinstance(
-                first_record,
-                dict,
-            ):
+            try:
 
-                print(
-                    "\nFIELD CỦA "
-                    "RECORD ĐẦU TIÊN:"
+                import pandas as pd
+
+                df = pd.DataFrame(
+                    data
                 )
 
-                for field in (
-                    first_record.keys()
-                ):
-                    print(
-                        f"- {field}"
-                    )
-
-                print(
-                    "\nRECORD ĐẦU TIÊN:"
+                st.markdown(
+                    "### Preview dữ liệu"
                 )
 
-                print(
-                    json.dumps(
-                        first_record,
-                        ensure_ascii=False,
-                        indent=2,
-                        default=str,
-                    )
+                st.dataframe(
+                    df.head(50),
+                    use_container_width=True,
                 )
+
+            except Exception:
+                pass
 
     else:
-        print(
-            "\nRESPONSE:"
-        )
-        print(
-            data
-        )
 
-
-# ============================================================
-# MAIN TEST
-# ============================================================
-
-if __name__ == "__main__":
-
-    # --------------------------------------------------------
-    # TEST 1:
-    # 1 XƯỞNG
-    # --------------------------------------------------------
-
-    print("\n\n")
-    print("#" * 80)
-    print("TEST 1 - MỘT XƯỞNG")
-    print("#" * 80)
-
-    data = call_repair_order_api(
-        date_from="2026-07-01",
-        date_to="2026-07-31",
-        branch_codes=[
-            "CSHN.HY",
-        ],
-    )
-
-    if data is not None:
-        inspect_response(
+        st.write(
             data
         )
