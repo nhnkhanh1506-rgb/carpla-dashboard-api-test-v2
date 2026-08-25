@@ -669,32 +669,33 @@ def _render_metric(title, value, icon, color):
 
 
 def _detail_card(title, rows, value_header, abnormal=False):
-    body = ""
+    # IMPORTANT:
+    # HTML phải không có indent 4 spaces ở đầu dòng.
+    # Nếu có, Markdown sẽ render thành code block (<tr> ...),
+    # đúng lỗi đang thấy trên Streamlit.
 
     if not rows:
-        body = """
-        <tr>
-            <td colspan="3"
-                style="text-align:center;color:#98A2B3;padding:28px 8px;">
-                Không có dữ liệu
-            </td>
-        </tr>
-        """
+        body = (
+            '<tr>'
+            '<td colspan="3" '
+            'style="text-align:center;color:#98A2B3;padding:28px 8px;">'
+            'Không có dữ liệu'
+            '</td>'
+            '</tr>'
+        )
     else:
+        row_parts = []
+
         for index, (label, value) in enumerate(rows, start=1):
-            body += f"""
-            <tr>
-                <td style="width:26px;color:#98A2B3;">
-                    {index}
-                </td>
-                <td>
-                    {html.escape(str(label))}
-                </td>
-                <td>
-                    {int(value):,}
-                </td>
-            </tr>
-            """
+            row_parts.append(
+                '<tr>'
+                f'<td style="width:26px;color:#98A2B3;">{index}</td>'
+                f'<td>{html.escape(str(label))}</td>'
+                f'<td>{int(value):,}</td>'
+                '</tr>'
+            )
+
+        body = "".join(row_parts)
 
     first_header = (
         "CÁC BẤT THƯỜNG"
@@ -702,54 +703,33 @@ def _detail_card(title, rows, value_header, abnormal=False):
         else "CÔNG ĐOẠN"
     )
 
-    return f"""
-    <div class="progress-detail-card">
-        <div class="progress-detail-header">
-            {html.escape(title)}
-        </div>
-        <div class="progress-table-wrap">
-            <table class="progress-table">
-                <thead>
-                    <tr>
-                        <th style="width:26px;">#</th>
-                        <th>{first_header}</th>
-                        <th>{html.escape(value_header)}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {body}
-                </tbody>
-            </table>
-        </div>
-    </div>
-    """
+    return (
+        '<div class="progress-detail-card">'
+        '<div class="progress-detail-header">'
+        f'{html.escape(title)}'
+        '</div>'
+        '<div class="progress-table-wrap">'
+        '<table class="progress-table">'
+        '<thead>'
+        '<tr>'
+        '<th style="width:26px;">#</th>'
+        f'<th>{first_header}</th>'
+        f'<th>{html.escape(value_header)}</th>'
+        '</tr>'
+        '</thead>'
+        '<tbody>'
+        f'{body}'
+        '</tbody>'
+        '</table>'
+        '</div>'
+        '</div>'
+    )
 
 
 # ============================================================
 # 8. VIEW SELECTOR
 # ============================================================
 
-def render_view_selector():
-    options = [
-        "📊 Dashboard quản trị",
-        "🔧 Bảng tiến độ sửa chữa",
-    ]
-
-    if hasattr(st, "segmented_control"):
-        return st.segmented_control(
-            "Chế độ xem",
-            options=options,
-            default=options[0],
-            selection_mode="single",
-            key="main_dashboard_view_mode",
-        )
-
-    return st.radio(
-        "Chế độ xem",
-        options=options,
-        horizontal=True,
-        key="main_dashboard_view_mode",
-    )
 
 
 # ============================================================
