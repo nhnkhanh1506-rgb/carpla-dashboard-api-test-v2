@@ -742,19 +742,20 @@ def render_progress_dashboard(
     # --------------------------------------------------------
     # HEADER
     # --------------------------------------------------------
-    st.markdown(
-        f"""
-        <div class="hero-box">
-            <div class="hero-title">
-                Bảng theo dõi tiến độ sửa chữa – {html.escape(branch_label)}
-            </div>
+    header_html = (
+        '<div class="hero-box">'
+        '<div class="hero-title">'
+        f'Bảng theo dõi tiến độ sửa chữa – {html.escape(branch_label)}'
+        '</div>'
+        '<div class="hero-subtitle">'
+        'Theo dõi tình trạng xe, tiến độ sửa chữa, '
+        'công đoạn chờ và các bất thường vận hành'
+        '</div>'
+        '</div>'
+    )
 
-            <div class="hero-subtitle">
-                Theo dõi tình trạng xe, tiến độ sửa chữa,
-                công đoạn chờ và các bất thường vận hành
-            </div>
-        </div>
-        """,
+    st.markdown(
+        header_html,
         unsafe_allow_html=True,
     )
 
