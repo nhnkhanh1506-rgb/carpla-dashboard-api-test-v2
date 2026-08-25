@@ -1042,7 +1042,7 @@ def _map_chart(
     figure = go.Figure()
 
     figure.add_trace(
-        go.Scattermapbox(
+        go.Scattermap(
             lat=map_data["lat"],
             lon=map_data["lon"],
             mode="markers",
@@ -1179,8 +1179,27 @@ def _map_chart(
                 color="#1F2937",
             ),
         ),
-        mapbox=dict(
-            style="carto-positron",
+        map=dict(
+            style={
+                "version": 8,
+                "sources": {
+                    "osm": {
+                        "type": "raster",
+                        "tiles": [
+                            "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        ],
+                        "tileSize": 256,
+                        "attribution": "© OpenStreetMap contributors",
+                    }
+                },
+                "layers": [
+                    {
+                        "id": "osm",
+                        "type": "raster",
+                        "source": "osm",
+                    }
+                ],
+            },
             center=dict(
                 lat=center_lat,
                 lon=center_lon,
