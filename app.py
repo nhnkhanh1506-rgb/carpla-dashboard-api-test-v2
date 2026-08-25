@@ -32,6 +32,11 @@ from config import (
 from data_loader import load_all_data
 from styles import apply_global_style
 
+from progress_dashboard import (
+    render_progress_dashboard,
+    render_view_selector,
+)
+
 
 # ============================================================
 # HÀM ĐỊNH DẠNG BẢNG
@@ -2506,6 +2511,28 @@ month = selection["month"]
 
 if month != "All":
     month = int(month)
+
+
+# ============================================================
+# 5.1 CHẾ ĐỘ XEM
+# ============================================================
+# Dashboard quản trị:
+# - giữ nguyên flow hiện tại
+# - chỉ call API production khi user chọn Dashboard quản trị
+#
+# Bảng tiến độ sửa chữa:
+# - đọc Google Sheet gần real-time
+# - KHÔNG call API production để tránh load thừa
+
+view_mode = render_view_selector()
+
+if view_mode == "🔧 Bảng tiến độ sửa chữa":
+    render_progress_dashboard(
+        selected_branch=selected_branch,
+        initial_workshop=selected_workshop,
+    )
+
+    st.stop()
 
 
 # ============================================================
