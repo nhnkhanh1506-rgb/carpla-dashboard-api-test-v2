@@ -2531,7 +2531,7 @@ if view_mode == "🔧 Bảng tiến độ sửa chữa":
             index=0,
             key="progress_sidebar_branch",
             format_func=lambda value: (
-                "Toàn hệ thống"
+                "Toàn HO"
                 if value == "All"
                 else value
             ),
