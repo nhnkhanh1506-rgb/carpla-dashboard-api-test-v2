@@ -434,6 +434,23 @@ def apply_progress_style():
     st.markdown(
         """
         <style>
+
+        .progress-filter-shell {
+            background:#FFFFFF;
+            border:1px solid #E3E8F0;
+            border-radius:18px;
+            padding:16px 18px 8px 18px;
+            margin:6px 0 20px 0;
+            box-shadow:0 8px 24px rgba(30,47,110,.055);
+        }
+
+        .progress-filter-title {
+            color:#173359;
+            font-size:14px;
+            font-weight:850;
+            margin:0 0 10px 2px;
+        }
+
         .progress-section-title {
             color:#173359;
             font-size:18px;
@@ -493,57 +510,130 @@ def apply_progress_style():
 
         .progress-detail-card {
             background:#FFFFFF;
-            border:1px solid #E7ECF3;
-            border-radius:15px;
+            border:1px solid #E3E8F0;
+            border-radius:18px;
             overflow:hidden;
-            min-height:390px;
-            box-shadow:0 4px 16px rgba(20,40,80,.045);
+            box-shadow:0 8px 24px rgba(30,47,110,.055);
+            height:auto;
+            min-height:0;
         }
 
         .progress-detail-header {
-            padding:15px 16px;
+            padding:16px 17px 13px 17px;
             border-bottom:1px solid #EEF1F5;
+        }
+
+        .progress-detail-title {
             color:#173359;
-            font-size:13px;
+            font-size:14px;
             font-weight:850;
+            line-height:1.3;
         }
 
-        .progress-table-wrap {
-            padding:6px 14px 14px 14px;
+        .progress-detail-total {
+            margin-top:6px;
+            color:#0B2A52;
+            font-size:28px;
+            line-height:1;
+            font-weight:900;
         }
 
-        .progress-table {
-            width:100%;
-            border-collapse:collapse;
-            table-layout:fixed;
-        }
-
-        .progress-table th {
-            text-align:left;
+        .progress-detail-total-label {
             color:#98A2B3;
-            font-size:9px;
-            font-weight:850;
-            padding:8px 7px;
-            border-bottom:1px solid #EEF1F5;
+            font-size:10px;
+            font-weight:750;
+            text-transform:uppercase;
+            letter-spacing:.35px;
+            margin-left:5px;
         }
 
-        .progress-table td {
-            padding:8px 7px;
+        .progress-list {
+            padding:10px 15px 14px 15px;
+        }
+
+        .progress-list-row {
+            padding:10px 0;
+            border-bottom:1px solid #F1F4F8;
+        }
+
+        .progress-list-row:last-child {
+            border-bottom:none;
+        }
+
+        .progress-list-top {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:12px;
+            margin-bottom:7px;
+        }
+
+        .progress-list-name {
             color:#344054;
-            font-size:11px;
-            border-bottom:1px solid #F2F4F7;
-            vertical-align:middle;
+            font-size:11.5px;
+            font-weight:700;
+            line-height:1.3;
         }
 
-        .progress-table td:last-child,
-        .progress-table th:last-child {
-            text-align:right;
-            width:70px;
-        }
-
-        .progress-table td:last-child {
+        .progress-list-value {
             color:#175CD3;
-            font-weight:850;
+            font-size:13px;
+            font-weight:900;
+            white-space:nowrap;
+        }
+
+        .progress-mini-track {
+            width:100%;
+            height:6px;
+            border-radius:999px;
+            background:#EEF2F6;
+            overflow:hidden;
+        }
+
+        .progress-mini-fill {
+            height:100%;
+            border-radius:999px;
+        }
+
+        .progress-warning-list {
+            padding:10px 14px 14px 14px;
+        }
+
+        .progress-warning-row {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:12px;
+            padding:11px 12px;
+            margin-bottom:8px;
+            border-radius:12px;
+            border:1px solid #F0F2F5;
+            background:#FAFBFC;
+        }
+
+        .progress-warning-row:last-child {
+            margin-bottom:0;
+        }
+
+        .progress-warning-name {
+            color:#344054;
+            font-size:11.5px;
+            font-weight:750;
+            line-height:1.3;
+        }
+
+        .progress-warning-value {
+            min-width:30px;
+            height:28px;
+            padding:0 8px;
+            border-radius:999px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#B42318;
+            background:#FEE4E2;
+            font-size:12px;
+            font-weight:900;
         }
 
         div[data-testid="stSelectbox"] label {
@@ -632,68 +722,123 @@ def _render_metric(title, value, icon, color):
     )
 
 
-def _detail_card(title, rows, value_header, abnormal=False):
-    # IMPORTANT:
-    # HTML phải không có indent 4 spaces ở đầu dòng.
-    # Nếu có, Markdown sẽ render thành code block (<tr> ...),
-    # đúng lỗi đang thấy trên Streamlit.
-
-    if not rows:
-        body = (
-            '<tr>'
-            '<td colspan="3" '
-            'style="text-align:center;color:#98A2B3;padding:28px 8px;">'
-            'Không có dữ liệu'
-            '</td>'
-            '</tr>'
+def _detail_card(
+    title,
+    rows,
+    value_header,
+    abnormal=False,
+    accent_color="#3478F6",
+):
+    if abnormal:
+        total = sum(
+            int(value)
+            for _, value in rows
         )
-    else:
-        row_parts = []
 
-        for index, (label, value) in enumerate(rows, start=1):
-            row_parts.append(
-                '<tr>'
-                f'<td style="width:26px;color:#98A2B3;">{index}</td>'
-                f'<td>{html.escape(str(label))}</td>'
-                f'<td>{int(value):,}</td>'
-                '</tr>'
+        if not rows:
+            body = (
+                '<div style="padding:26px 16px;text-align:center;'
+                'color:#98A2B3;font-size:12px;">'
+                'Không có bất thường'
+                '</div>'
+            )
+        else:
+            warning_rows = []
+
+            for label, value in rows:
+                warning_rows.append(
+                    '<div class="progress-warning-row">'
+                    f'<div class="progress-warning-name">{html.escape(str(label))}</div>'
+                    f'<div class="progress-warning-value">{int(value):,}</div>'
+                    '</div>'
+                )
+
+            body = (
+                '<div class="progress-warning-list">'
+                + "".join(warning_rows)
+                + '</div>'
             )
 
-        body = "".join(row_parts)
+        return (
+            '<div class="progress-detail-card">'
+            '<div class="progress-detail-header">'
+            f'<div class="progress-detail-title">{html.escape(title)}</div>'
+            f'<div class="progress-detail-total">{total:,}'
+            '<span class="progress-detail-total-label">bất thường</span>'
+            '</div>'
+            '</div>'
+            f'{body}'
+            '</div>'
+        )
 
-    first_header = (
-        "CÁC BẤT THƯỜNG"
-        if abnormal
-        else "CÔNG ĐOẠN"
+    # Với stage cards, dòng "Tổng cộng" chỉ dùng làm total, không render lại.
+    total = 0
+    detail_rows = list(rows)
+
+    if detail_rows and _norm(detail_rows[0][0]) == _norm("Tổng cộng"):
+        total = int(detail_rows[0][1])
+        detail_rows = detail_rows[1:]
+    else:
+        total = sum(
+            int(value)
+            for _, value in detail_rows
+        )
+
+    max_value = max(
+        [int(value) for _, value in detail_rows],
+        default=1,
     )
+
+    if not detail_rows:
+        body = (
+            '<div style="padding:26px 16px;text-align:center;'
+            'color:#98A2B3;font-size:12px;">'
+            'Không có dữ liệu'
+            '</div>'
+        )
+    else:
+        list_rows = []
+
+        for label, value in detail_rows:
+            value_int = int(value)
+            width = max(
+                8,
+                min(
+                    100,
+                    value_int / max_value * 100,
+                ),
+            )
+
+            list_rows.append(
+                '<div class="progress-list-row">'
+                '<div class="progress-list-top">'
+                f'<div class="progress-list-name">{html.escape(str(label))}</div>'
+                f'<div class="progress-list-value">{value_int:,}</div>'
+                '</div>'
+                '<div class="progress-mini-track">'
+                f'<div class="progress-mini-fill" style="width:{width:.1f}%;'
+                f'background:{accent_color};"></div>'
+                '</div>'
+                '</div>'
+            )
+
+        body = (
+            '<div class="progress-list">'
+            + "".join(list_rows)
+            + '</div>'
+        )
 
     return (
         '<div class="progress-detail-card">'
         '<div class="progress-detail-header">'
-        f'{html.escape(title)}'
+        f'<div class="progress-detail-title">{html.escape(title)}</div>'
+        f'<div class="progress-detail-total">{total:,}'
+        '<span class="progress-detail-total-label">xe</span>'
         '</div>'
-        '<div class="progress-table-wrap">'
-        '<table class="progress-table">'
-        '<thead>'
-        '<tr>'
-        '<th style="width:26px;">#</th>'
-        f'<th>{first_header}</th>'
-        f'<th>{html.escape(value_header)}</th>'
-        '</tr>'
-        '</thead>'
-        '<tbody>'
+        '</div>'
         f'{body}'
-        '</tbody>'
-        '</table>'
-        '</div>'
         '</div>'
     )
-
-
-# ============================================================
-# 8. VIEW SELECTOR
-# ============================================================
-
 
 
 # ============================================================
@@ -828,6 +973,12 @@ def render_progress_dashboard(
             .index(initial_workshop)
         )
 
+    st.markdown(
+        '<div class="progress-filter-shell">'
+        '<div class="progress-filter-title">Bộ lọc</div>',
+        unsafe_allow_html=True,
+    )
+
     f1, f2, f3, f4 = st.columns(
         4,
         gap="medium",
@@ -864,6 +1015,11 @@ def render_progress_dashboard(
             index=0,
             key="progress_repair_type_filter",
         )
+
+    st.markdown(
+        '</div>',
+        unsafe_allow_html=True,
+    )
 
     selected_month = (
         "Tất cả"
@@ -1043,9 +1199,10 @@ def render_progress_dashboard(
     with d1:
         st.markdown(
             _detail_card(
-                "◷  Công đoạn – SL xe chờ",
+                "◷  Xe đang chờ",
                 waiting_rows,
                 "SL XE CHỜ",
+                accent_color="#3478F6",
             ),
             unsafe_allow_html=True,
         )
@@ -1053,9 +1210,10 @@ def render_progress_dashboard(
     with d2:
         st.markdown(
             _detail_card(
-                "🔧  Công đoạn – SL xe đang sửa chữa",
+                "🔧  Xe đang sửa chữa",
                 repairing_rows,
                 "SL XE",
+                accent_color="#20A779",
             ),
             unsafe_allow_html=True,
         )
@@ -1063,10 +1221,11 @@ def render_progress_dashboard(
     with d3:
         st.markdown(
             _detail_card(
-                "⚠  Các bất thường – Tổng SL xe",
+                "⚠  Các bất thường",
                 abnormal_rows,
                 "TỔNG SL XE",
                 abnormal=True,
+                accent_color="#E85454",
             ),
             unsafe_allow_html=True,
         )
