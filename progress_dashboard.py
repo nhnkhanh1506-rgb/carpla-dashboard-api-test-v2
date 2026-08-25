@@ -434,6 +434,42 @@ def apply_progress_style():
     st.markdown(
         """
         <style>
+        .progress-top-shell {
+            background:
+                linear-gradient(
+                    135deg,
+                    #FFFFFF 0%,
+                    #F7FAFE 100%
+                );
+            border:1px solid #E7ECF3;
+            border-radius:20px;
+            padding:24px 26px 20px 26px;
+            margin:4px 0 18px 0;
+            box-shadow:0 5px 22px rgba(26,47,81,.045);
+        }
+
+        .progress-title {
+            color:#0B2A52;
+            font-size:30px;
+            line-height:1.15;
+            font-weight:900;
+            letter-spacing:-0.55px;
+            margin-bottom:7px;
+        }
+
+        .progress-subtitle {
+            color:#667085;
+            font-size:14px;
+            font-weight:500;
+        }
+
+        .progress-meta {
+            margin-top:10px;
+            color:#98A2B3;
+            font-size:11.5px;
+            font-weight:600;
+        }
+
         .progress-section-title {
             color:#173359;
             font-size:18px;
@@ -633,33 +669,32 @@ def _render_metric(title, value, icon, color):
 
 
 def _detail_card(title, rows, value_header, abnormal=False):
-    # IMPORTANT:
-    # HTML phải không có indent 4 spaces ở đầu dòng.
-    # Nếu có, Markdown sẽ render thành code block (<tr> ...),
-    # đúng lỗi đang thấy trên Streamlit.
+    body = ""
 
     if not rows:
-        body = (
-            '<tr>'
-            '<td colspan="3" '
-            'style="text-align:center;color:#98A2B3;padding:28px 8px;">'
-            'Không có dữ liệu'
-            '</td>'
-            '</tr>'
-        )
+        body = """
+        <tr>
+            <td colspan="3"
+                style="text-align:center;color:#98A2B3;padding:28px 8px;">
+                Không có dữ liệu
+            </td>
+        </tr>
+        """
     else:
-        row_parts = []
-
         for index, (label, value) in enumerate(rows, start=1):
-            row_parts.append(
-                '<tr>'
-                f'<td style="width:26px;color:#98A2B3;">{index}</td>'
-                f'<td>{html.escape(str(label))}</td>'
-                f'<td>{int(value):,}</td>'
-                '</tr>'
-            )
-
-        body = "".join(row_parts)
+            body += f"""
+            <tr>
+                <td style="width:26px;color:#98A2B3;">
+                    {index}
+                </td>
+                <td>
+                    {html.escape(str(label))}
+                </td>
+                <td>
+                    {int(value):,}
+                </td>
+            </tr>
+            """
 
     first_header = (
         "CÁC BẤT THƯỜNG"
@@ -667,33 +702,54 @@ def _detail_card(title, rows, value_header, abnormal=False):
         else "CÔNG ĐOẠN"
     )
 
-    return (
-        '<div class="progress-detail-card">'
-        '<div class="progress-detail-header">'
-        f'{html.escape(title)}'
-        '</div>'
-        '<div class="progress-table-wrap">'
-        '<table class="progress-table">'
-        '<thead>'
-        '<tr>'
-        '<th style="width:26px;">#</th>'
-        f'<th>{first_header}</th>'
-        f'<th>{html.escape(value_header)}</th>'
-        '</tr>'
-        '</thead>'
-        '<tbody>'
-        f'{body}'
-        '</tbody>'
-        '</table>'
-        '</div>'
-        '</div>'
-    )
+    return f"""
+    <div class="progress-detail-card">
+        <div class="progress-detail-header">
+            {html.escape(title)}
+        </div>
+        <div class="progress-table-wrap">
+            <table class="progress-table">
+                <thead>
+                    <tr>
+                        <th style="width:26px;">#</th>
+                        <th>{first_header}</th>
+                        <th>{html.escape(value_header)}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {body}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    """
 
 
 # ============================================================
 # 8. VIEW SELECTOR
 # ============================================================
 
+def render_view_selector():
+    options = [
+        "📊 Dashboard quản trị",
+        "🔧 Bảng tiến độ sửa chữa",
+    ]
+
+    if hasattr(st, "segmented_control"):
+        return st.segmented_control(
+            "Chế độ xem",
+            options=options,
+            default=options[0],
+            selection_mode="single",
+            key="main_dashboard_view_mode",
+        )
+
+    return st.radio(
+        "Chế độ xem",
+        options=options,
+        horizontal=True,
+        key="main_dashboard_view_mode",
+    )
 
 
 # ============================================================
@@ -742,26 +798,23 @@ def render_progress_dashboard(
     # --------------------------------------------------------
     # HEADER
     # --------------------------------------------------------
-    header_html = (
-        '<div class="hero-box">'
-        '<div class="hero-title">'
-        f'Bảng theo dõi tiến độ sửa chữa – {html.escape(branch_label)}'
-        '</div>'
-        '<div class="hero-subtitle">'
-        'Theo dõi tình trạng xe, tiến độ sửa chữa, '
-        'công đoạn chờ và các bất thường vận hành'
-        '</div>'
-        '</div>'
-    )
-
     st.markdown(
-        header_html,
+        f"""
+        <div class="progress-top-shell">
+            <div class="progress-title">
+                Bảng theo dõi tiến độ sửa chữa – {html.escape(branch_label)}
+            </div>
+            <div class="progress-subtitle">
+                Theo dõi tình trạng xe, tiến độ sửa chữa,
+                công đoạn chờ và các bất thường vận hành
+            </div>
+            <div class="progress-meta">
+                Google Sheet gần real-time · Cache 60 giây ·
+                Cập nhật giao diện lúc {datetime.now():%d/%m/%Y %H:%M}
+            </div>
+        </div>
+        """,
         unsafe_allow_html=True,
-    )
-
-    st.caption(
-        "Google Sheet gần real-time · Cache 60 giây · "
-        f"Cập nhật giao diện lúc {datetime.now():%d/%m/%Y %H:%M}"
     )
 
     if errors:
