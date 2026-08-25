@@ -32,10 +32,7 @@ from config import (
 from data_loader import load_all_data
 from styles import apply_global_style
 
-from progress_dashboard import (
-    render_progress_dashboard,
-    render_view_selector,
-)
+from progress_dashboard import render_progress_dashboard
 
 
 # ============================================================
@@ -2463,30 +2460,101 @@ apply_global_style()
 
 
 # ============================================================
-# 3. SIDEBAR FILTER
+# 3. CHẾ ĐỘ XEM Ở SIDEBAR
 # ============================================================
-# Sidebar dùng mapping trong config, chưa call API ở bước này.
+# Đưa lựa chọn Dashboard quản trị / Bảng tiến độ vào sidebar
+# để phần nội dung chính giữ đúng bố cục homepage cũ.
+
+with st.sidebar:
+    st.markdown(
+        """
+        <div style="
+            color:#FFFFFF;
+            font-size:20px;
+            font-weight:800;
+            margin:8px 0 10px 0;
+        ">
+            Chế độ xem
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    view_mode = st.radio(
+        "Chế độ xem",
+        options=[
+            "📊 Dashboard quản trị",
+            "🔧 Bảng tiến độ sửa chữa",
+        ],
+        index=0,
+        label_visibility="collapsed",
+        key="main_view_mode",
+    )
+
+
+# ============================================================
+# 3.1 BẢNG TIẾN ĐỘ
+# ============================================================
+# Khi chọn Bảng tiến độ:
+# - chỉ hiện bộ lọc Chi nhánh riêng cho tiến độ ở sidebar
+# - không hiện bộ lọc Năm / Tháng của Dashboard quản trị
+# - không call API production
+
+if view_mode == "🔧 Bảng tiến độ sửa chữa":
+    with st.sidebar:
+        st.markdown(
+            """
+            <div style="
+                color:#FFFFFF;
+                font-size:20px;
+                font-weight:800;
+                margin:22px 0 10px 0;
+            ">
+                Bộ lọc tiến độ
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        progress_branch = st.selectbox(
+            "Chi nhánh",
+            options=[
+                "All",
+                "Hà Nội",
+                "Tây Bắc Bộ",
+                "Đông Bắc Bộ",
+                "TP. HCM",
+                "Cần Thơ",
+                "Nghệ An",
+                "Đà Nẵng",
+            ],
+            index=0,
+            key="progress_sidebar_branch",
+            format_func=lambda value: (
+                "Toàn hệ thống"
+                if value == "All"
+                else value
+            ),
+        )
+
+    render_progress_dashboard(
+        selected_branch=progress_branch,
+        initial_workshop="All",
+    )
+
+    st.stop()
+
+
+# ============================================================
+# 3.2 DASHBOARD QUẢN TRỊ
+# ============================================================
+# Chỉ khi chọn Dashboard quản trị mới render bộ lọc cũ.
 
 selection = render_sidebar(
     branch_workshop_codes=(
         BRANCH_WORKSHOP_CODES
     )
 )
-
-
-# ============================================================
-# 3.1 CHẾ ĐỘ XEM
-# ============================================================
-# Hiển thị NGAY từ homepage để user có thể chọn:
-# - Dashboard quản trị
-# - Bảng tiến độ sửa chữa
-#
-# Nếu chọn Bảng tiến độ:
-# - không cần bấm XEM DASHBOARD
-# - không call API production
-# - đi thẳng sang dữ liệu Google Sheet tiến độ
-
-view_mode = render_view_selector()
 
 
 # ============================================================
@@ -2504,24 +2572,6 @@ selected_workshop = selection.get(
     "workshop",
     "All",
 )
-
-
-# ============================================================
-# 4.1 BẢNG TIẾN ĐỘ SỬA CHỮA
-# ============================================================
-# Khi chọn Bảng tiến độ:
-# - mở trực tiếp
-# - không cần bấm XEM DASHBOARD
-# - không call API production của Dashboard quản trị
-# - không phụ thuộc Năm / Tháng ở sidebar
-
-if view_mode == "🔧 Bảng tiến độ sửa chữa":
-    render_progress_dashboard(
-        selected_branch=selected_branch or "All",
-        initial_workshop=selected_workshop or "All",
-    )
-
-    st.stop()
 
 
 # ============================================================
