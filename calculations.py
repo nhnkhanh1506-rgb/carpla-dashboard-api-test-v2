@@ -239,11 +239,34 @@ def calculate_dashboard_metrics(
     )
 
     # --------------------------------------------------------
-    # 3. CƠ CẤU DOANH THU LSC
+    # 3. CƠ CẤU DOANH THU
     # --------------------------------------------------------
+    # Công việc:
+    #   SUM doanh_thu_cong_viec của cả LSC + LPK
+    #
+    # Phụ tùng:
+    #   SUM doanh_thu_phu_tung của LSC
+    #
+    # Phụ kiện:
+    #   SUM doanh_thu_phu_tung của LPK
+
+    revenue_orders = scoped_data[
+        scoped_data["loai_lenh"].isin(
+            [
+                "LSC",
+                "LPK",
+            ]
+        )
+    ].copy()
+
+    revenue_orders = revenue_orders[
+        revenue_orders[
+            "doanh_thu_truoc_thue"
+        ] > 0
+    ].copy()
 
     labor_revenue = pd.to_numeric(
-        data[
+        revenue_orders[
             "doanh_thu_cong_viec"
         ],
         errors="coerce",
@@ -280,7 +303,7 @@ def calculate_dashboard_metrics(
 
     accessory_revenue = pd.to_numeric(
         accessory_orders[
-            "doanh_thu_truoc_thue"
+            "doanh_thu_phu_tung"
         ],
         errors="coerce",
     ).fillna(0).sum()
@@ -289,10 +312,12 @@ def calculate_dashboard_metrics(
     # 5. TỔNG DOANH THU
     # --------------------------------------------------------
 
-    actual_revenue = (
-        service_revenue
-        + accessory_revenue
-    )
+    actual_revenue = pd.to_numeric(
+        revenue_orders[
+            "doanh_thu_truoc_thue"
+        ],
+        errors="coerce",
+    ).fillna(0).sum()
 
     # --------------------------------------------------------
     # 6. TỔNG THANH TOÁN SAU THUẾ
