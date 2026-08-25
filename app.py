@@ -2490,27 +2490,20 @@ view_mode = render_view_selector()
 
 
 # ============================================================
-# 4. SELECTED FILTERS
+# 4. SELECTED SCOPE CƠ BẢN
 # ============================================================
-# Lấy selection trước để Bảng tiến độ có thể dùng ngay,
-# kể cả khi user chưa bấm XEM DASHBOARD.
+# Ở homepage, year/month có thể chưa được chọn nên KHÔNG ép int ở đây.
+# Bảng tiến độ chỉ cần Chi nhánh + Xưởng để mở.
 
-selected_branch = selection[
-    "branch"
-]
-
-selected_workshop = selection[
-    "workshop"
-]
-
-year = int(
-    selection["year"]
+selected_branch = selection.get(
+    "branch",
+    "All",
 )
 
-month = selection["month"]
-
-if month != "All":
-    month = int(month)
+selected_workshop = selection.get(
+    "workshop",
+    "All",
+)
 
 
 # ============================================================
@@ -2520,11 +2513,12 @@ if month != "All":
 # - mở trực tiếp
 # - không cần bấm XEM DASHBOARD
 # - không call API production của Dashboard quản trị
+# - không phụ thuộc Năm / Tháng ở sidebar
 
 if view_mode == "🔧 Bảng tiến độ sửa chữa":
     render_progress_dashboard(
-        selected_branch=selected_branch,
-        initial_workshop=selected_workshop,
+        selected_branch=selected_branch or "All",
+        initial_workshop=selected_workshop or "All",
     )
 
     st.stop()
@@ -2543,6 +2537,29 @@ if not selection[
     )
 
     st.stop()
+
+
+# ============================================================
+# 5. SELECTED FILTERS CHO DASHBOARD QUẢN TRỊ
+# ============================================================
+# Chỉ sau khi user đã bấm XEM DASHBOARD mới parse Năm / Tháng.
+
+selected_branch = selection[
+    "branch"
+]
+
+selected_workshop = selection[
+    "workshop"
+]
+
+year = int(
+    selection["year"]
+)
+
+month = selection["month"]
+
+if month != "All":
+    month = int(month)
 
 
 # ============================================================
