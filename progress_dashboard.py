@@ -434,42 +434,6 @@ def apply_progress_style():
     st.markdown(
         """
         <style>
-        .progress-top-shell {
-            background:
-                linear-gradient(
-                    135deg,
-                    #FFFFFF 0%,
-                    #F7FAFE 100%
-                );
-            border:1px solid #E7ECF3;
-            border-radius:20px;
-            padding:24px 26px 20px 26px;
-            margin:4px 0 18px 0;
-            box-shadow:0 5px 22px rgba(26,47,81,.045);
-        }
-
-        .progress-title {
-            color:#0B2A52;
-            font-size:30px;
-            line-height:1.15;
-            font-weight:900;
-            letter-spacing:-0.55px;
-            margin-bottom:7px;
-        }
-
-        .progress-subtitle {
-            color:#667085;
-            font-size:14px;
-            font-weight:500;
-        }
-
-        .progress-meta {
-            margin-top:10px;
-            color:#98A2B3;
-            font-size:11.5px;
-            font-weight:600;
-        }
-
         .progress-section-title {
             color:#173359;
             font-size:18px;
@@ -780,21 +744,23 @@ def render_progress_dashboard(
     # --------------------------------------------------------
     st.markdown(
         f"""
-        <div class="progress-top-shell">
-            <div class="progress-title">
+        <div class="hero-box">
+            <div class="hero-title">
                 Bảng theo dõi tiến độ sửa chữa – {html.escape(branch_label)}
             </div>
-            <div class="progress-subtitle">
+
+            <div class="hero-subtitle">
                 Theo dõi tình trạng xe, tiến độ sửa chữa,
                 công đoạn chờ và các bất thường vận hành
-            </div>
-            <div class="progress-meta">
-                Google Sheet gần real-time · Cache 60 giây ·
-                Cập nhật giao diện lúc {datetime.now():%d/%m/%Y %H:%M}
             </div>
         </div>
         """,
         unsafe_allow_html=True,
+    )
+
+    st.caption(
+        "Google Sheet gần real-time · Cache 60 giây · "
+        f"Cập nhật giao diện lúc {datetime.now():%d/%m/%Y %H:%M}"
     )
 
     if errors:
