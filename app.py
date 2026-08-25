@@ -2475,25 +2475,25 @@ selection = render_sidebar(
 
 
 # ============================================================
-# 4. HOME PAGE
+# 3.1 CHẾ ĐỘ XEM
 # ============================================================
-# Khi chưa bấm XEM DASHBOARD:
-# - chỉ hiện homepage
-# - KHÔNG call API
+# Hiển thị NGAY từ homepage để user có thể chọn:
+# - Dashboard quản trị
+# - Bảng tiến độ sửa chữa
+#
+# Nếu chọn Bảng tiến độ:
+# - không cần bấm XEM DASHBOARD
+# - không call API production
+# - đi thẳng sang dữ liệu Google Sheet tiến độ
 
-if not selection[
-    "show_dashboard"
-]:
-    render_homepage(
-        logo_path=LOGO_FILE
-    )
-
-    st.stop()
+view_mode = render_view_selector()
 
 
 # ============================================================
-# 5. SELECTED FILTERS
+# 4. SELECTED FILTERS
 # ============================================================
+# Lấy selection trước để Bảng tiến độ có thể dùng ngay,
+# kể cả khi user chưa bấm XEM DASHBOARD.
 
 selected_branch = selection[
     "branch"
@@ -2514,22 +2514,32 @@ if month != "All":
 
 
 # ============================================================
-# 5.1 CHẾ ĐỘ XEM
+# 4.1 BẢNG TIẾN ĐỘ SỬA CHỮA
 # ============================================================
-# Dashboard quản trị:
-# - giữ nguyên flow hiện tại
-# - chỉ call API production khi user chọn Dashboard quản trị
-#
-# Bảng tiến độ sửa chữa:
-# - đọc Google Sheet gần real-time
-# - KHÔNG call API production để tránh load thừa
-
-view_mode = render_view_selector()
+# Khi chọn Bảng tiến độ:
+# - mở trực tiếp
+# - không cần bấm XEM DASHBOARD
+# - không call API production của Dashboard quản trị
 
 if view_mode == "🔧 Bảng tiến độ sửa chữa":
     render_progress_dashboard(
         selected_branch=selected_branch,
         initial_workshop=selected_workshop,
+    )
+
+    st.stop()
+
+
+# ============================================================
+# 4.2 HOME PAGE - DASHBOARD QUẢN TRỊ
+# ============================================================
+# Chỉ Dashboard quản trị mới dùng homepage + nút XEM DASHBOARD.
+
+if not selection[
+    "show_dashboard"
+]:
+    render_homepage(
+        logo_path=LOGO_FILE
     )
 
     st.stop()
