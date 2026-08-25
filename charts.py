@@ -2562,6 +2562,26 @@ def render_payment_section(data):
         padding: 0 !important;
     }
 
+    .st-key-customer_source_revenue_chart_card {
+        width: 100% !important;
+        background: #FFFFFF !important;
+        border: 1px solid #E2E8F0 !important;
+        border-radius: 18px !important;
+        box-sizing: border-box !important;
+        padding: 14px 18px 12px 18px !important;
+        overflow: hidden !important;
+        min-height: 334px !important;
+    }
+
+    .st-key-customer_source_revenue_chart_card div[data-testid="stVerticalBlock"] {
+        gap: 0 !important;
+    }
+
+    .st-key-customer_source_revenue_chart_card div[data-testid="stPlotlyChart"] {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
     .customer-source-card-title {
         color: #1F2937;
         font-size: 18px;
