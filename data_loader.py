@@ -286,11 +286,7 @@ def _get_authorization():
     return authorization
 
 
-@st.cache_data(
-    ttl=API_CACHE_TTL_SECONDS,
-    show_spinner=False,
-)
-def _call_api_batch_cached(
+def _call_api_batch_uncached(
     date_from_text,
     date_to_text,
     branch_codes_tuple,
@@ -360,6 +356,42 @@ def _call_api_batch_cached(
     return records
 
 
+@st.cache_data(
+    ttl=86_400,
+    show_spinner=False,
+)
+def _call_api_batch_historical_cached(
+    date_from_text,
+    date_to_text,
+    branch_codes_tuple,
+    authorization,
+):
+    return _call_api_batch_uncached(
+        date_from_text=date_from_text,
+        date_to_text=date_to_text,
+        branch_codes_tuple=branch_codes_tuple,
+        authorization=authorization,
+    )
+
+
+@st.cache_data(
+    ttl=API_CACHE_TTL_SECONDS,
+    show_spinner=False,
+)
+def _call_api_batch_current_cached(
+    date_from_text,
+    date_to_text,
+    branch_codes_tuple,
+    authorization,
+):
+    return _call_api_batch_uncached(
+        date_from_text=date_from_text,
+        date_to_text=date_to_text,
+        branch_codes_tuple=branch_codes_tuple,
+        authorization=authorization,
+    )
+
+
 def call_api_raw(
     selected_branch,
     selected_workshop,
@@ -405,8 +437,20 @@ def call_api_raw(
             batch_end,
         ) in batches:
             try:
+                current_month_start = pd.Timestamp(
+                    year=date.today().year,
+                    month=date.today().month,
+                    day=1,
+                )
+
+                cache_function = (
+                    _call_api_batch_historical_cached
+                    if batch_end < current_month_start
+                    else _call_api_batch_current_cached
+                )
+
                 records = (
-                    _call_api_batch_cached(
+                    cache_function(
                         date_from_text=(
                             batch_start.strftime(
                                 "%Y-%m-%d"
