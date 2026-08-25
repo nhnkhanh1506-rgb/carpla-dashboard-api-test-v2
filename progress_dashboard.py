@@ -435,20 +435,17 @@ def apply_progress_style():
         """
         <style>
 
-        .progress-filter-shell {
-            background:#FFFFFF;
-            border:1px solid #E3E8F0;
-            border-radius:18px;
-            padding:16px 18px 8px 18px;
-            margin:6px 0 20px 0;
-            box-shadow:0 8px 24px rgba(30,47,110,.055);
+        .st-key-progress_filter_card {
+            background:#FFFFFF !important;
+            border:1px solid #E3E8F0 !important;
+            border-radius:18px !important;
+            padding:14px 18px 10px 18px !important;
+            margin:6px 0 20px 0 !important;
+            box-shadow:0 8px 24px rgba(30,47,110,.055) !important;
         }
 
-        .progress-filter-title {
-            color:#173359;
-            font-size:14px;
-            font-weight:850;
-            margin:0 0 10px 2px;
+        .st-key-progress_filter_card > div {
+            border-radius:18px !important;
         }
 
         .progress-section-title {
@@ -973,53 +970,47 @@ def render_progress_dashboard(
             .index(initial_workshop)
         )
 
-    st.markdown(
-        '<div class="progress-filter-shell">'
-        '<div class="progress-filter-title">Bộ lọc</div>',
-        unsafe_allow_html=True,
+    filter_card = st.container(
+        key="progress_filter_card"
     )
 
-    f1, f2, f3, f4 = st.columns(
-        4,
-        gap="medium",
-    )
-
-    with f1:
-        selected_month_label = st.selectbox(
-            "📅 Tháng lập lệnh",
-            month_labels,
-            index=0,
-            key="progress_month_filter",
+    with filter_card:
+        f1, f2, f3, f4 = st.columns(
+            4,
+            gap="medium",
         )
 
-    with f2:
-        selected_workshop = st.selectbox(
-            "🔧 Xưởng dịch vụ",
-            ["Tất cả", *workshops],
-            index=default_workshop_index,
-            key="progress_workshop_filter",
-        )
+        with f1:
+            selected_month_label = st.selectbox(
+                "📅 Tháng lập lệnh",
+                month_labels,
+                index=0,
+                key="progress_month_filter",
+            )
 
-    with f3:
-        selected_brand = st.selectbox(
-            "🚘 Hãng xe",
-            ["Tất cả", *brands],
-            index=0,
-            key="progress_brand_filter",
-        )
+        with f2:
+            selected_workshop = st.selectbox(
+                "🔧 Xưởng dịch vụ",
+                ["Tất cả", *workshops],
+                index=default_workshop_index,
+                key="progress_workshop_filter",
+            )
 
-    with f4:
-        selected_repair_type = st.selectbox(
-            "📋 Loại hình sửa chữa",
-            ["Tất cả", *repair_types],
-            index=0,
-            key="progress_repair_type_filter",
-        )
+        with f3:
+            selected_brand = st.selectbox(
+                "🚘 Hãng xe",
+                ["Tất cả", *brands],
+                index=0,
+                key="progress_brand_filter",
+            )
 
-    st.markdown(
-        '</div>',
-        unsafe_allow_html=True,
-    )
+        with f4:
+            selected_repair_type = st.selectbox(
+                "📋 Loại hình sửa chữa",
+                ["Tất cả", *repair_types],
+                index=0,
+                key="progress_repair_type_filter",
+            )
 
     selected_month = (
         "Tất cả"
