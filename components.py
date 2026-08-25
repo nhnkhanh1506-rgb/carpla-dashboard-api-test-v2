@@ -115,7 +115,7 @@ def render_mini_kpi(
 # SIDEBAR FILTER
 # ============================================================
 
-def render_sidebar(data_raw):
+def render_sidebar(branch_workshop_codes):
     if "show_dashboard" not in st.session_state:
         st.session_state.show_dashboard = False
 
@@ -137,18 +137,11 @@ def render_sidebar(data_raw):
     # 1. CHI NHÁNH
     # =========================================================
 
-    available_branches = sorted(
-        data_raw[
-            "chi_nhanh"
-        ]
-        .dropna()
-        .unique()
-        .tolist()
-    )
-
     branch_options = [
         "All"
-    ] + available_branches
+    ] + list(
+        branch_workshop_codes.keys()
+    )
 
     selected_branch_input = (
         st.sidebar.selectbox(
@@ -165,43 +158,21 @@ def render_sidebar(data_raw):
     # =========================================================
 
     if selected_branch_input is None:
-        scope_after_branch = (
-            data_raw.iloc[
-                0:0
-            ].copy()
-        )
-
         workshop_options = []
 
     elif selected_branch_input == "All":
-        scope_after_branch = (
-            data_raw.copy()
-        )
-
-        # Khi xem toàn HO thì xưởng cố định All.
         workshop_options = [
             "All"
         ]
 
     else:
-        scope_after_branch = (
-            data_raw[
-                data_raw[
-                    "chi_nhanh"
-                ]
-                == selected_branch_input
-            ].copy()
-        )
-
         workshop_options = [
             "All"
         ] + sorted(
-            scope_after_branch[
-                "xuong"
-            ]
-            .dropna()
-            .unique()
-            .tolist()
+            branch_workshop_codes.get(
+                selected_branch_input,
+                {},
+            ).keys()
         )
 
     selected_workshop_input = (
@@ -219,46 +190,19 @@ def render_sidebar(data_raw):
     # =========================================================
 
     if (
-        selected_branch_input
-        is not None
-        and selected_workshop_input
-        is not None
+        selected_branch_input is not None
+        and selected_workshop_input is not None
     ):
-        if (
-            selected_workshop_input
-            == "All"
-        ):
-            scope_after_workshop = (
-                scope_after_branch.copy()
-            )
-        else:
-            scope_after_workshop = (
-                scope_after_branch[
-                    scope_after_branch[
-                        "xuong"
-                    ]
-                    == selected_workshop_input
-                ].copy()
-            )
-
-        # Dashboard hiện tại chỉ sử dụng dữ liệu năm 2026.
-        # Không tự sinh thêm năm từ dữ liệu lỗi/sót trong file.
         year_options = [
             2026
         ]
     else:
-        scope_after_workshop = (
-            data_raw.iloc[
-                0:0
-            ].copy()
-        )
-
         year_options = []
 
     selected_year_input = (
         st.sidebar.selectbox(
             "Năm",
-            options=[2026] if year_options else [],
+            options=year_options,
             index=None,
             placeholder=" ",
             key="sidebar_year",
@@ -269,38 +213,26 @@ def render_sidebar(data_raw):
     # 4. THÁNG
     # =========================================================
 
-    if (
-        selected_year_input
-        is not None
-    ):
-        year_data = (
-            scope_after_workshop[
-                scope_after_workshop[
-                    "ngay_hoa_don"
-                ].dt.year
-                == int(
-                    selected_year_input
-                )
-            ].copy()
-        )
+    if selected_year_input is not None:
+        from datetime import date
 
-        available_months = [
-            month_value
-            for month_value in sorted(
-                year_data[
-                    "ngay_hoa_don"
-                ]
-                .dropna()
-                .dt.month
-                .unique()
-                .tolist()
-            )
-            if 1 <= int(month_value) <= 7
-        ]
+        today = date.today()
+
+        if int(selected_year_input) == today.year:
+            max_month = today.month
+        elif int(selected_year_input) < today.year:
+            max_month = 12
+        else:
+            max_month = 0
 
         month_options = (
             ["All"]
-            + available_months
+            + list(
+                range(
+                    1,
+                    max_month + 1,
+                )
+            )
         )
     else:
         month_options = []
@@ -308,7 +240,7 @@ def render_sidebar(data_raw):
     selected_month_input = (
         st.sidebar.selectbox(
             "Tháng",
-            options=["All"] + [m for m in month_options if m != "All" and int(m) <= 7],
+            options=month_options,
             index=None,
             placeholder=" ",
             format_func=(
@@ -328,14 +260,10 @@ def render_sidebar(data_raw):
     # =========================================================
 
     all_selected = all([
-        selected_branch_input
-        is not None,
-        selected_workshop_input
-        is not None,
-        selected_year_input
-        is not None,
-        selected_month_input
-        is not None,
+        selected_branch_input is not None,
+        selected_workshop_input is not None,
+        selected_year_input is not None,
+        selected_month_input is not None,
     ])
 
     if st.sidebar.button(
