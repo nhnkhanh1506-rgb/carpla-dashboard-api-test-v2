@@ -2951,51 +2951,24 @@ def render_payment_section(data):
             )
 
             st.markdown(
-                f"""
-                <div style="
-                    display:flex;
-                    justify-content:center;
-                    gap:18px;
-                    flex-wrap:nowrap;
-                    margin-top:-22px;
-                    padding-bottom:4px;
-                    font-size:13px;
-                    color:#475467;
-                    font-weight:600;
-                ">
-                    <div style="
-                        display:flex;
-                        align-items:center;
-                        gap:6px;
-                        white-space:nowrap;
-                    ">
-                        <span style="
-                            width:10px;
-                            height:10px;
-                            border-radius:50%;
-                            background:{DONUT_MAIN};
-                            display:inline-block;
-                        "></span>
-                        <span>Khách hàng chi trả</span>
-                    </div>
-
-                    <div style="
-                        display:flex;
-                        align-items:center;
-                        gap:6px;
-                        white-space:nowrap;
-                    ">
-                        <span style="
-                            width:10px;
-                            height:10px;
-                            border-radius:50%;
-                            background:{DONUT_SECOND};
-                            display:inline-block;
-                        "></span>
-                        <span>Bảo hiểm chi trả</span>
-                    </div>
-                </div>
-                """,
+                (
+                    '<div style="display:flex;justify-content:center;gap:18px;'
+                    'flex-wrap:nowrap;margin-top:-22px;padding-bottom:4px;'
+                    'font-size:13px;color:#475467;font-weight:600;">'
+                    '<div style="display:flex;align-items:center;gap:6px;'
+                    'white-space:nowrap;">'
+                    f'<span style="width:10px;height:10px;border-radius:50%;'
+                    f'background:{DONUT_MAIN};display:inline-block;"></span>'
+                    '<span>Khách hàng chi trả</span>'
+                    '</div>'
+                    '<div style="display:flex;align-items:center;gap:6px;'
+                    'white-space:nowrap;">'
+                    f'<span style="width:10px;height:10px;border-radius:50%;'
+                    f'background:{DONUT_SECOND};display:inline-block;"></span>'
+                    '<span>Bảo hiểm chi trả</span>'
+                    '</div>'
+                    '</div>'
+                ),
                 unsafe_allow_html=True,
             )
 
