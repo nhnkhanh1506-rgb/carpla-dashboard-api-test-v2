@@ -356,64 +356,6 @@ def render_sidebar(branch_workshop_codes):
 
 
 # ============================================================
-# TASCO AUTO WORDMARK - HOMEPAGE
-# ============================================================
-
-def _build_tasco_wordmark_html():
-    """
-    Dùng file PNG đã xử lý sẵn:
-    tasco_auto_logo_navy.png
-
-    - nền trong suốt
-    - chữ navy #1E2F6E
-    - đặt nhỏ ở góc trên trái của homepage-card
-    """
-
-    tasco_logo_path = (
-        Path(__file__).resolve().parent
-        / "tasco_auto_logo_navy.png"
-    )
-
-    if not tasco_logo_path.exists():
-        return (
-            '<div style="'
-            'position:absolute;'
-            'top:24px;'
-            'left:30px;'
-            'z-index:5;'
-            'color:#1E2F6E;'
-            'font-size:15px;'
-            'line-height:0.95;'
-            'font-weight:900;'
-            'letter-spacing:0.4px;'
-            'text-align:left;'
-            '">'
-            'TASCO<br>AUTO'
-            '</div>'
-        )
-
-    tasco_base64 = base64.b64encode(
-        tasco_logo_path.read_bytes()
-    ).decode("utf-8")
-
-    return (
-        '<img '
-        f'src="data:image/png;base64,{tasco_base64}" '
-        'alt="TASCO AUTO" '
-        'style="'
-        'position:absolute;'
-        'top:22px;'
-        'left:28px;'
-        'width:118px;'
-        'height:auto;'
-        'z-index:5;'
-        'display:block;'
-        'object-fit:contain;'
-        '">'
-    )
-
-
-# ============================================================
 # HOMEPAGE
 # ============================================================
 
@@ -439,18 +381,9 @@ def render_homepage(logo_path: Path):
             'color:#172554;">CARPLA SERVICES</div>'
         )
 
-    tasco_wordmark_html = (
-        _build_tasco_wordmark_html()
-    )
-
     html = (
         '<div class="homepage-stage">'
             '<div class="homepage-card">'
-
-                # TASCO AUTO nhỏ ở góc trên trái của inner card
-                f'{tasco_wordmark_html}'
-
-                # CARPLA SERVICES giữ nguyên ở giữa
                 f'{logo_html}'
 
                 '<div class="homepage-title">'
@@ -458,67 +391,38 @@ def render_homepage(logo_path: Path):
                 '</div>'
 
                 '<div class="homepage-subtitle">'
-                    'Nền tảng dashboard tập trung giúp theo dõi, '
-                    'phân tích và đánh giá hiệu quả hoạt động của '
-                    'các xưởng trong toàn hệ thống Carpla Services.'
-                '</div>'
+'Nền tảng dashboard tập trung giúp theo dõi, phân tích và đánh giá hiệu quả hoạt động của các xưởng trong toàn hệ thống Carpla Services.'
+'</div>'
 
-                '<div class="homepage-feature-grid">'
-                    '<div class="homepage-feature-item">'
-                        '🚗 <span>Lượt xe</span>'
-                    '</div>'
-                    '<div class="homepage-feature-item">'
-                        '📊 <span>Doanh thu</span>'
-                    '</div>'
-                    '<div class="homepage-feature-item">'
-                        '📦 <span>Cơ cấu xe</span>'
-                    '</div>'
-                    '<div class="homepage-feature-item">'
-                        '💳 <span>Thanh toán</span>'
-                    '</div>'
-                    '<div class="homepage-feature-item">'
-                        '📈 <span>KPI vận hành</span>'
-                    '</div>'
-                '</div>'
+'<div class="homepage-feature-grid">'
+    '<div class="homepage-feature-item">🚗 <span>Lượt xe</span></div>'
+    '<div class="homepage-feature-item">📊 <span>Doanh thu</span></div>'
+    '<div class="homepage-feature-item">📦 <span>Cơ cấu xe</span></div>'
+    '<div class="homepage-feature-item">💳 <span>Thanh toán</span></div>'
+    '<div class="homepage-feature-item">📈 <span>KPI vận hành</span></div>'
+'</div>'
 
-                '<div class="homepage-guide">'
-                    '<span>'
-                        'Vui lòng chọn <b>Chi nhánh</b>, '
-                        '<b>Xưởng</b>, <b>Năm</b> và <b>Tháng</b> '
-                        'tại bộ lọc bên trái, sau đó nhấn&nbsp;'
-                    '</span>'
-
-                    '<span style="'
-                        'display:inline-flex;'
-                        'align-items:center;'
-                        'justify-content:center;'
-                        'padding:8px 18px;'
-                        'border-radius:12px;'
-                        'background:linear-gradient('
-                            '135deg,'
-                            '#FF6969 0%,'
-                            '#FF4F4F 52%,'
-                            '#E93E3E 100%'
-                        ');'
-                        'color:#FFFFFF;'
-                        'font-size:14px;'
-                        'line-height:1;'
-                        'font-weight:800;'
-                        'letter-spacing:0.25px;'
-                        'border:1px solid '
-                            'rgba(255,255,255,0.24);'
-                        'box-shadow:'
-                            '0 8px 18px rgba(233,62,62,0.24),'
-                            'inset 0 1px 0 rgba(255,255,255,0.26);'
-                        'text-shadow:'
-                            '0 1px 1px rgba(122,26,26,0.16);'
-                        'white-space:nowrap;'
-                        'vertical-align:middle;'
-                    '">'
-                        'XEM DASHBOARD'
-                    '</span>'
-                '</div>'
-
+'<div class="homepage-guide">'
+    '<span style="'
+        'display:inline-flex;'
+        'align-items:center;'
+        'justify-content:center;'
+        'padding:13px 24px;'
+        'border-radius:14px;'
+        'background:linear-gradient(135deg,#FF6969 0%,#FF4F4F 52%,#E93E3E 100%);'
+        'color:#FFFFFF;'
+        'font-size:15px;'
+        'line-height:1.35;'
+        'font-weight:800;'
+        'letter-spacing:0.15px;'
+        'border:1px solid rgba(255,255,255,0.30);'
+        'box-shadow:0 10px 22px rgba(233,62,62,0.28),0 0 18px rgba(255,90,90,0.12),inset 0 1px 0 rgba(255,255,255,0.32);'
+        'text-shadow:0 1px 2px rgba(122,26,26,0.18);'
+        'white-space:normal;'
+        'text-align:center;'
+        'max-width:760px;'
+    '">Vui lòng chọn Chế độ xem tại bộ lọc bên trái để bắt đầu.</span>'
+'</div>'
             '</div>'
         '</div>'
     )
