@@ -1180,7 +1180,7 @@ def _map_chart(
             ),
         ),
         mapbox=dict(
-            style="open-street-map",
+            style="carto-positron",
             center=dict(
                 lat=center_lat,
                 lon=center_lon,
