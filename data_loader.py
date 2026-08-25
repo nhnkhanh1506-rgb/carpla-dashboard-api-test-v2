@@ -1,50 +1,34 @@
-from pathlib import Path
+import calendar
 import re
 import unicodedata
+from datetime import date
 
 import pandas as pd
+import requests
 import streamlit as st
+
+from config import (
+    API_BUFFER_MONTHS,
+    API_CACHE_TTL_SECONDS,
+    API_TIMEOUT_SECONDS,
+    API_URL,
+    API_WORKSHOP_BRANCH_MAP,
+    API_WORKSHOP_NAME_MAP,
+    BRANCH_ORDER,
+    BRANCH_WORKSHOP_CODES,
+)
 
 
 # ============================================================
 # HÀM CHUẨN HÓA
 # ============================================================
 
-def normalize_text(value):
-    value = str(value).strip()
-
-    value = unicodedata.normalize(
-        "NFD",
-        value,
-    )
-
-    value = "".join(
-        character
-        for character in value
-        if unicodedata.category(character) != "Mn"
-    )
-
-    value = value.lower()
-
-    value = re.sub(
-        r"[^a-z0-9]+",
-        "_",
-        value,
-    )
-
-    return value.strip("_")
-
-
 def normalize_order_number(series):
     return (
         series.astype(str)
         .str.strip()
         .str.upper()
-        .str.replace(
-            r"\s+",
-            " ",
-            regex=True,
-        )
+        .str.replace(r"\s+", " ", regex=True)
         .replace({
             "": pd.NA,
             "NAN": pd.NA,
@@ -54,24 +38,18 @@ def normalize_order_number(series):
 
 
 def parse_money(series):
+    if pd.api.types.is_numeric_dtype(series):
+        return pd.to_numeric(
+            series,
+            errors="coerce",
+        ).fillna(0)
+
     cleaned = (
         series.astype(str)
         .str.strip()
-        .str.replace(
-            ",",
-            "",
-            regex=False,
-        )
-        .str.replace(
-            " ",
-            "",
-            regex=False,
-        )
-        .str.replace(
-            r"[^\d\-.]",
-            "",
-            regex=True,
-        )
+        .str.replace(",", "", regex=False)
+        .str.replace(" ", "", regex=False)
+        .str.replace(r"[^\d\-.]", "", regex=True)
     )
 
     return pd.to_numeric(
@@ -81,102 +59,427 @@ def parse_money(series):
 
 
 # ============================================================
-# ĐỌC FILE VÀ TỰ TÌM HEADER
+# HÀM THỜI GIAN
 # ============================================================
 
-def read_excel_with_header_detection(
-    file_path: Path,
-    expected_columns,
-    preferred_sheet="Báo cáo",
-):
-    if not file_path.exists():
-        st.error(
-            f"Không tìm thấy file dữ liệu: "
-            f"{file_path.name}"
+def _month_start(year, month):
+    return pd.Timestamp(
+        year=int(year),
+        month=int(month),
+        day=1,
+    )
+
+
+def _month_end(year, month):
+    last_day = calendar.monthrange(
+        int(year),
+        int(month),
+    )[1]
+
+    end = pd.Timestamp(
+        year=int(year),
+        month=int(month),
+        day=last_day,
+    )
+
+    today = pd.Timestamp(date.today())
+
+    if (
+        int(year) == today.year
+        and int(month) == today.month
+    ):
+        end = min(
+            end,
+            today,
         )
-        st.stop()
 
-    excel_file = pd.ExcelFile(
-        file_path
+    return end
+
+
+def _shift_months(timestamp, months):
+    return (
+        pd.Timestamp(timestamp)
+        + pd.DateOffset(months=int(months))
     )
 
-    if preferred_sheet in excel_file.sheet_names:
-        sheet_name = preferred_sheet
+
+def _iter_month_batches(start_date, end_date):
+    cursor = pd.Timestamp(
+        year=start_date.year,
+        month=start_date.month,
+        day=1,
+    )
+
+    end_date = pd.Timestamp(end_date)
+
+    while cursor <= end_date:
+        batch_start = cursor
+
+        batch_end = pd.Timestamp(
+            year=cursor.year,
+            month=cursor.month,
+            day=calendar.monthrange(
+                cursor.year,
+                cursor.month,
+            )[1],
+        )
+
+        batch_start = max(
+            batch_start,
+            pd.Timestamp(start_date),
+        )
+
+        batch_end = min(
+            batch_end,
+            end_date,
+        )
+
+        yield (
+            batch_start,
+            batch_end,
+        )
+
+        cursor = (
+            cursor
+            + pd.DateOffset(months=1)
+        )
+
+
+# ============================================================
+# XÁC ĐỊNH PHẠM VI API
+# ============================================================
+
+def get_branch_codes(
+    selected_branch,
+    selected_workshop,
+):
+    if selected_branch == "All":
+        codes = []
+
+        for branch_name in BRANCH_ORDER:
+            for workshop_codes in (
+                BRANCH_WORKSHOP_CODES
+                .get(branch_name, {})
+                .values()
+            ):
+                codes.extend(
+                    workshop_codes
+                )
+
+        return sorted(
+            set(codes)
+        )
+
+    workshop_map = (
+        BRANCH_WORKSHOP_CODES.get(
+            selected_branch,
+            {},
+        )
+    )
+
+    if selected_workshop == "All":
+        codes = []
+
+        for workshop_codes in (
+            workshop_map.values()
+        ):
+            codes.extend(
+                workshop_codes
+            )
+
+        return sorted(
+            set(codes)
+        )
+
+    return sorted(
+        set(
+            workshop_map.get(
+                selected_workshop,
+                [],
+            )
+        )
+    )
+
+
+def get_api_raw_window(
+    year,
+    month,
+):
+    year = int(year)
+    today = pd.Timestamp(
+        date.today()
+    )
+
+    if month == "All":
+        dashboard_start = pd.Timestamp(
+            year=year,
+            month=1,
+            day=1,
+        )
+
+        if year == today.year:
+            dashboard_end = today
+        else:
+            dashboard_end = pd.Timestamp(
+                year=year,
+                month=12,
+                day=31,
+            )
+
+        api_start = _shift_months(
+            dashboard_start,
+            -API_BUFFER_MONTHS,
+        )
+
+        api_end = dashboard_end
+
     else:
-        sheet_name = excel_file.sheet_names[0]
+        month = int(month)
 
-    preview = pd.read_excel(
-        file_path,
-        sheet_name=sheet_name,
-        header=None,
-        nrows=30,
-    )
+        dashboard_start = _month_start(
+            year,
+            month,
+        )
 
-    normalized_expected = {
-        normalize_text(column)
-        for column in expected_columns
+        dashboard_end = _month_end(
+            year,
+            month,
+        )
+
+        api_start = _shift_months(
+            dashboard_start,
+            -API_BUFFER_MONTHS,
+        )
+
+        api_end = dashboard_end
+
+    return {
+        "dashboard_start": dashboard_start,
+        "dashboard_end": dashboard_end,
+        "api_start": api_start,
+        "api_end": api_end,
     }
 
-    header_row = None
 
-    for row_index in range(len(preview)):
-        row_values = {
-            normalize_text(value)
-            for value in preview.iloc[
-                row_index
-            ].dropna()
-        }
+# ============================================================
+# CALL API - CACHE THEO TỪNG BATCH 1 THÁNG
+# ============================================================
 
-        if normalized_expected.issubset(
-            row_values
-        ):
-            header_row = row_index
-            break
-
-    if header_row is None:
+def _get_authorization():
+    try:
+        authorization = (
+            st.secrets["api"]["authorization"]
+        )
+    except Exception:
         st.error(
-            f"Không tìm được dòng tiêu đề "
-            f"trong file {file_path.name}."
+            "Chưa cấu hình API Production Authorization "
+            "trong Streamlit Secrets."
         )
         st.stop()
 
-    data = pd.read_excel(
-        file_path,
-        sheet_name=sheet_name,
-        header=header_row,
+    if not authorization:
+        st.error(
+            "API Production Authorization đang trống."
+        )
+        st.stop()
+
+    return authorization
+
+
+@st.cache_data(
+    ttl=API_CACHE_TTL_SECONDS,
+    show_spinner=False,
+)
+def _call_api_batch_cached(
+    date_from_text,
+    date_to_text,
+    branch_codes_tuple,
+    authorization,
+):
+    headers = {
+        "Authorization": authorization,
+        "Content-Type": "application/json",
+    }
+
+    payload = {
+        "date_from": date_from_text,
+        "date_to": date_to_text,
+        "branch_ids": [],
+        "branch_codes": list(
+            branch_codes_tuple
+        ),
+    }
+
+    response = requests.post(
+        API_URL,
+        headers=headers,
+        json=payload,
+        timeout=API_TIMEOUT_SECONDS,
     )
 
-    data = data.dropna(
-        how="all"
-    ).copy()
+    response.raise_for_status()
 
-    data.columns = [
-        str(column).strip()
-        for column in data.columns
-    ]
+    response_json = response.json()
 
-    return data
+    if not isinstance(
+        response_json,
+        dict,
+    ):
+        raise ValueError(
+            "API không trả response dạng dict."
+        )
+
+    success_data = response_json.get(
+        "success"
+    )
+
+    if not isinstance(
+        success_data,
+        dict,
+    ):
+        raise ValueError(
+            "API response không có object 'success'."
+        )
+
+    records = success_data.get(
+        "data",
+        [],
+    )
+
+    if records is None:
+        records = []
+
+    if not isinstance(
+        records,
+        list,
+    ):
+        raise ValueError(
+            "API response success.data không phải list."
+        )
+
+    return records
 
 
-# ============================================================
-# ĐỌC FILE TỔNG HỢP 1 CHI NHÁNH
-# ============================================================
-
-def read_branch_file(
-    file_path: Path,
-    branch_name: str,
-    workshop_name_map: dict,
+def call_api_raw(
+    selected_branch,
+    selected_workshop,
+    year,
+    month,
 ):
-    data = read_excel_with_header_detection(
-        file_path=file_path,
-        expected_columns=[
-            "Số lệnh sửa chữa",
-            "Ngày DT",
-            "Chi nhánh",
-            "Tổng doanh thu",
-            "Nguồn khách",
-        ],
-        preferred_sheet="Báo cáo",
+    branch_codes = get_branch_codes(
+        selected_branch=selected_branch,
+        selected_workshop=selected_workshop,
+    )
+
+    if not branch_codes:
+        st.error(
+            "Không tìm thấy branch code cho phạm vi đã chọn."
+        )
+        st.stop()
+
+    window = get_api_raw_window(
+        year=year,
+        month=month,
+    )
+
+    authorization = _get_authorization()
+
+    all_records = []
+
+    batches = list(
+        _iter_month_batches(
+            window["api_start"],
+            window["api_end"],
+        )
+    )
+
+    progress_text = (
+        "Đang lấy dữ liệu DMS từ API Production..."
+    )
+
+    with st.spinner(
+        progress_text
+    ):
+        for (
+            batch_start,
+            batch_end,
+        ) in batches:
+            try:
+                records = (
+                    _call_api_batch_cached(
+                        date_from_text=(
+                            batch_start.strftime(
+                                "%Y-%m-%d"
+                            )
+                        ),
+                        date_to_text=(
+                            batch_end.strftime(
+                                "%Y-%m-%d"
+                            )
+                        ),
+                        branch_codes_tuple=tuple(
+                            branch_codes
+                        ),
+                        authorization=authorization,
+                    )
+                )
+            except requests.HTTPError as error:
+                status_code = (
+                    error.response.status_code
+                    if error.response is not None
+                    else "?"
+                )
+
+                st.error(
+                    "API Production trả lỗi "
+                    f"HTTP {status_code} cho batch "
+                    f"{batch_start:%d/%m/%Y} → "
+                    f"{batch_end:%d/%m/%Y}."
+                )
+                st.stop()
+
+            except requests.RequestException as error:
+                st.error(
+                    "Không kết nối được API Production cho batch "
+                    f"{batch_start:%d/%m/%Y} → "
+                    f"{batch_end:%d/%m/%Y}."
+                )
+                st.exception(
+                    error
+                )
+                st.stop()
+
+            except Exception as error:
+                st.error(
+                    "Không đọc được response API Production."
+                )
+                st.exception(
+                    error
+                )
+                st.stop()
+
+            all_records.extend(
+                records
+            )
+
+    return (
+        all_records,
+        window,
+    )
+
+
+# ============================================================
+# CHUẨN HÓA RESPONSE API → FORMAT DASHBOARD
+# ============================================================
+
+def prepare_api_data(
+    records,
+):
+    if not records:
+        return pd.DataFrame()
+
+    data = pd.DataFrame(
+        records
     )
 
     # --------------------------------------------------------
@@ -194,63 +497,39 @@ def read_branch_file(
             "Hãng xe": "hang_xe",
             "Dòng xe": "dong_xe",
             "Khách hàng": "ten_khach_hang",
-            "Doanh thu công việc": (
-                "doanh_thu_cong_viec"
-            ),
-            "Doanh thu phụ tùng": (
-                "doanh_thu_phu_tung"
-            ),
-            "Tổng doanh thu": (
-                "doanh_thu_truoc_thue"
-            ),
-            "Tổng thanh toán": (
-                "tong_tien_sau_thue"
-            ),
-            "Khách hàng.1": (
-                "khach_hang_chi_tra"
-            ),
-            "Bảo hiểm": (
-                "bao_hiem_chi_tra"
-            ),
-            "Chi nhánh": (
-                "xuong_dms"
-            ),
+            "Doanh thu công việc": "doanh_thu_cong_viec",
+            "Doanh thu phụ tùng": "doanh_thu_phu_tung",
+            "Tổng doanh thu": "doanh_thu_truoc_thue",
+            "Tổng thanh toán": "tong_tien_sau_thue",
+            "Khách hàng (2)": "khach_hang_chi_tra",
+            "Khách hàng.1": "khach_hang_chi_tra",
+            "Bảo hiểm": "bao_hiem_chi_tra",
+            "Chi nhánh": "xuong_dms",
         }
     )
 
     required_columns = [
         "ro",
         "ngay_hoa_don",
+        "ngay_quyet_toan",
+        "ngay_lap_lenh",
         "trang_thai",
+        "nguon_khach",
         "hang_xe",
         "doanh_thu_cong_viec",
         "doanh_thu_phu_tung",
         "doanh_thu_truoc_thue",
         "tong_tien_sau_thue",
         "xuong_dms",
-        "nguon_khach",
     ]
 
-    missing_columns = [
-        column
-        for column in required_columns
-        if column not in data.columns
-    ]
-
-    if missing_columns:
-        st.error(
-            f"File {file_path.name} thiếu các cột: "
-            + ", ".join(missing_columns)
-        )
-        st.stop()
+    for column in required_columns:
+        if column not in data.columns:
+            data[column] = pd.NA
 
     # --------------------------------------------------------
-    # 2. CHỈ GIỮ CÁC DÒNG LỆNH THẬT
+    # 2. RO
     # --------------------------------------------------------
-    # File tổng hợp có:
-    # - dòng Tổng cộng
-    # - dòng tiêu đề theo ngày
-    # Các dòng đó không phải lệnh.
 
     data["ro"] = (
         data["ro"]
@@ -259,62 +538,50 @@ def read_branch_file(
         .str.strip()
     )
 
-    # Chỉ kiểm tra đây có phải "lệnh thật" hay không.
-    # KHÔNG lọc theo năm nằm trong Số lệnh.
-    #
-    # Ví dụ:
-    #   LSC.2025.... nhưng Ngày DT = 02/01/2026
-    #   => VẪN PHẢI TÍNH vào dashboard 2026.
-    real_order_mask = (
-        data["ro"]
-        .str.upper()
-        .str.match(
-            r"^(LSC|LPK|LPT)\.",
-            na=False,
+    data["ro_key"] = (
+        normalize_order_number(
+            data["ro"]
         )
-    )
-
-    data = data[
-        real_order_mask
-    ].copy()
-
-    # --------------------------------------------------------
-    # 3. LOẠI LỆNH TRÙNG
-    # --------------------------------------------------------
-
-    data["ro_key"] = normalize_order_number(
-        data["ro"]
     )
 
     data = data[
         data["ro_key"].notna()
     ].copy()
 
-    # Nếu cùng một số lệnh xuất hiện nhiều dòng,
-    # chỉ giữ bản ghi cuối cùng.
-    data = (
-        data.drop_duplicates(
-            subset=["ro_key"],
-            keep="last",
-        )
-        .reset_index(drop=True)
-    )
-
-    # --------------------------------------------------------
-    # 4. LOẠI LỆNH
-    # --------------------------------------------------------
-
+    # API có thể trả:
+    #   LSC.2026...
+    #   CSHN.HY.LSC.2607...
+    # nên tìm loại lệnh ở bất kỳ segment nào trong Số lệnh.
     data["loai_lenh"] = (
         data["ro_key"]
         .astype(str)
-        .str[:3]
+        .str.extract(
+            r"(?:^|\.)(LSC|LPK|LPT)(?:\.|$)",
+            expand=False,
+        )
     )
 
+    data = data[
+        data["loai_lenh"].notna()
+    ].copy()
+
     # --------------------------------------------------------
-    # 5. CHI NHÁNH / XƯỞNG
+    # 3. NGÀY
     # --------------------------------------------------------
 
-    data["chi_nhanh"] = branch_name
+    for column in [
+        "ngay_hoa_don",
+        "ngay_quyet_toan",
+        "ngay_lap_lenh",
+    ]:
+        data[column] = pd.to_datetime(
+            data[column],
+            errors="coerce",
+        )
+
+    # --------------------------------------------------------
+    # 4. CHI NHÁNH / XƯỞNG
+    # --------------------------------------------------------
 
     data["xuong_dms"] = (
         data["xuong_dms"]
@@ -325,89 +592,23 @@ def read_branch_file(
 
     data["xuong"] = (
         data["xuong_dms"]
-        .map(workshop_name_map)
-        .fillna(data["xuong_dms"])
+        .map(
+            API_WORKSHOP_NAME_MAP
+        )
+        .fillna(
+            data["xuong_dms"]
+        )
+    )
+
+    data["chi_nhanh"] = (
+        data["xuong_dms"]
+        .map(
+            API_WORKSHOP_BRANCH_MAP
+        )
     )
 
     # --------------------------------------------------------
-    # 6. NGÀY
-    # --------------------------------------------------------
-    # QUY TẮC DUY NHẤT CHO KỲ DASHBOARD:
-    # - "Ngày DT" -> "ngay_hoa_don" là ngày dùng để lọc năm/tháng.
-    # - "Ngày lập lệnh" và "Ngày quyết toán" chỉ giữ để tham chiếu,
-    #   KHÔNG dùng để xác định kỳ dashboard.
-
-    for column in [
-        "ngay_hoa_don",
-        "ngay_quyet_toan",
-        "ngay_lap_lenh",
-    ]:
-        if column in data.columns:
-            data[column] = pd.to_datetime(
-                data[column],
-                errors="coerce",
-                dayfirst=True,
-            )
-
-    # --------------------------------------------------------
-    # 6.1. GIỚI HẠN PHẠM VI NGÀY DT CHO FILE HÀ NỘI
-    # --------------------------------------------------------
-    # File hiện tại được xác định là dữ liệu từ:
-    # 01/01/2026 đến 31/07/2026.
-    #
-    # Vì vậy các dòng có Ngày DT ngoài phạm vi này
-    # sẽ bị loại khỏi dashboard, kể cả khi chúng vẫn còn
-    # xuất hiện trong file nguồn.
-
-    if branch_name == "Hà Nội":
-        # PHẠM VI DUY NHẤT DÙNG ĐỂ XÁC ĐỊNH KỲ DASHBOARD:
-        # cột "Ngày DT" đã được đổi tên thành "ngay_hoa_don".
-        #
-        # Chỉ lấy lệnh có:
-        #   01/01/2026 <= Ngày DT <= 31/07/2026
-        #
-        # Không quan tâm năm nằm trong Số lệnh,
-        # Ngày lập lệnh hay Ngày quyết toán.
-        start_date = pd.Timestamp(
-            "2026-01-01"
-        )
-
-        end_date = pd.Timestamp(
-            "2026-07-31"
-        )
-
-        data = data[
-            data[
-                "ngay_hoa_don"
-            ].between(
-                start_date,
-                end_date,
-                inclusive="both",
-            )
-        ].copy()
-
-        # Kiểm tra an toàn: sau khi lọc không được còn
-        # bất kỳ Ngày DT nào ngoài phạm vi trên.
-        if not data.empty:
-            min_dt = data[
-                "ngay_hoa_don"
-            ].min()
-
-            max_dt = data[
-                "ngay_hoa_don"
-            ].max()
-
-            if (
-                min_dt < start_date
-                or max_dt > end_date
-            ):
-                raise ValueError(
-                    "Lỗi lọc Ngày DT: dữ liệu còn nằm "
-                    "ngoài 01/01/2026 - 31/07/2026."
-                )
-
-    # --------------------------------------------------------
-    # 7. CỘT TIỀN
+    # 5. CỘT TIỀN
     # --------------------------------------------------------
 
     money_columns = [
@@ -428,7 +629,7 @@ def read_branch_file(
         )
 
     # --------------------------------------------------------
-    # 8. TRẠNG THÁI
+    # 6. TRẠNG THÁI
     # --------------------------------------------------------
 
     data["trang_thai"] = (
@@ -439,7 +640,7 @@ def read_branch_file(
     )
 
     # --------------------------------------------------------
-    # 9. HÃNG XE
+    # 7. HÃNG XE
     # --------------------------------------------------------
 
     data["hang_xe"] = (
@@ -448,10 +649,6 @@ def read_branch_file(
         .astype(str)
         .str.upper()
         .str.strip()
-    )
-
-    data["hang_xe"] = (
-        data["hang_xe"]
         .replace({
             "HUYNDAI": "HYUNDAI",
             "HYNDAI": "HYUNDAI",
@@ -462,11 +659,8 @@ def read_branch_file(
     )
 
     # --------------------------------------------------------
-    # 10. NGUỒN KHÁCH
+    # 8. NGUỒN KHÁCH
     # --------------------------------------------------------
-
-    if "nguon_khach" not in data.columns:
-        data["nguon_khach"] = ""
 
     data["nguon_khach"] = (
         data["nguon_khach"]
@@ -479,59 +673,103 @@ def read_branch_file(
         )
     )
 
+    # --------------------------------------------------------
+    # 9. DÒNG XE / KHÁCH HÀNG
+    # --------------------------------------------------------
+
+    if "dong_xe" not in data.columns:
+        data["dong_xe"] = ""
+
+    if "ten_khach_hang" not in data.columns:
+        data["ten_khach_hang"] = ""
+
+    return data.reset_index(
+        drop=True
+    )
+
+
+# ============================================================
+# LỌC CHÍNH THỨC THEO NGÀY DT
+# ============================================================
+
+def filter_by_dashboard_period(
+    data,
+    year,
+    month,
+):
+    if data.empty:
+        return data
+
+    data = data[
+        data["ngay_hoa_don"].notna()
+    ].copy()
+
+    data = data[
+        data["ngay_hoa_don"].dt.year
+        == int(year)
+    ].copy()
+
+    if month != "All":
+        data = data[
+            data["ngay_hoa_don"].dt.month
+            == int(month)
+        ].copy()
+
+    # Nếu API raw có một RO lặp lại do nguồn trả trùng,
+    # chỉ giữ bản ghi cuối cùng sau khi sort theo Ngày DT.
+    data = (
+        data.sort_values(
+            [
+                "ngay_hoa_don",
+                "ngay_quyet_toan",
+            ],
+            na_position="first",
+        )
+        .drop_duplicates(
+            subset=["ro_key"],
+            keep="last",
+        )
+        .reset_index(drop=True)
+    )
+
     return data
 
 
 # ============================================================
-# LOAD TOÀN BỘ DỮ LIỆU
+# LOAD TOÀN BỘ DỮ LIỆU CHO DASHBOARD
 # ============================================================
 
-@st.cache_data
 def load_all_data(
-    data_files,
-    workshop_name_map,
+    selected_branch,
+    selected_workshop,
+    year,
+    month,
 ):
-    frames = []
-
-    for (
-        branch_name,
-        file_path,
-    ) in data_files.items():
-        if not file_path.exists():
-            st.warning(
-                f"Chưa có file dữ liệu cho "
-                f"Chi nhánh {branch_name}: "
-                f"{file_path.name}"
-            )
-            continue
-
-        branch_data = read_branch_file(
-            file_path=file_path,
-            branch_name=branch_name,
-            workshop_name_map=(
-                workshop_name_map
-            ),
-        )
-
-        frames.append(
-            branch_data
-        )
-
-    if not frames:
-        st.error(
-            "Không có dữ liệu để hiển thị."
-        )
-        st.stop()
-
-    data_raw = pd.concat(
-        frames,
-        ignore_index=True,
+    records, window = call_api_raw(
+        selected_branch=selected_branch,
+        selected_workshop=selected_workshop,
+        year=year,
+        month=month,
     )
 
-    # Giữ 3 output để app cũ vẫn tương thích.
-    # File tổng hợp mới đã có trực tiếp DT công việc,
-    # DT phụ tùng và DT phụ kiện theo loại lệnh,
-    # nên không còn cần parts_data/accessory_data riêng.
+    raw_data = prepare_api_data(
+        records
+    )
+
+    if raw_data.empty:
+        st.warning(
+            "API không trả dữ liệu cho phạm vi đã chọn."
+        )
+
+        data_raw = raw_data
+    else:
+        data_raw = filter_by_dashboard_period(
+            data=raw_data,
+            year=year,
+            month=month,
+        )
+
+    # Giữ 3 output để calculations/app hiện tại tương thích.
     parts_data = {}
     accessory_data = {}
 
