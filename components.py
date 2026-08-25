@@ -356,6 +356,93 @@ def render_sidebar(branch_workshop_codes):
 
 
 # ============================================================
+# TASCO AUTO WORDMARK - HOMEPAGE
+# ============================================================
+
+def _build_tasco_wordmark_html():
+    """
+    Đọc file tasco_auto_logo.png cùng thư mục với components.py.
+
+    Logo gốc có nền trắng + chữ đen.
+    Ở đây dùng SVG filter để:
+    - biến nền trắng thành trong suốt
+    - đổi phần chữ sang navy #1E2F6E
+    - crop chỉ phần chữ TASCO AUTO
+    - hiển thị nhỏ ở góc trái homepage-card
+
+    Không cần sửa app.py.
+    """
+
+    tasco_logo_path = (
+        Path(__file__).resolve().parent
+        / "tasco_auto_logo.png"
+    )
+
+    if not tasco_logo_path.exists():
+        return (
+            '<div style="'
+            'position:absolute;'
+            'top:24px;'
+            'left:30px;'
+            'z-index:5;'
+            'color:#1E2F6E;'
+            'font-size:17px;'
+            'line-height:0.95;'
+            'font-weight:900;'
+            'letter-spacing:0.5px;'
+            'text-align:left;'
+            '">'
+            'TASCO<br>AUTO'
+            '</div>'
+        )
+
+    tasco_base64 = base64.b64encode(
+        tasco_logo_path.read_bytes()
+    ).decode("utf-8")
+
+    # Logo ảnh gốc user gửi khoảng 1456 x 1056.
+    # viewBox crop đúng khu vực chữ TASCO AUTO.
+    return (
+        '<div style="'
+        'position:absolute;'
+        'top:22px;'
+        'left:28px;'
+        'z-index:5;'
+        'width:128px;'
+        'height:58px;'
+        'overflow:hidden;'
+        '">'
+        '<svg '
+        'xmlns="http://www.w3.org/2000/svg" '
+        'width="128" '
+        'height="58" '
+        'viewBox="315 340 820 365" '
+        'preserveAspectRatio="xMidYMid meet">'
+        '<defs>'
+        '<filter id="tascoNavyWordmark" '
+        'x="-20%" y="-20%" width="140%" height="140%">'
+        '<feColorMatrix '
+        'type="matrix" '
+        'values="'
+        '0 0 0 0 0.1176 '
+        '0 0 0 0 0.1843 '
+        '0 0 0 0 0.4314 '
+        '-0.3333 -0.3333 -0.3333 0 1'
+        '"/>'
+        '</filter>'
+        '</defs>'
+        f'<image '
+        f'href="data:image/png;base64,{tasco_base64}" '
+        'x="0" y="0" '
+        'width="1456" height="1056" '
+        'filter="url(#tascoNavyWordmark)" '
+        '/>'
+        '</svg>'
+        '</div>'
+    )
+
+
+# ============================================================
 # HOMEPAGE
 # ============================================================
 
@@ -381,9 +468,18 @@ def render_homepage(logo_path: Path):
             'color:#172554;">CARPLA SERVICES</div>'
         )
 
+    tasco_wordmark_html = (
+        _build_tasco_wordmark_html()
+    )
+
     html = (
         '<div class="homepage-stage">'
             '<div class="homepage-card">'
+
+                # TASCO AUTO nhỏ ở góc trên trái của inner card
+                f'{tasco_wordmark_html}'
+
+                # CARPLA SERVICES giữ nguyên ở giữa
                 f'{logo_html}'
 
                 '<div class="homepage-title">'
@@ -391,38 +487,67 @@ def render_homepage(logo_path: Path):
                 '</div>'
 
                 '<div class="homepage-subtitle">'
-'Nền tảng dashboard tập trung giúp theo dõi, phân tích và đánh giá hiệu quả hoạt động của các xưởng trong toàn hệ thống Carpla Services.'
-'</div>'
+                    'Nền tảng dashboard tập trung giúp theo dõi, '
+                    'phân tích và đánh giá hiệu quả hoạt động của '
+                    'các xưởng trong toàn hệ thống Carpla Services.'
+                '</div>'
 
-'<div class="homepage-feature-grid">'
-    '<div class="homepage-feature-item">🚗 <span>Lượt xe</span></div>'
-    '<div class="homepage-feature-item">📊 <span>Doanh thu</span></div>'
-    '<div class="homepage-feature-item">📦 <span>Cơ cấu xe</span></div>'
-    '<div class="homepage-feature-item">💳 <span>Thanh toán</span></div>'
-    '<div class="homepage-feature-item">📈 <span>KPI vận hành</span></div>'
-'</div>'
+                '<div class="homepage-feature-grid">'
+                    '<div class="homepage-feature-item">'
+                        '🚗 <span>Lượt xe</span>'
+                    '</div>'
+                    '<div class="homepage-feature-item">'
+                        '📊 <span>Doanh thu</span>'
+                    '</div>'
+                    '<div class="homepage-feature-item">'
+                        '📦 <span>Cơ cấu xe</span>'
+                    '</div>'
+                    '<div class="homepage-feature-item">'
+                        '💳 <span>Thanh toán</span>'
+                    '</div>'
+                    '<div class="homepage-feature-item">'
+                        '📈 <span>KPI vận hành</span>'
+                    '</div>'
+                '</div>'
 
-'<div class="homepage-guide">'
-    '<span>Vui lòng chọn <b>Chi nhánh</b>, <b>Xưởng</b>, <b>Năm</b> và <b>Tháng</b> tại bộ lọc bên trái, sau đó nhấn&nbsp;</span>'
-    '<span style="'
-        'display:inline-flex;'
-        'align-items:center;'
-        'justify-content:center;'
-        'padding:8px 18px;'
-        'border-radius:12px;'
-        'background:linear-gradient(135deg,#FF6969 0%,#FF4F4F 52%,#E93E3E 100%);'
-        'color:#FFFFFF;'
-        'font-size:14px;'
-        'line-height:1;'
-        'font-weight:800;'
-        'letter-spacing:0.25px;'
-        'border:1px solid rgba(255,255,255,0.24);'
-        'box-shadow:0 8px 18px rgba(233,62,62,0.24),inset 0 1px 0 rgba(255,255,255,0.26);'
-        'text-shadow:0 1px 1px rgba(122,26,26,0.16);'
-        'white-space:nowrap;'
-        'vertical-align:middle;'
-    '">XEM DASHBOARD</span>'
-'</div>'
+                '<div class="homepage-guide">'
+                    '<span>'
+                        'Vui lòng chọn <b>Chi nhánh</b>, '
+                        '<b>Xưởng</b>, <b>Năm</b> và <b>Tháng</b> '
+                        'tại bộ lọc bên trái, sau đó nhấn&nbsp;'
+                    '</span>'
+
+                    '<span style="'
+                        'display:inline-flex;'
+                        'align-items:center;'
+                        'justify-content:center;'
+                        'padding:8px 18px;'
+                        'border-radius:12px;'
+                        'background:linear-gradient('
+                            '135deg,'
+                            '#FF6969 0%,'
+                            '#FF4F4F 52%,'
+                            '#E93E3E 100%'
+                        ');'
+                        'color:#FFFFFF;'
+                        'font-size:14px;'
+                        'line-height:1;'
+                        'font-weight:800;'
+                        'letter-spacing:0.25px;'
+                        'border:1px solid '
+                            'rgba(255,255,255,0.24);'
+                        'box-shadow:'
+                            '0 8px 18px rgba(233,62,62,0.24),'
+                            'inset 0 1px 0 rgba(255,255,255,0.26);'
+                        'text-shadow:'
+                            '0 1px 1px rgba(122,26,26,0.16);'
+                        'white-space:nowrap;'
+                        'vertical-align:middle;'
+                    '">'
+                        'XEM DASHBOARD'
+                    '</span>'
+                '</div>'
+
             '</div>'
         '</div>'
     )
