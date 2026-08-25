@@ -361,21 +361,17 @@ def render_sidebar(branch_workshop_codes):
 
 def _build_tasco_wordmark_html():
     """
-    Đọc file tasco_auto_logo.png cùng thư mục với components.py.
+    Dùng file PNG đã xử lý sẵn:
+    tasco_auto_logo_navy.png
 
-    Logo gốc có nền trắng + chữ đen.
-    Ở đây dùng SVG filter để:
-    - biến nền trắng thành trong suốt
-    - đổi phần chữ sang navy #1E2F6E
-    - crop chỉ phần chữ TASCO AUTO
-    - hiển thị nhỏ ở góc trái homepage-card
-
-    Không cần sửa app.py.
+    - nền trong suốt
+    - chữ navy #1E2F6E
+    - đặt nhỏ ở góc trên trái của homepage-card
     """
 
     tasco_logo_path = (
         Path(__file__).resolve().parent
-        / "tasco_auto_logo.png"
+        / "tasco_auto_logo_navy.png"
     )
 
     if not tasco_logo_path.exists():
@@ -386,10 +382,10 @@ def _build_tasco_wordmark_html():
             'left:30px;'
             'z-index:5;'
             'color:#1E2F6E;'
-            'font-size:17px;'
+            'font-size:15px;'
             'line-height:0.95;'
             'font-weight:900;'
-            'letter-spacing:0.5px;'
+            'letter-spacing:0.4px;'
             'text-align:left;'
             '">'
             'TASCO<br>AUTO'
@@ -400,45 +396,20 @@ def _build_tasco_wordmark_html():
         tasco_logo_path.read_bytes()
     ).decode("utf-8")
 
-    # Logo ảnh gốc user gửi khoảng 1456 x 1056.
-    # viewBox crop đúng khu vực chữ TASCO AUTO.
     return (
-        '<div style="'
+        '<img '
+        f'src="data:image/png;base64,{tasco_base64}" '
+        'alt="TASCO AUTO" '
+        'style="'
         'position:absolute;'
         'top:22px;'
         'left:28px;'
+        'width:118px;'
+        'height:auto;'
         'z-index:5;'
-        'width:128px;'
-        'height:58px;'
-        'overflow:hidden;'
+        'display:block;'
+        'object-fit:contain;'
         '">'
-        '<svg '
-        'xmlns="http://www.w3.org/2000/svg" '
-        'width="128" '
-        'height="58" '
-        'viewBox="315 340 820 365" '
-        'preserveAspectRatio="xMidYMid meet">'
-        '<defs>'
-        '<filter id="tascoNavyWordmark" '
-        'x="-20%" y="-20%" width="140%" height="140%">'
-        '<feColorMatrix '
-        'type="matrix" '
-        'values="'
-        '0 0 0 0 0.1176 '
-        '0 0 0 0 0.1843 '
-        '0 0 0 0 0.4314 '
-        '-0.3333 -0.3333 -0.3333 0 1'
-        '"/>'
-        '</filter>'
-        '</defs>'
-        f'<image '
-        f'href="data:image/png;base64,{tasco_base64}" '
-        'x="0" y="0" '
-        'width="1456" height="1056" '
-        'filter="url(#tascoNavyWordmark)" '
-        '/>'
-        '</svg>'
-        '</div>'
     )
 
 
