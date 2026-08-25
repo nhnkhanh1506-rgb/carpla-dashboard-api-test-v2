@@ -24,10 +24,9 @@ from components import (
 )
 
 from config import (
-    DATA_FILES,
+    BRANCH_WORKSHOP_CODES,
     LOGO_FILE,
     TARGETS,
-    WORKSHOP_NAME_MAP,
 )
 
 from data_loader import load_all_data
@@ -2459,31 +2458,23 @@ apply_global_style()
 
 
 # ============================================================
-# 3. LOAD DATA
+# 3. SIDEBAR FILTER
 # ============================================================
+# Sidebar dùng mapping trong config, chưa call API ở bước này.
 
-data_raw, parts_data, accessory_data = (
-    load_all_data(
-        data_files=DATA_FILES,
-        workshop_name_map=(
-            WORKSHOP_NAME_MAP
-        ),
+selection = render_sidebar(
+    branch_workshop_codes=(
+        BRANCH_WORKSHOP_CODES
     )
 )
 
 
 # ============================================================
-# 4. SIDEBAR FILTER
+# 4. HOME PAGE
 # ============================================================
-
-selection = render_sidebar(
-    data_raw=data_raw
-)
-
-
-# ============================================================
-# 5. HOME PAGE
-# ============================================================
+# Khi chưa bấm XEM DASHBOARD:
+# - chỉ hiện homepage
+# - KHÔNG call API
 
 if not selection[
     "show_dashboard"
@@ -2496,7 +2487,7 @@ if not selection[
 
 
 # ============================================================
-# 6. SELECTED FILTERS
+# 5. SELECTED FILTERS
 # ============================================================
 
 selected_branch = selection[
@@ -2515,6 +2506,27 @@ month = selection["month"]
 
 if month != "All":
     month = int(month)
+
+
+# ============================================================
+# 6. LOAD DATA TỪ API PRODUCTION
+# ============================================================
+# API lọc raw theo Ngày quyết toán.
+# data_loader:
+# - chia từng request 1 tháng
+# - lấy thêm 2 tháng trước làm buffer
+# - sau đó lọc chính thức theo Ngày DT
+
+data_raw, parts_data, accessory_data = (
+    load_all_data(
+        selected_branch=selected_branch,
+        selected_workshop=(
+            selected_workshop
+        ),
+        year=year,
+        month=month,
+    )
+)
 
 
 # ============================================================
