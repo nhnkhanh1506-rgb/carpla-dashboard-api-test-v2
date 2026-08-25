@@ -2894,7 +2894,7 @@ def render_payment_section(data):
 
                         domain=dict(
                             x=[0.08, 0.92],
-                            y=[0.13, 0.98],
+                            y=[0.22, 0.98],
                         ),
 
                         hovertemplate=(
@@ -2938,7 +2938,19 @@ def render_payment_section(data):
                 paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)",
 
-                showlegend=False,
+                showlegend=True,
+
+                legend=dict(
+                    orientation="h",
+                    x=0.5,
+                    xanchor="center",
+                    y=0.01,
+                    yanchor="bottom",
+                    font=dict(
+                        color="#475467",
+                        size=13,
+                    ),
+                ),
             )
 
             st.plotly_chart(
@@ -2948,28 +2960,6 @@ def render_payment_section(data):
                     "displayModeBar": False,
                     "responsive": True,
                 },
-            )
-
-            st.markdown(
-                (
-                    '<div style="display:flex;justify-content:center;gap:18px;'
-                    'flex-wrap:nowrap;margin-top:-22px;padding-bottom:4px;'
-                    'font-size:13px;color:#475467;font-weight:600;">'
-                    '<div style="display:flex;align-items:center;gap:6px;'
-                    'white-space:nowrap;">'
-                    f'<span style="width:10px;height:10px;border-radius:50%;'
-                    f'background:{DONUT_MAIN};display:inline-block;"></span>'
-                    '<span>Khách hàng chi trả</span>'
-                    '</div>'
-                    '<div style="display:flex;align-items:center;gap:6px;'
-                    'white-space:nowrap;">'
-                    f'<span style="width:10px;height:10px;border-radius:50%;'
-                    f'background:{DONUT_SECOND};display:inline-block;"></span>'
-                    '<span>Bảo hiểm chi trả</span>'
-                    '</div>'
-                    '</div>'
-                ),
-                unsafe_allow_html=True,
             )
 
         if (
