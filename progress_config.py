@@ -15,6 +15,7 @@ PROGRESS_SHEETS = {
     "TP. HCM": {
         "spreadsheet_id": "1p7qxvtjtZveG4HWjTLV25h4d6AWxC42Bp5ECE74AhdE",
         "sheet_candidates": [
+            "HCM",
             "CN-TP. HCM",
             "CN - TP. HCM",
             "CN TP. HCM",
