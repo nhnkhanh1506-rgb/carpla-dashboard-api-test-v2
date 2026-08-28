@@ -2739,14 +2739,14 @@ def render_payment_section(data):
         ].sum()
 
         source_summary[
-            "ty_trong"
+            "ty_trong_doanh_thu"
         ] = source_summary[
-            "so_ro"
+            "doanh_thu"
         ].apply(
             lambda value:
             safe_div(
                 value,
-                total_source_ro,
+                total_source_revenue,
             )
         )
 
@@ -2757,8 +2757,10 @@ def render_payment_section(data):
                 columns={
                     "nguon_khach": "Nguồn khách",
                     "so_ro": "Số RO",
-                    "ty_trong": "Tỷ trọng",
                     "doanh_thu": "Doanh thu",
+                    "ty_trong_doanh_thu": (
+                        "Tỷ trọng doanh thu"
+                    ),
                 }
             )
         )
@@ -2767,8 +2769,8 @@ def render_payment_section(data):
             [
                 "Nguồn khách",
                 "Số RO",
-                "Tỷ trọng",
                 "Doanh thu",
+                "Tỷ trọng doanh thu",
             ]
         ]
 
@@ -2783,19 +2785,19 @@ def render_payment_section(data):
         )
 
         source_display[
-            "Tỷ trọng"
-        ] = source_display[
-            "Tỷ trọng"
-        ].map(
-            lambda value:
-            f"{value:.1%}"
-        )
-
-        source_display[
             "Doanh thu"
         ] = source_display[
             "Doanh thu"
         ].map(fmt_m)
+
+        source_display[
+            "Tỷ trọng doanh thu"
+        ] = source_display[
+            "Tỷ trọng doanh thu"
+        ].map(
+            lambda value:
+            f"{value:.1%}"
+        )
 
         source_total_row = pd.DataFrame(
             {
@@ -2809,13 +2811,13 @@ def render_payment_section(data):
                         )
                     )
                 ],
-                "Tỷ trọng": [
-                    "100.0%"
-                ],
                 "Doanh thu": [
                     fmt_m(
                         total_source_revenue
                     )
+                ],
+                "Tỷ trọng doanh thu": [
+                    "100.0%"
                 ],
             }
         )
