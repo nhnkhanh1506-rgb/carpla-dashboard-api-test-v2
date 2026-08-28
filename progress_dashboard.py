@@ -29,6 +29,219 @@ SLATE = "#65758B"
 
 
 # ============================================================
+# DEMO MODE - DỮ LIỆU MÔ PHỎNG PHỤC VỤ DEMO ĐỐI TÁC
+# ============================================================
+# True  = dùng số demo bên dưới, KHÔNG gọi Google Sheet
+# False = quay lại dữ liệu Google Sheet gần real-time
+DEMO_MODE = True
+
+DEMO_PROGRESS_METRICS = {
+    "Hà Nội": {
+        "received": 6200,
+        "delivered": 5250,
+        "late_delivery": 310,
+        "not_delivered": 950,
+        "waiting_delivery": 180,
+        "late_progress": 145,
+        "stopped": 52,
+        "waiting_parts": 96,
+        "rework": 28,
+        "tasco_inspection": 56,
+        "other_inspection": 31,
+        "tasco_price": 71,
+        "other_insurance": 40,
+    },
+    "Tây Bắc Bộ": {
+        "received": 3100,
+        "delivered": 2620,
+        "late_delivery": 150,
+        "not_delivered": 480,
+        "waiting_delivery": 92,
+        "late_progress": 74,
+        "stopped": 28,
+        "waiting_parts": 49,
+        "rework": 14,
+        "tasco_inspection": 28,
+        "other_inspection": 15,
+        "tasco_price": 34,
+        "other_insurance": 19,
+    },
+    "Đông Bắc Bộ": {
+        "received": 3450,
+        "delivered": 2900,
+        "late_delivery": 170,
+        "not_delivered": 550,
+        "waiting_delivery": 108,
+        "late_progress": 83,
+        "stopped": 31,
+        "waiting_parts": 57,
+        "rework": 16,
+        "tasco_inspection": 31,
+        "other_inspection": 17,
+        "tasco_price": 39,
+        "other_insurance": 22,
+    },
+    "TP. HCM": {
+        "received": 5850,
+        "delivered": 4950,
+        "late_delivery": 290,
+        "not_delivered": 900,
+        "waiting_delivery": 172,
+        "late_progress": 138,
+        "stopped": 49,
+        "waiting_parts": 91,
+        "rework": 27,
+        "tasco_inspection": 53,
+        "other_inspection": 30,
+        "tasco_price": 67,
+        "other_insurance": 38,
+    },
+    "Cần Thơ": {
+        "received": 2650,
+        "delivered": 2240,
+        "late_delivery": 125,
+        "not_delivered": 410,
+        "waiting_delivery": 78,
+        "late_progress": 62,
+        "stopped": 23,
+        "waiting_parts": 43,
+        "rework": 12,
+        "tasco_inspection": 24,
+        "other_inspection": 13,
+        "tasco_price": 29,
+        "other_insurance": 16,
+    },
+    "Nghệ An": {
+        "received": 2250,
+        "delivered": 1900,
+        "late_delivery": 105,
+        "not_delivered": 350,
+        "waiting_delivery": 66,
+        "late_progress": 52,
+        "stopped": 19,
+        "waiting_parts": 36,
+        "rework": 10,
+        "tasco_inspection": 20,
+        "other_inspection": 11,
+        "tasco_price": 25,
+        "other_insurance": 14,
+    },
+    "Đà Nẵng": {
+        "received": 3650,
+        "delivered": 3080,
+        "late_delivery": 180,
+        "not_delivered": 570,
+        "waiting_delivery": 112,
+        "late_progress": 89,
+        "stopped": 33,
+        "waiting_parts": 59,
+        "rework": 17,
+        "tasco_inspection": 33,
+        "other_inspection": 21,
+        "tasco_price": 47,
+        "other_insurance": 27,
+    },
+}
+
+
+def _get_demo_metrics(selected_branch):
+    if selected_branch != "All":
+        return DEMO_PROGRESS_METRICS.get(
+            selected_branch,
+            DEMO_PROGRESS_METRICS["Hà Nội"],
+        ).copy()
+
+    keys = next(
+        iter(DEMO_PROGRESS_METRICS.values())
+    ).keys()
+
+    return {
+        key: sum(
+            branch_data[key]
+            for branch_data in DEMO_PROGRESS_METRICS.values()
+        )
+        for key in keys
+    }
+
+
+def _get_demo_detail_rows(metrics):
+    not_delivered = metrics["not_delivered"]
+
+    waiting_total = max(
+        1,
+        round(not_delivered * 0.56),
+    )
+
+    # Phân bổ công đoạn chờ.
+    waiting_distribution = [
+        ("CHỜ GIAO XE", metrics["waiting_delivery"]),
+        ("CHỜ ĐỒNG", round(waiting_total * 0.18)),
+        ("CHỜ TIẾP NHẬN", round(waiting_total * 0.14)),
+        ("CHỜ SƠN", round(waiting_total * 0.12)),
+        ("CHỜ GIÁM ĐỊNH", round(waiting_total * 0.10)),
+        ("CHỜ DUYỆT SC", round(waiting_total * 0.09)),
+        ("DỪNG CÔNG VIỆC", metrics["stopped"]),
+    ]
+
+    waiting_rows = [
+        ("Tổng cộng", waiting_total),
+        *waiting_distribution,
+    ]
+
+    repairing_total = max(
+        1,
+        not_delivered - waiting_total,
+    )
+
+    repairing_rows = [
+        ("Tổng cộng", repairing_total),
+        ("ĐANG SỬA CHỮA", round(repairing_total * 0.28)),
+        ("ĐANG SƠN", round(repairing_total * 0.20)),
+        ("ĐANG LÀM ĐỒNG", round(repairing_total * 0.17)),
+        ("ĐANG ĐÁNH BÓNG", round(repairing_total * 0.13)),
+        ("KIỂM TRA CUỐI", round(repairing_total * 0.10)),
+        ("CHẨN ĐOÁN", round(repairing_total * 0.07)),
+        ("LẮP RÁP", round(repairing_total * 0.05)),
+    ]
+
+    abnormal_rows = [
+        ("Thiếu KTV Sơn", max(1, round(metrics["late_progress"] * 0.20))),
+        ("Thiếu KTV Rửa xe", max(1, round(metrics["late_progress"] * 0.16))),
+        ("Thiếu KTV SCC", max(1, round(metrics["late_progress"] * 0.15))),
+        ("Chờ phụ tùng", metrics["waiting_parts"]),
+        ("Xe sửa chữa lại", metrics["rework"]),
+        ("Thiếu KTV Đồng", max(1, round(metrics["late_progress"] * 0.10))),
+        ("Xe sửa chữa nặng", max(1, round(metrics["late_progress"] * 0.08))),
+    ]
+
+    return (
+        waiting_rows,
+        repairing_rows,
+        abnormal_rows,
+    )
+
+
+def _build_demo_raw():
+    # DataFrame tối thiểu để giữ nguyên giao diện/filter.
+    return pd.DataFrame(
+        {
+            "month_key": [""],
+            "xuong_dich_vu": [""],
+            "hang_xe": [""],
+            "loai_hinh_sua_chua": [""],
+            "so_lenh": [""],
+            "cong_doan": [""],
+            "trang_thai_sua_chua": [""],
+            "cac_bat_thuong": [""],
+            "bao_hiem": [""],
+            "trang_thai_giao_xe": [""],
+            "thoi_gian_giao_xe": [pd.NaT],
+            "thoi_gian_hen_giao": [pd.NaT],
+        }
+    )
+
+
+# ============================================================
 # 2. TEXT NORMALIZATION
 # ============================================================
 
@@ -855,31 +1068,35 @@ def render_progress_dashboard(
     )
 
     # --------------------------------------------------------
-    # LOAD GOOGLE SHEET
+    # LOAD DATA
     # --------------------------------------------------------
-    with st.spinner(
-        "Đang tải Bảng tiến độ..."
-    ):
-        try:
-            raw = load_progress_data(
-                selected_branch=selected_branch,
-            )
-        except Exception as exc:
-            st.error(
-                "Không tải được dữ liệu Bảng tiến độ."
-            )
-            st.code(str(exc))
-            st.info(
-                "Nếu file Google Sheet đang để Restricted, "
-                "hãy share file cho service-account email của Streamlit "
-                "hoặc bật 'Anyone with the link – Viewer'."
-            )
-            return
+    if DEMO_MODE:
+        raw = _build_demo_raw()
+        errors = []
+    else:
+        with st.spinner(
+            "Đang tải Bảng tiến độ..."
+        ):
+            try:
+                raw = load_progress_data(
+                    selected_branch=selected_branch,
+                )
+            except Exception as exc:
+                st.error(
+                    "Không tải được dữ liệu Bảng tiến độ."
+                )
+                st.code(str(exc))
+                st.info(
+                    "Nếu file Google Sheet đang để Restricted, "
+                    "hãy share file cho service-account email của Streamlit "
+                    "hoặc bật 'Anyone with the link – Viewer'."
+                )
+                return
 
-    errors = raw.attrs.get(
-        "load_errors",
-        [],
-    )
+        errors = raw.attrs.get(
+            "load_errors",
+            [],
+        )
 
     # --------------------------------------------------------
     # HEADER
@@ -901,10 +1118,15 @@ def render_progress_dashboard(
         unsafe_allow_html=True,
     )
 
-    st.caption(
-        "Google Sheet gần real-time · Cache 60 giây · "
-        f"Cập nhật giao diện lúc {datetime.now():%d/%m/%Y %H:%M}"
-    )
+    if DEMO_MODE:
+        st.caption(
+            "Dữ liệu mô phỏng phục vụ demo · Kỳ minh họa: Cả năm 2026"
+        )
+    else:
+        st.caption(
+            "Google Sheet gần real-time · Cache 60 giây · "
+            f"Cập nhật giao diện lúc {datetime.now():%d/%m/%Y %H:%M}"
+        )
 
     if errors:
         with st.expander(
@@ -923,10 +1145,15 @@ def render_progress_dashboard(
         for key in month_keys
     }
 
-    month_labels = [
-        "Tất cả",
-        *month_label_map.keys(),
-    ]
+    if DEMO_MODE:
+        month_labels = [
+            "Cả năm 2026",
+        ]
+    else:
+        month_labels = [
+            "Tất cả",
+            *month_label_map.keys(),
+        ]
 
     workshops = sorted(
         [
@@ -1012,13 +1239,16 @@ def render_progress_dashboard(
                 key="progress_repair_type_filter",
             )
 
-    selected_month = (
-        "Tất cả"
-        if selected_month_label == "Tất cả"
-        else month_label_map[
-            selected_month_label
-        ]
-    )
+    if DEMO_MODE:
+        selected_month = "Tất cả"
+    else:
+        selected_month = (
+            "Tất cả"
+            if selected_month_label == "Tất cả"
+            else month_label_map[
+                selected_month_label
+            ]
+        )
 
     data = _apply_progress_filters(
         raw,
@@ -1031,9 +1261,14 @@ def render_progress_dashboard(
     # --------------------------------------------------------
     # KPI
     # --------------------------------------------------------
-    metrics = calculate_progress_metrics(
-        data
-    )
+    if DEMO_MODE:
+        metrics = _get_demo_metrics(
+            selected_branch
+        )
+    else:
+        metrics = calculate_progress_metrics(
+            data
+        )
 
     st.markdown(
         '<div class="progress-section-title">Tổng quan tiến độ</div>',
@@ -1163,19 +1398,28 @@ def render_progress_dashboard(
     # --------------------------------------------------------
     # DETAIL TABLES
     # --------------------------------------------------------
-    waiting_rows = _stage_summary(
-        data,
-        mode="waiting",
-    )
+    if DEMO_MODE:
+        (
+            waiting_rows,
+            repairing_rows,
+            abnormal_rows,
+        ) = _get_demo_detail_rows(
+            metrics
+        )
+    else:
+        waiting_rows = _stage_summary(
+            data,
+            mode="waiting",
+        )
 
-    repairing_rows = _stage_summary(
-        data,
-        mode="repairing",
-    )
+        repairing_rows = _stage_summary(
+            data,
+            mode="repairing",
+        )
 
-    abnormal_rows = _abnormal_summary(
-        data
-    )
+        abnormal_rows = _abnormal_summary(
+            data
+        )
 
     st.markdown(
         '<div class="progress-section-title">Chi tiết vận hành</div>',
