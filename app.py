@@ -1381,11 +1381,23 @@ def _multi_unit_monthly_line(
         ]
     ].fillna(0)
 
-    value_column = (
-        "revenue"
-        if metric == "revenue"
-        else "ro"
+    monthly_unit_full[
+        "revenue_per_ro"
+    ] = monthly_unit_full.apply(
+        lambda row:
+        safe_div(
+            row["revenue"],
+            row["ro"],
+        ),
+        axis=1,
     )
+
+    if metric == "revenue":
+        value_column = "revenue"
+    elif metric == "revenue_per_ro":
+        value_column = "revenue_per_ro"
+    else:
+        value_column = "ro"
 
     # ========================================================
     # GROWTH % THEO TỪNG ĐƠN VỊ
@@ -1436,6 +1448,13 @@ def _multi_unit_monthly_line(
             y_values = (
                 unit_data[
                     "revenue"
+                ]
+                / 1_000_000
+            )
+        elif metric == "revenue_per_ro":
+            y_values = (
+                unit_data[
+                    "revenue_per_ro"
                 ]
                 / 1_000_000
             )
@@ -1508,6 +1527,10 @@ def _multi_unit_monthly_line(
                 value_text = (
                     f"{row['revenue'] / 1_000_000:,.1f}M"
                 )
+            elif metric == "revenue_per_ro":
+                value_text = (
+                    f"{row['revenue_per_ro'] / 1_000_000:,.1f}M"
+                )
             else:
                 value_text = (
                     f"{int(row['ro']):,}"
@@ -1547,7 +1570,10 @@ def _multi_unit_monthly_line(
             value_column
         ]
 
-        if metric == "revenue":
+        if metric in [
+            "revenue",
+            "revenue_per_ro",
+        ]:
             month_max = (
                 month_values.max()
                 / 1_000_000
@@ -1584,11 +1610,12 @@ def _multi_unit_monthly_line(
         )
     )
 
-    y_title = (
-        "Doanh thu (M)"
-        if metric == "revenue"
-        else "Lượt xe / RO"
-    )
+    if metric == "revenue":
+        y_title = "Doanh thu (M)"
+    elif metric == "revenue_per_ro":
+        y_title = "Doanh thu / RO (M)"
+    else:
+        y_title = "Lượt xe / RO"
 
     figure.update_layout(
         template="simple_white",
@@ -1879,59 +1906,19 @@ def render_executive_dashboard(
         unsafe_allow_html=True,
     )
 
-    trend_left, trend_right = (
-        st.columns(2)
-    )
+    # --------------------------------------------------------
+    # Nếu đang xem nhiều đơn vị:
+    # Hàng 1: Lượt xe tổng | Lượt xe từng đơn vị
+    # Hàng 2: Doanh thu tổng | Doanh thu từng đơn vị
+    # Hàng 3: Doanh thu/RO tổng | Doanh thu/RO từng đơn vị
+    # --------------------------------------------------------
 
-    with trend_left:
-        ro_line = _line_chart(
-            monthly=monthly,
-            value_column="ro",
-            title="Lượt xe theo tháng",
-            y_title="Lượt xe / RO",
-        )
-
-        st.plotly_chart(
-            ro_line,
-            use_container_width=True,
-            config={
-                "displayModeBar": False,
-            },
-        )
-
-    with trend_right:
-        revenue_line = _line_chart(
-            monthly=monthly,
-            value_column="revenue",
-            title="Doanh thu theo tháng",
-            y_title="Doanh thu",
-        )
-
-        st.plotly_chart(
-            revenue_line,
-            use_container_width=True,
-            config={
-                "displayModeBar": False,
-            },
-        )
-
-
-    # ========================================================
-    # TREND THEO TỪNG ĐƠN VỊ
-    # ========================================================
-    # Nếu Xưởng = All:
-    #   mỗi xưởng là 1 line.
-    #
-    # Nếu Chi nhánh = All:
-    #   mỗi chi nhánh là 1 line.
-    #
-    # Nếu đang chọn 1 xưởng cụ thể:
-    #   không cần lặp thêm chart này.
-
-    if (
+    show_unit_comparison = (
         selected_workshop == "All"
         or selected_branch == "All"
-    ):
+    )
+
+    if show_unit_comparison:
         if selected_branch == "All":
             trend_group_column = "chi_nhanh"
             trend_group_label = "chi nhánh"
@@ -1939,25 +1926,26 @@ def render_executive_dashboard(
             trend_group_column = "xuong"
             trend_group_label = "xưởng"
 
-        st.markdown(
-            f"""
-            <div style="
-                color:#475467;
-                font-size:14px;
-                font-weight:700;
-                margin:2px 0 10px 2px;
-            ">
-                So sánh xu hướng theo từng {trend_group_label}
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        # HÀNG 1 - LƯỢT XE
+        row1_left, row1_right = st.columns(2)
 
-        unit_trend_left, unit_trend_right = (
-            st.columns(2)
-        )
+        with row1_left:
+            ro_line = _line_chart(
+                monthly=monthly,
+                value_column="ro",
+                title="Lượt xe theo tháng",
+                y_title="Lượt xe / RO",
+            )
 
-        with unit_trend_left:
+            st.plotly_chart(
+                ro_line,
+                use_container_width=True,
+                config={
+                    "displayModeBar": False,
+                },
+            )
+
+        with row1_right:
             unit_ro_line = (
                 _multi_unit_monthly_line(
                     lsc=lsc,
@@ -1981,7 +1969,26 @@ def render_executive_dashboard(
                 },
             )
 
-        with unit_trend_right:
+        # HÀNG 2 - DOANH THU
+        row2_left, row2_right = st.columns(2)
+
+        with row2_left:
+            revenue_line = _line_chart(
+                monthly=monthly,
+                value_column="revenue",
+                title="Doanh thu theo tháng",
+                y_title="Doanh thu",
+            )
+
+            st.plotly_chart(
+                revenue_line,
+                use_container_width=True,
+                config={
+                    "displayModeBar": False,
+                },
+            )
+
+        with row2_right:
             unit_revenue_line = (
                 _multi_unit_monthly_line(
                     lsc=lsc,
@@ -2004,6 +2011,100 @@ def render_executive_dashboard(
                     "displayModeBar": False,
                 },
             )
+
+        # HÀNG 3 - DOANH THU / RO
+        row3_left, row3_right = st.columns(2)
+
+        with row3_left:
+            revenue_per_ro_line = _line_chart(
+                monthly=monthly,
+                value_column="revenue_per_ro",
+                title="Doanh thu / RO theo tháng",
+                y_title="Doanh thu / RO",
+            )
+
+            st.plotly_chart(
+                revenue_per_ro_line,
+                use_container_width=True,
+                config={
+                    "displayModeBar": False,
+                },
+            )
+
+        with row3_right:
+            unit_revenue_per_ro_line = (
+                _multi_unit_monthly_line(
+                    lsc=lsc,
+                    accessory=accessory,
+                    group_column=(
+                        trend_group_column
+                    ),
+                    title=(
+                        "Doanh thu / RO theo tháng "
+                        f"– từng {trend_group_label}"
+                    ),
+                    metric="revenue_per_ro",
+                )
+            )
+
+            st.plotly_chart(
+                unit_revenue_per_ro_line,
+                use_container_width=True,
+                config={
+                    "displayModeBar": False,
+                },
+            )
+
+    else:
+        # Khi xem 1 xưởng cụ thể: chỉ hiển thị 3 xu hướng tổng.
+        row1_left, row1_right = st.columns(2)
+
+        with row1_left:
+            ro_line = _line_chart(
+                monthly=monthly,
+                value_column="ro",
+                title="Lượt xe theo tháng",
+                y_title="Lượt xe / RO",
+            )
+
+            st.plotly_chart(
+                ro_line,
+                use_container_width=True,
+                config={
+                    "displayModeBar": False,
+                },
+            )
+
+        with row1_right:
+            revenue_line = _line_chart(
+                monthly=monthly,
+                value_column="revenue",
+                title="Doanh thu theo tháng",
+                y_title="Doanh thu",
+            )
+
+            st.plotly_chart(
+                revenue_line,
+                use_container_width=True,
+                config={
+                    "displayModeBar": False,
+                },
+            )
+
+        revenue_per_ro_line = _line_chart(
+            monthly=monthly,
+            value_column="revenue_per_ro",
+            title="Doanh thu / RO theo tháng",
+            y_title="Doanh thu / RO",
+        )
+
+        st.plotly_chart(
+            revenue_per_ro_line,
+            use_container_width=True,
+            config={
+                "displayModeBar": False,
+            },
+        )
 
 
     # ========================================================
