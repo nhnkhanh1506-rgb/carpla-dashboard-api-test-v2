@@ -1044,7 +1044,7 @@ def _map_chart(
     figure = go.Figure()
 
     figure.add_trace(
-        go.Scattermapbox(
+        go.Scattermap(
             lat=map_data["lat"],
             lon=map_data["lon"],
             mode="markers",
@@ -1181,8 +1181,8 @@ def _map_chart(
                 color="#1F2937",
             ),
         ),
-        mapbox=dict(
-            style="carto-positron",
+        map=dict(
+            style="carto-voyager",
             center=dict(
                 lat=center_lat,
                 lon=center_lon,
