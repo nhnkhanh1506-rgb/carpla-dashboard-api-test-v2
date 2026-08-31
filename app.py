@@ -804,7 +804,7 @@ def _line_chart(
 
     figure.update_layout(
         template="simple_white",
-        height=350,
+        height=430,
         margin=dict(
             l=55,
             r=25,
